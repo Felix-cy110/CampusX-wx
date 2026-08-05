@@ -1,0 +1,38 @@
+<view class="page">
+  <view class="status-bar-placeholder" style="height: {{statusBarHeight}}px;"></view>
+  <view class="nav-bar" style="height: {{navBarHeight}}px;">
+    <image class="nav-back" src="/images/SVG/返回.svg" mode="aspectFit" bindtap="navigateBack"></image>
+    <text class="nav-title">图书预购</text>
+    <view class="nav-right" bindtap="onTapMyOrders">
+      <text class="nav-right-text">我的订单</text>
+    </view>
+  </view>
+
+  <view class="tab-bar">
+    <view class="tab-item {{activeTab === 'ongoing' ? 'active' : ''}}" bindtap="switchTab" data-tab="ongoing"><text>进行中</text></view>
+    <view class="tab-item {{activeTab === 'ended' ? 'active' : ''}}" bindtap="switchTab" data-tab="ended"><text>已结束</text></view>
+  </view>
+
+  <scroll-view class="list" scroll-y enhanced show-scrollbar="{{false}}">
+    <view wx:if="{{filteredList.length === 0}}" class="empty">
+      <text class="empty-text">暂无预购活动</text>
+    </view>
+    <view class="item" wx:for="{{filteredList}}" wx:key="id" bindtap="onTapItem" data-id="{{item.id}}">
+      <view class="item-left">
+        <view class="item-title-row">
+          <text class="item-title ellipsis">{{item.bookName}}</text>
+          <view class="status-tag {{item.status === 1 ? 'tag-green' : 'tag-gray'}}"><text>{{item.status === 1 ? '进行中' : '已结束'}}</text></view>
+        </view>
+        <text class="item-sub text-secondary">{{item.author}} · {{item.publisher}}</text>
+        <view class="price-row">
+          <text class="price-value">¥{{item.price}}</text>
+          <text class="deposit-hint text-secondary">定金 ¥{{item.depositAmount}}</text>
+        </view>
+        <text class="item-meta text-secondary">已预订 {{item.orderedCount}} 本 · {{item.stock > 0 ? '库存' + item.stock + '本' : '不限量'}}</text>
+      </view>
+      <image wx:if="{{item.coverImage}}" class="item-cover" src="{{item.coverImage}}" mode="aspectFill"></image>
+      <view wx:else class="item-cover-placeholder"></view>
+    </view>
+    <view class="list-bottom"></view>
+  </scroll-view>
+</view>

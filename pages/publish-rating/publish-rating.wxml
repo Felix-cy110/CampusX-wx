@@ -1,0 +1,167 @@
+<view class="page">
+  <!-- 导航栏 -->
+  <view class="fixed-header">
+    <view class="status-bar-placeholder" style="height: {{statusBarHeight}}px;"></view>
+    <view class="nav-bar" style="height: {{navBarHeight}}px;">
+      <view class="nav-back" bindtap="goBack">
+        <image class="nav-back-icon" src="/images/SVG/返回.svg" mode="aspectFit"></image>
+      </view>
+      <text class="nav-title">发起评分</text>
+      <view class="nav-placeholder"></view>
+    </view>
+  </view>
+
+  <scroll-view class="form-scroll" scroll-y enhanced show-scrollbar="{{false}}">
+    <view class="form-card">
+
+      <!-- ===== 已选教师/课程 或 搜索区 ===== -->
+      <view wx:if="{{selectedTeacher && selectedCourse}}" class="section">
+        <view class="section-title">评分对象</view>
+        <view class="selected-info">
+          <view class="selected-row">
+            <text class="selected-name">{{selectedTeacher.name}}</text>
+            <text class="selected-divider">·</text>
+            <text class="selected-course">{{selectedCourse.courseName}}</text>
+            <view class="clear-btn" bindtap="clearSelection">
+              <text class="clear-icon">✕</text>
+            </view>
+          </view>
+          <view class="selected-meta" wx:if="{{selectedTeacher.avgScore}}">
+            <text class="selected-avg">综合 {{selectedTeacher.avgScore}} 分</text>
+            <text class="selected-count">{{selectedTeacher.ratingCount}} 条评价</text>
+          </view>
+        </view>
+      </view>
+
+      <view wx:else>
+        <!-- 搜索栏 -->
+        <view class="section">
+          <view class="section-title">{{keyword ? '搜索结果' : '本校教师'}}</view>
+          <view class="search-bar">
+            <image class="search-icon" src="/images/SVG/搜索.svg" mode="aspectFit"></image>
+            <input
+              class="search-input"
+              placeholder="搜索教师 / 课程"
+              placeholder-class="search-placeholder"
+              value="{{keyword}}"
+              bindinput="onSearchInput"
+              bindconfirm="onSearchConfirm"
+              confirm-type="search"
+            />
+            <view class="search-clear" wx:if="{{keyword}}" bindtap="onSearchClear">
+              <text class="search-clear-text">×</text>
+            </view>
+          </view>
+        </view>
+
+        <!-- 搜索中 -->
+        <view class="search-status" wx:if="{{searching}}">
+          <text class="search-hint">搜索中...</text>
+        </view>
+
+        <!-- 教师列表（左右撑满，紧贴搜索框） -->
+        <view class="teacher-list" wx:if="{{!searching && teachers.length > 0}}">
+          <view
+            wx:for="{{teachers}}"
+            wx:key="id"
+            wx:for-index="tIndex"
+            class="teacher-card {{expandedTeacherIndex === tIndex ? 'expanded' : ''}}"
+          >
+            <view class="teacher-row" bindtap="selectTeacher" data-index="{{tIndex}}">
+              <view class="teacher-info">
+                <text class="teacher-name">{{item.name}}</text>
+                <view class="teacher-meta">
+                  <text class="teacher-avg" wx:if="{{item.avgScore}}">综合 {{item.avgScore}} 分</text>
+                  <text class="teacher-count">{{item.ratingCount || 0}} 条评价</text>
+                </view>
+              </view>
+              <text class="expand-arrow {{expandedTeacherIndex === tIndex ? 'arrow-up' : ''}}">›</text>
+            </view>
+
+            <!-- 课程列表 -->
+            <view class="course-list" wx:if="{{expandedTeacherIndex === tIndex && item.courses && item.courses.length > 0}}">
+              <view
+                wx:for="{{item.courses}}"
+                wx:key="id"
+                wx:for-index="cIndex"
+                wx:for-item="course"
+                class="course-item"
+                bindtap="selectCourse"
+                data-t-index="{{tIndex}}"
+                data-c-index="{{cIndex}}"
+              >
+                <view class="course-info">
+                  <text class="course-name">{{course.courseName}}</text>
+                  <view class="course-meta">
+                    <text class="course-avg" wx:if="{{course.avgScore}}">{{course.avgScore}} 分</text>
+                    <text class="course-count">{{course.ratingCount || 0}} 评</text>
+                  </view>
+                </view>
+                <text class="course-select">去评分 ›</text>
+              </view>
+            </view>
+            <view class="course-empty" wx:if="{{expandedTeacherIndex === tIndex && (!item.courses || item.courses.length === 0)}}">
+              <text>暂无课程，可先申请添加课程</text>
+            </view>
+          </view>
+        </view>
+
+        <!-- 无结果 -->
+        <view class="search-status" wx:if="{{!searching && searched && teachers.length === 0}}">
+          <text class="search-hint">未找到相关教师</text>
+        </view>
+      </view>
+
+      <!-- ===== 星级评分（课程选中后显示） ===== -->
+      <view class="section" wx:if="{{selectedTeacher && selectedCourse}}">
+        <view class="section-title">评分<text class="required">*</text></view>
+        <view class="star-row">
+          <text
+            wx:for="{{stars}}"
+            wx:key="*this"
+            class="star-item {{item <= score ? 'active' : ''}}"
+            data-score="{{item}}"
+            bindtap="setScore"
+          >★</text>
+          <text class="score-value" wx:if="{{score > 0}}">{{score}}.0</text>
+          <text class="score-hint" wx:else>点击星星评分</text>
+        </view>
+      </view>
+
+      <!-- ===== 评价内容（课程选中后显示） ===== -->
+      <view class="section" wx:if="{{selectedTeacher && selectedCourse}}">
+        <view class="section-title">评价内容</view>
+        <view class="textarea-wrap">
+          <textarea
+            class="form-textarea"
+            placeholder="请输入评价内容（可选）..."
+            placeholder-class="input-placeholder"
+            value="{{content}}"
+            bindinput="onContentInput"
+            maxlength="{{contentMax}}"
+            auto-height
+          />
+        </view>
+        <view class="char-count">{{content.length}}/{{contentMax}}</view>
+      </view>
+
+    </view>
+
+    <!-- 提交按钮 -->
+    <view class="submit-area" wx:if="{{selectedTeacher && selectedCourse}}">
+      <view class="btn btn-primary submit-btn {{submitting ? 'btn-disabled' : ''}}" bindtap="onSubmit">
+        <text>{{submitting ? '发布中...' : '发布'}}</text>
+      </view>
+    </view>
+
+    <view class="safe-bottom-spacer"></view>
+  </scroll-view>
+
+  <!-- 浮动加号按钮：申请新增教师 -->
+  <view class="fab-btn" bindtap="goApplyTeacher">
+    <view class="fab-inner">
+      <view class="fab-line fab-line-h"></view>
+      <view class="fab-line fab-line-v"></view>
+    </view>
+  </view>
+</view>

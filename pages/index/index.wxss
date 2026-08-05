@@ -1,0 +1,1425 @@
+/* 集市首页样式 */
+
+.page {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--color-bg);
+}
+
+/* ========== 固定头部 ========== */
+.fixed-header {
+  flex-shrink: 0;
+  background-color: #FFFFFF;
+}
+
+/* ========== 可滚动内容 ========== */
+.feed-swiper {
+  flex: 1;
+  height: 0;
+}
+
+.feed-swiper swiper-item {
+  height: 100%;
+  overflow: hidden;
+}
+
+.page-content {
+  height: 100%;
+}
+
+/* 推荐页 wrapper */
+.recommend-wrapper {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 内层 swiper：分类面板 */
+.inner-swiper {
+  flex: 1;
+  height: 0;
+}
+
+.inner-swiper swiper-item {
+  height: 100%;
+  overflow: hidden;
+}
+
+/* 面板内滚动区域 */
+.panel-scroll {
+  height: 100%;
+}
+
+/* ========== 未加入学校横幅 ========== */
+.not-joined-banner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  padding: 0 48rpx;
+}
+
+.not-joined-card {
+  width: 100%;
+  background: var(--color-bg-white);
+  border-radius: var(--radius-lg);
+  padding: 64rpx 48rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.not-joined-icon {
+  width: 120rpx;
+  height: 120rpx;
+  opacity: 0.25;
+  margin-bottom: 40rpx;
+}
+
+.not-joined-title {
+  font-size: var(--font-xl);
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: 16rpx;
+}
+
+.not-joined-desc {
+  font-size: var(--font-sm);
+  color: var(--color-text-secondary);
+  text-align: center;
+  line-height: 1.6;
+  margin-bottom: 48rpx;
+}
+
+.not-joined-btn {
+  width: 100%;
+}
+
+/* 状态栏占位 */
+.status-bar-placeholder {
+  width: 100%;
+}
+
+/* ========== 第一行：学校名称，与胶囊按钮平齐 ========== */
+.hero-nav-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 30rpx;
+}
+
+.hero-school-row {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+}
+
+.hero-school {
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.hero-school-text {
+  font-size: var(--font-base);
+  color: #333333;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 300rpx;
+}
+
+.hero-school-arrow {
+  font-size: 18rpx;
+  color: #999999;
+  margin-left: 6rpx;
+  flex-shrink: 0;
+}
+
+/* ========== 第二行：推荐/关注 + 搜索/私信 ========== */
+.hero-sub-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12rpx 30rpx 16rpx;
+}
+
+/* 左侧：推荐 / 关注 */
+.hero-left-tabs {
+  display: flex;
+  align-items: center;
+  width: 180rpx;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.hero-feed-tab {
+  flex: 1;
+  text-align: center;
+  font-size: var(--font-lg);
+  font-weight: 500;
+  color: #999999;
+  position: relative;
+  padding-bottom: 6rpx;
+}
+
+.hero-feed-tab.active {
+  color: #333333;
+  font-weight: 700;
+}
+
+.hero-feed-indicator {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  transform: translateX(-50%);
+  width: 36rpx;
+  height: 4rpx;
+  background-color: var(--color-primary);
+  border-radius: 2rpx;
+  transition: left 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* 右侧：搜索 + 私信 */
+.hero-right-actions {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  flex-shrink: 0;
+}
+
+.hero-action-btn {
+  width: 56rpx;
+  height: 56rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hero-action-icon {
+  width: 40rpx;
+  height: 40rpx;
+}
+
+/* ========== 分类图标 ========== */
+.category-squares {
+  display: flex;
+  justify-content: space-between;
+  padding: 16rpx 40rpx;
+  background-color: #FFFFFF;
+}
+
+.square-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6rpx;
+  padding: 8rpx 0;
+  opacity: 0.4;
+  transition: opacity 0.15s ease;
+}
+
+.square-item:active {
+  opacity: 0.3;
+}
+
+.square-selected {
+  opacity: 1;
+}
+
+.square-selected .square-icon {
+  width: 64rpx;
+  height: 64rpx;
+}
+
+.square-icon {
+  width: 56rpx;
+  height: 56rpx;
+}
+
+.square-label {
+  font-size: var(--font-xs);
+  color: #333333;
+  font-weight: 500;
+}
+
+.square-selected .square-label {
+  font-weight: 700;
+  color: #222222;
+}
+
+/* ========== 二手二级分类 ========== */
+.market-sub-tabs {
+  display: flex;
+  position: relative;
+  padding: 0 30rpx;
+  background-color: #FFFFFF;
+  border-top: 0 solid var(--color-border-light);
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: max-height 0.3s cubic-bezier(0.32, 0.72, 0, 1),
+              opacity 0.3s cubic-bezier(0.32, 0.72, 0, 1),
+              padding 0.3s cubic-bezier(0.32, 0.72, 0, 1),
+              border-top-width 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.market-sub-tabs.visible {
+  padding: 16rpx 30rpx;
+  max-height: 120rpx;
+  opacity: 1;
+  border-top-width: 1rpx;
+}
+
+.market-sub-item {
+  flex: 1;
+  text-align: center;
+  position: relative;
+  padding: 8rpx 0;
+}
+
+.market-sub-text {
+  font-size: var(--font-lg);
+  font-weight: 500;
+  color: var(--color-text-secondary);
+}
+
+.market-sub-item.active .market-sub-text {
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+.market-sub-indicator {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  transform: translateX(-50%);
+  width: 40rpx;
+  height: 4rpx;
+  background-color: var(--color-primary);
+  border-radius: 2rpx;
+  transition: left 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* ========== 评分教师卡片 ========== */
+.rating-teacher-card {
+  background-color: #FFFFFF;
+  padding: 24rpx 30rpx;
+  border-bottom: 1rpx solid var(--color-border-light);
+}
+
+.rtc-header {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.rtc-avatar {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 50%;
+  background-color: var(--color-primary);
+  color: #FFFFFF;
+  font-size: 32rpx;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.rtc-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.rtc-name {
+  font-size: var(--font-base);
+  font-weight: 600;
+  color: var(--color-text);
+  display: block;
+}
+
+.rtc-stats {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  margin-top: 6rpx;
+}
+
+.rtc-avg {
+  font-size: var(--font-xs);
+  color: var(--color-star);
+}
+
+.rtc-count {
+  font-size: var(--font-xs);
+  color: var(--color-text-secondary);
+}
+
+.rtc-arrow {
+  font-size: 36rpx;
+  color: var(--color-text-secondary);
+  flex-shrink: 0;
+  transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+  display: inline-block;
+}
+
+.rtc-arrow.rotated {
+  transform: rotate(90deg);
+}
+
+/* 课程下拉区域 */
+.rtc-courses-dropdown {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: max-height 0.4s cubic-bezier(0.32, 0.72, 0, 1),
+              opacity 0.3s cubic-bezier(0.32, 0.72, 0, 1),
+              margin-top 0.4s cubic-bezier(0.32, 0.72, 0, 1),
+              padding-top 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+  border-top: 0 solid transparent;
+}
+
+.rtc-courses-dropdown.visible {
+  max-height: 800rpx;
+  opacity: 1;
+  margin-top: 16rpx;
+  padding-top: 16rpx;
+  border-top: 1rpx solid #F0F0F0;
+}
+
+.rtc-course-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16rpx 16rpx;
+  background-color: var(--color-bg);
+  border-radius: 10rpx;
+  margin-bottom: 8rpx;
+}
+
+.rtc-course-item:active {
+  background-color: #EAEAEA;
+}
+
+.rtc-course-left {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  flex: 1;
+  min-width: 0;
+}
+
+.rtc-course-name {
+  font-size: var(--font-sm);
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+.rtc-course-score {
+  font-size: var(--font-xs);
+  color: var(--color-star);
+}
+
+.rtc-course-arrow {
+  font-size: 28rpx;
+  color: var(--color-text-secondary);
+  flex-shrink: 0;
+  margin-left: 8rpx;
+}
+
+.rtc-courses-empty {
+  padding: 16rpx 0;
+  text-align: center;
+  font-size: var(--font-xs);
+  color: var(--color-text-secondary);
+}
+
+/* ========== 内容列表 ========== */
+.content-list {
+  padding: 0 0 calc(120rpx + env(safe-area-inset-bottom));
+}
+
+/* ========== 帖子卡片 ========== */
+.feed-card {
+  background-color: var(--color-bg-white);
+  padding: 28rpx 30rpx;
+  border-bottom: 1rpx solid var(--color-border-light);
+}
+
+/* 顶部：头像 + 用户名 */
+.feed-card-header {
+  display: flex;
+  align-items: center;
+}
+
+.feed-card-avatar {
+  width: 48rpx;
+  height: 48rpx;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.feed-card-username {
+  font-size: var(--font-sm);
+  font-weight: 600;
+  color: var(--color-text);
+  margin-left: 16rpx;
+}
+
+/* 标题 */
+.feed-card-title {
+  font-size: var(--font-lg);
+  font-weight: 700;
+  color: var(--color-text);
+  margin-top: 18rpx;
+  display: block;
+}
+
+/* 内容 */
+.feed-card-content {
+  font-size: var(--font-base);
+  color: var(--color-text);
+  margin-top: 12rpx;
+  line-height: 1.6;
+}
+
+/* 图片区域 */
+.feed-card-images {
+  display: flex;
+  gap: 10rpx;
+  margin-top: 16rpx;
+}
+
+.feed-card-image {
+  width: 210rpx;
+  height: 210rpx;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+}
+
+.feed-card-image-single {
+  width: 320rpx;
+  height: 320rpx;
+}
+
+/* 底部：左侧分类标签 + 右侧统计 */
+.feed-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 20rpx;
+}
+
+.feed-card-tag {
+  display: flex;
+  align-items: center;
+}
+
+.feed-tag-text {
+  font-size: var(--font-xs);
+  color: var(--color-text-secondary);
+  background-color: var(--color-bg);
+  padding: 6rpx 16rpx;
+  border-radius: 6rpx;
+  font-weight: 400;
+}
+
+.feed-card-stats {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+}
+
+.feed-stat-item {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+}
+
+.feed-stat-icon {
+  width: 28rpx;
+  height: 28rpx;
+}
+
+.feed-stat-num {
+  font-size: var(--font-xs);
+  color: var(--color-text-secondary);
+}
+
+/* 列表点赞按钮：加大点击区域 */
+.feed-like-btn {
+  padding: 8rpx 4rpx;
+  margin: -8rpx -4rpx;
+  position: relative;
+  z-index: 1;
+}
+
+/* ========== 商品卡片（二手/跑腿/评分共用） ========== */
+.product-card {
+  background-color: var(--color-bg-white);
+  padding: 24rpx 30rpx;
+  border-bottom: 1rpx solid var(--color-border-light);
+  margin-bottom: 12rpx;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+}
+
+.card-avatar {
+  width: 42rpx;
+  height: 42rpx;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.card-user-info {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-left: 16rpx;
+}
+
+.card-username {
+  font-size: var(--font-sm);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.card-time {
+  font-size: var(--font-xs);
+  color: var(--color-text-secondary);
+}
+
+.card-title {
+  font-size: var(--font-md);
+  color: var(--color-text);
+  margin-top: 16rpx;
+}
+
+.card-content {
+  font-size: var(--font-base);
+  color: var(--color-text);
+  margin-top: 14rpx;
+  line-height: 1.5;
+}
+
+.card-image {
+  width: 94rpx;
+  height: 94rpx;
+  border-radius: var(--radius-sm);
+  margin-top: 14rpx;
+}
+
+.card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 20rpx;
+}
+
+.card-footer-left {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.card-footer-right {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.price-tag {
+  font-size: var(--font-md);
+  font-weight: 700;
+  color: var(--color-red);
+}
+
+.price-orange {
+  color: var(--color-orange);
+  font-size: var(--font-sm);
+  font-weight: 500;
+}
+
+.status-tag {
+  font-size: var(--font-xs);
+  padding: 4rpx 12rpx;
+  border-radius: 6rpx;
+}
+
+.status-green {
+  color: var(--color-green);
+  background-color: rgba(20, 181, 84, 0.1);
+}
+
+.status-gray {
+  color: var(--color-text-secondary);
+  background-color: var(--color-bg);
+}
+
+.rent-tag {
+  font-size: var(--font-xs);
+  color: #B8860B;
+  background-color: rgba(255, 223, 120, 0.3);
+  padding: 4rpx 12rpx;
+  border-radius: 6rpx;
+}
+
+.card-action {
+  font-size: var(--font-xs);
+  color: var(--color-text-secondary);
+}
+
+.star-rating {
+  font-size: var(--font-lg);
+  color: var(--color-star);
+}
+
+.errand-status-tag {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 4rpx 14rpx;
+  border-radius: 20rpx;
+  gap: 6rpx;
+  max-width: 160rpx;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.errand-status-open {
+  background-color: rgba(20, 181, 84, 0.12);
+  border: 1rpx solid rgba(20, 181, 84, 0.3);
+}
+
+.errand-status-taken {
+  background-color: rgba(0, 0, 0, 0.05);
+  border: 1rpx solid rgba(0, 0, 0, 0.1);
+}
+
+.errand-status-dot {
+  font-size: 14rpx;
+  line-height: 1;
+}
+
+.errand-status-open .errand-status-dot {
+  color: var(--color-green);
+}
+
+.errand-status-taken .errand-status-dot {
+  color: var(--color-text-secondary);
+}
+
+.errand-status-text {
+  font-size: var(--font-xs);
+  font-weight: 500;
+}
+
+.errand-status-open .errand-status-text {
+  color: var(--color-green);
+}
+
+.errand-status-taken .errand-status-text {
+  color: var(--color-text-secondary);
+}
+
+/* 跑腿联系按钮 */
+/* 跑腿按钮组 */
+.errand-btn-group {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: 0 4rpx 12rpx rgba(37, 90, 197, 0.25);
+  flex-shrink: 0;
+}
+
+.errand-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 120rpx;
+  padding: 14rpx 28rpx;
+}
+
+.errand-btn text {
+  font-size: 28rpx;
+  font-weight: 600;
+}
+
+.errand-btn-left {
+  background: var(--color-primary);
+}
+
+.errand-btn-left text {
+  color: #fff;
+}
+
+.errand-btn-right {
+  background: #1E4DA8;
+  border-left: 1rpx solid rgba(255, 255, 255, 0.2);
+}
+
+.errand-btn-right text {
+  color: #fff;
+}
+
+.errand-btn-disabled {
+  background: var(--color-border-light);
+  box-shadow: none;
+}
+
+.errand-btn-disabled text {
+  color: var(--color-text-secondary);
+}
+
+/* ========== 任务卡片（跑腿/评分） ========== */
+.task-card {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 20rpx;
+  margin: 0;
+  border-radius: 0;
+  border-bottom: 1rpx solid var(--color-border-light);
+  box-shadow: none;
+}
+
+.task-avatar {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 4rpx;
+}
+
+.task-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.task-top {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16rpx;
+}
+
+.task-user {
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+  min-width: 0;
+}
+
+.task-user .card-username {
+  font-size: var(--font-sm);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.task-user .card-time {
+  font-size: var(--font-xs);
+  color: var(--color-text-secondary);
+}
+
+/* ========== 代课卡片（新版） ========== */
+.errand-card {
+  display: flex;
+  flex-direction: column;
+  padding: 24rpx 30rpx;
+  margin: 0 0 16rpx 0;
+  background: var(--color-bg-white);
+  border-bottom: 1rpx solid var(--color-border-light);
+}
+
+/* 顶部紧急栏：倒计时 + 报酬 */
+.errand-urgent-bar {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20rpx;
+}
+
+.errand-countdown-tag {
+  flex-shrink: 0;
+  background: rgba(255, 107, 0, 0.1);
+  border: 1rpx solid rgba(255, 107, 0, 0.25);
+  border-radius: var(--radius-sm);
+  padding: 6rpx 16rpx;
+}
+
+.errand-countdown-tag-text {
+  font-size: var(--font-sm);
+  color: var(--color-orange);
+  font-weight: 600;
+}
+
+.errand-reward {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  flex-shrink: 0;
+}
+
+.errand-reward-symbol {
+  font-size: var(--font-sm);
+  color: var(--color-red);
+  font-weight: 600;
+}
+
+.errand-reward-num {
+  font-size: 40rpx;
+  color: var(--color-red);
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* 课程核心信息 */
+.errand-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10rpx;
+  padding-bottom: 20rpx;
+  border-bottom: 1rpx dashed var(--color-border-light);
+}
+
+.errand-course-name {
+  font-size: var(--font-lg);
+  font-weight: 700;
+  color: var(--color-text);
+  line-height: 1.4;
+}
+
+.errand-dest-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.errand-dest-icon {
+  width: 32rpx;
+  height: 32rpx;
+  flex-shrink: 0;
+}
+
+.errand-dest-text {
+  font-size: var(--font-md);
+  color: var(--color-text);
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.errand-info-row {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.errand-info-icon {
+  width: 28rpx;
+  height: 28rpx;
+  flex-shrink: 0;
+}
+
+.errand-info-text {
+  font-size: var(--font-base);
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.errand-remark {
+  font-size: var(--font-base);
+  color: var(--color-text);
+  line-height: 1.5;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 底部行动栏 */
+.errand-action-bar {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 20rpx;
+  gap: 20rpx;
+}
+
+.errand-publisher {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12rpx;
+  flex: 1;
+  min-width: 0;
+}
+
+.errand-publisher-avatar {
+  width: 48rpx;
+  height: 48rpx;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.errand-publisher-name {
+  font-size: var(--font-sm);
+  color: var(--color-text);
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.errand-publisher-time {
+  font-size: var(--font-xs);
+  color: var(--color-text-secondary);
+  flex-shrink: 0;
+}
+
+/* ========== 未登录 ========== */
+.not-logged-in {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ========== 关注视图：头像栏 ========== */
+.follow-avatars-bar {
+  background-color: #FFFFFF;
+  padding: 20rpx 0;
+  border-bottom: 1rpx solid var(--color-border-light);
+}
+
+.follow-avatars-scroll {
+  width: 100%;
+  white-space: nowrap;
+}
+
+.follow-avatars-inner {
+  display: inline-flex;
+  padding: 0 16rpx;
+  gap: 24rpx;
+}
+
+.follow-avatar-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+  width: 100rpx;
+}
+
+.follow-avatar-wrap {
+  position: relative;
+  width: 80rpx;
+  height: 80rpx;
+}
+
+.follow-avatar-img {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 50%;
+}
+
+.follow-avatar-dot {
+  position: absolute;
+  top: -2rpx;
+  right: -2rpx;
+  width: 16rpx;
+  height: 16rpx;
+  background-color: var(--color-red);
+  border-radius: 50%;
+  border: 2rpx solid #FFFFFF;
+}
+
+.follow-avatar-name {
+  font-size: 20rpx;
+  color: var(--color-text-secondary);
+  margin-top: 6rpx;
+  max-width: 100rpx;
+  text-align: center;
+  line-height: 1.3;
+}
+
+/* ========== 关注视图：加载更多 ========== */
+.load-more-tip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32rpx 0;
+}
+
+.load-more-tip text {
+  font-size: var(--font-xs);
+  color: var(--color-text-secondary);
+}
+
+
+/* ========== 二手书市场 ========== */
+
+.book-market-panel {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--color-bg);
+}
+
+.book-list-scroll {
+  flex: 1;
+  height: 0;
+}
+
+/* 搜索栏 */
+.book-search-bar {
+  padding: 16rpx 30rpx;
+  background-color: #FFFFFF;
+}
+
+.book-search-box {
+  display: flex;
+  align-items: center;
+  height: 72rpx;
+  background-color: #F5F5F5;
+  border-radius: 36rpx;
+  padding: 0 20rpx;
+}
+
+.book-search-icon {
+  width: 32rpx;
+  height: 32rpx;
+  flex-shrink: 0;
+  opacity: 0.5;
+}
+
+.book-search-input {
+  flex: 1;
+  margin-left: 12rpx;
+  font-size: 28rpx;
+  color: #333333;
+  height: 72rpx;
+  line-height: 72rpx;
+}
+
+.book-search-placeholder {
+  font-size: 26rpx;
+  color: #BBBBBB;
+}
+
+.book-search-clear {
+  width: 40rpx;
+  height: 40rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-left: 8rpx;
+}
+
+.book-clear-text {
+  font-size: 28rpx;
+  color: #999999;
+  font-weight: 700;
+}
+
+/* 分类标签 */
+.book-category-bar {
+  position: relative;
+  background-color: #FFFFFF;
+  padding-bottom: 16rpx;
+}
+
+.book-category-scroll {
+  width: 100%;
+  white-space: nowrap;
+}
+
+.book-category-inner {
+  display: inline-flex;
+  padding: 0 20rpx;
+  gap: 8rpx;
+}
+
+.book-category-item {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10rpx 24rpx;
+  position: relative;
+}
+
+.book-category-text {
+  font-size: 26rpx;
+  color: #666666;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.book-category-item.active .book-category-text {
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+.book-category-item.active::after {
+  content: '';
+  position: absolute;
+  bottom: 2rpx;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 32rpx;
+  height: 4rpx;
+  background-color: var(--color-primary);
+  border-radius: 2rpx;
+}
+
+.book-category-shadow {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 60rpx;
+  background: linear-gradient(to right, rgba(255,255,255,0), rgba(255,255,255,1));
+  pointer-events: none;
+}
+
+/* 双列瀑布流 */
+.book-waterfall {
+  display: flex;
+  padding: 0 16rpx;
+  gap: 12rpx;
+  margin-top: 8rpx;
+}
+
+.book-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+
+/* 商品卡片 */
+.book-card {
+  background-color: #FFFFFF;
+  border-radius: 16rpx;
+  overflow: hidden;
+  box-shadow: 0 2rpx 16rpx rgba(0, 0, 0, 0.05);
+}
+
+.book-card-image-wrap {
+  position: relative;
+  width: 100%;
+  padding-top: 133.33%; /* 3:4 比例 */
+  background-color: #F0F0F0;
+}
+
+.book-card-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.book-card-image-placeholder {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.book-placeholder-icon {
+  font-size: 80rpx;
+  opacity: 0.3;
+}
+
+/* 多图角标 */
+.book-multi-badge {
+  position: absolute;
+  top: 12rpx;
+  left: 12rpx;
+  background-color: rgba(0, 0, 0, 0.5);
+  padding: 4rpx 12rpx;
+  border-radius: 8rpx;
+}
+
+.book-multi-text {
+  font-size: 20rpx;
+  color: #FFFFFF;
+  font-weight: 500;
+}
+
+/* 成色标签 */
+.book-condition-tag {
+  position: absolute;
+  bottom: 12rpx;
+  left: 12rpx;
+  background-color: rgba(20, 181, 84, 0.9);
+  padding: 4rpx 12rpx;
+  border-radius: 8rpx;
+}
+
+.book-condition-tag text {
+  font-size: 22rpx;
+  color: #FFFFFF;
+  font-weight: 500;
+}
+
+/* 收藏按钮 */
+.book-favorite-btn {
+  position: absolute;
+  top: 12rpx;
+  right: 12rpx;
+  width: 52rpx;
+  height: 52rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(255, 255, 255, 0.85);
+  border-radius: 50%;
+  z-index: 2;
+}
+
+.book-favorite-btn.active {
+  background-color: rgba(255, 195, 0, 0.95);
+}
+
+.book-favorite-icon {
+  width: 30rpx;
+  height: 30rpx;
+  opacity: 0.5;
+}
+
+.book-favorite-btn.active .book-favorite-icon {
+  opacity: 1;
+}
+
+/* 卡片内容区 */
+.book-card-body {
+  padding: 16rpx;
+}
+
+.book-card-title {
+  font-size: 28rpx;
+  color: #333333;
+  font-weight: 500;
+  line-height: 1.4;
+  display: block;
+}
+
+.book-card-price-row {
+  display: flex;
+  align-items: baseline;
+  margin-top: 12rpx;
+  gap: 10rpx;
+}
+
+.book-card-price {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #FF4D4F;
+}
+
+.book-card-price.free {
+  color: var(--color-green);
+}
+
+.book-card-original {
+  font-size: 22rpx;
+  color: #BBBBBB;
+  text-decoration: line-through;
+}
+
+/* 认证标签 */
+.book-card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8rpx;
+  margin-top: 12rpx;
+}
+
+.book-cert-tag {
+  display: inline-block;
+  padding: 4rpx 10rpx;
+  border-radius: 6rpx;
+  font-size: 20rpx;
+  color: var(--color-green);
+  background-color: rgba(20, 181, 84, 0.1);
+  font-weight: 500;
+}
+
+/* 附加信息 */
+.book-card-extra {
+  display: block;
+  font-size: 22rpx;
+  color: #999999;
+  margin-top: 12rpx;
+  line-height: 1.4;
+}
+
+/* 卖家信息 */
+.book-card-seller {
+  display: flex;
+  align-items: center;
+  margin-top: 14rpx;
+  padding-top: 12rpx;
+  border-top: 1rpx solid #F0F0F0;
+}
+
+.book-seller-avatar {
+  width: 32rpx;
+  height: 32rpx;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.book-seller-name {
+  font-size: 22rpx;
+  color: #666666;
+  margin-left: 8rpx;
+  max-width: 120rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.book-seller-school {
+  font-size: 20rpx;
+  color: #AAAAAA;
+  margin-left: 6rpx;
+}
+
+/* 加载提示 */
+.book-load-tip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40rpx 0;
+}
+
+.book-load-tip text {
+  font-size: 24rpx;
+  color: #AAAAAA;
+}

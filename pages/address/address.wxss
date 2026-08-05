@@ -1,0 +1,160 @@
+.page {
+  min-height: 100vh;
+  background: var(--color-bg);
+}
+
+.nav-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24rpx;
+  background: #fff;
+}
+
+.nav-back {
+  width: 44rpx;
+  height: 44rpx;
+}
+
+.nav-title {
+  font-size: var(--font-lg);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.container {
+  padding: 0 0 calc(40rpx + env(safe-area-inset-bottom));
+}
+
+/* 区块标题 */
+.section-title {
+  font-size: var(--font-md);
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 24rpx 30rpx 16rpx;
+  display: block;
+}
+
+/* 地址列表 */
+.address-list {
+  margin-bottom: 8rpx;
+}
+
+.address-card {
+  background: var(--color-bg-white);
+  border-radius: 0;
+  padding: 24rpx 30rpx;
+  margin-bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.address-card + .address-card {
+  border-top: 1rpx solid var(--color-border-light);
+}
+
+.address-card-default {
+  border: 2rpx solid var(--color-primary);
+}
+
+.address-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.address-header {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  margin-bottom: 8rpx;
+}
+
+.address-full {
+  font-size: var(--font-base);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.default-badge {
+  background: var(--color-primary);
+  padding: 2rpx 12rpx;
+  border-radius: 6rpx;
+  flex-shrink: 0;
+}
+
+.default-badge text {
+  font-size: 18rpx;
+  color: #FFFFFF;
+  font-weight: 500;
+}
+
+.address-detail {
+  display: flex;
+  gap: 8rpx;
+  flex-wrap: wrap;
+}
+
+.address-tag {
+  font-size: var(--font-xs);
+  color: var(--color-text-secondary);
+  background: var(--color-bg);
+  padding: 4rpx 12rpx;
+  border-radius: 6rpx;
+}
+
+.address-actions {
+  display: flex;
+  gap: 12rpx;
+  flex-shrink: 0;
+  margin-left: 16rpx;
+}
+
+.action-btn {
+  padding: 8rpx 20rpx;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-xs);
+}
+
+.action-btn.edit {
+  color: var(--color-primary);
+  background: rgba(37, 90, 197, 0.08);
+}
+
+.action-btn.delete {
+  color: var(--color-red);
+  background: rgba(255, 107, 107, 0.08);
+}
+
+.action-btn.set-default {
+  color: var(--color-primary);
+  background: rgba(37, 90, 197, 0.06);
+}
+
+/* 添加新地址按钮 */
+.add-btn-area {
+  display: flex;
+  justify-content: center;
+  margin: 16rpx 0 0;
+  padding: 0;
+}
+
+.btn-add-new {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 28rpx;
+  background: var(--color-bg-white);
+  border-radius: 0;
+}
+
+.btn-add-new:active {
+  background: var(--color-bg);
+}
+
+.btn-add-new text {
+  font-size: var(--font-base);
+  color: var(--color-primary);
+  font-weight: 500;
+}

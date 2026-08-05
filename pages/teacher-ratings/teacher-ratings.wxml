@@ -1,0 +1,105 @@
+<view class="page">
+  <!-- 导航栏 -->
+  <view class="fixed-header">
+    <view class="status-bar-placeholder" style="height: {{statusBarHeight}}px;"></view>
+    <view class="nav-bar" style="height: {{navBarHeight}}px;">
+      <view class="nav-back" bindtap="goBack">
+        <image class="nav-back-icon" src="/images/SVG/返回.svg" mode="aspectFit"></image>
+      </view>
+      <text class="nav-title">课程评价</text>
+      <view class="nav-placeholder"></view>
+    </view>
+  </view>
+
+  <scroll-view
+    class="page-scroll"
+    scroll-y
+    enhanced
+    show-scrollbar="{{false}}"
+    refresher-enabled
+    refresher-triggered="{{loading}}"
+    bindrefresherrefresh="refreshRatings"
+    bindscrolltolower="loadMore"
+    lower-threshold="200"
+  >
+    <!-- 教师 + 课程信息卡片 -->
+    <view class="info-header">
+      <view class="info-teacher-row">
+        <view class="info-avatar">
+          <text class="info-avatar-text">{{teacherName[0] || '教'}}</text>
+        </view>
+        <view class="info-main">
+          <text class="info-teacher-name">{{teacherName}}</text>
+          <text class="info-course-name">{{courseName || '综合评分'}}</text>
+        </view>
+      </view>
+      <view class="info-stats">
+        <view class="info-stat-item">
+          <text class="info-stat-value">{{courseAvgScore || avgScore || '-'}}</text>
+          <text class="info-stat-label">课程评分</text>
+        </view>
+        <view class="info-stat-divider"></view>
+        <view class="info-stat-item">
+          <text class="info-stat-value">{{ratingCount}}</text>
+          <text class="info-stat-label">评价数</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 评价列表标题 -->
+    <view class="section-title">
+      <text>全部评价（{{ratings.length}}）</text>
+    </view>
+
+    <!-- 评价列表 -->
+    <view class="rating-list">
+      <view class="rating-card" wx:for="{{ratings}}" wx:key="id">
+        <view class="rating-card-header">
+          <image class="rating-user-avatar" src="{{item.user.avatar}}" mode="aspectFill"></image>
+          <view class="rating-user-info">
+            <text class="rating-user-name">{{item.user.name}}</text>
+            <view class="rating-star-row">
+              <text
+                class="rating-star {{index < item.score ? 'active' : ''}}"
+                wx:for="{{starArray}}"
+                wx:key="*this"
+              >★</text>
+              <text class="rating-score-num">{{item.score}}.0</text>
+            </view>
+          </view>
+          <text class="rating-time">{{item.createdAt}}</text>
+        </view>
+        <text class="rating-content" wx:if="{{item.content}}">{{item.content}}</text>
+        <view class="rating-tags" wx:if="{{item.tags && item.tags.length > 0}}">
+          <text class="rating-tag" wx:for="{{item.tags}}" wx:for-item="tag" wx:key="*this">{{tag}}</text>
+        </view>
+      </view>
+
+      <!-- 加载更多 -->
+      <view class="load-more-tip" wx:if="{{loadingMore}}">
+        <text>加载中...</text>
+      </view>
+      <view class="load-more-tip" wx:if="{{!loading && !hasMore && ratings.length > 0}}">
+        <text>- 没有更多评价了 -</text>
+      </view>
+
+      <!-- 空状态 -->
+      <view class="empty-state" wx:if="{{!loading && ratings.length === 0}}">
+        <text>暂无评价，快来评价这门课吧</text>
+        <view class="empty-action" bindtap="goPublishRating">
+          <text class="empty-action-text">去评分</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="safe-bottom-spacer"></view>
+  </scroll-view>
+
+  <!-- 浮动按钮：去评分 -->
+  <view class="fab-btn" bindtap="goPublishRating">
+    <view class="fab-inner">
+      <view class="fab-line fab-line-h"></view>
+      <view class="fab-line fab-line-v"></view>
+    </view>
+  </view>
+</view>

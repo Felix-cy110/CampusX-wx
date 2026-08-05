@@ -1,0 +1,292 @@
+<!-- 帖子详情页 -->
+<view class="page">
+  <!-- 固定顶部：状态栏 + 导航栏 -->
+  <view class="fixed-header">
+    <view class="status-bar-placeholder" style="height: {{statusBarHeight}}px;"></view>
+    <view class="detail-nav-bar" style="height: {{navBarHeight}}px;">
+      <view class="nav-back" bindtap="goBack">
+        <image class="nav-back-icon" src="/images/SVG/返回.svg" mode="aspectFit"></image>
+      </view>
+      <text class="detail-title">帖子详情</text>
+      <view class="nav-more" bindtap="showActionSheet" wx:if="{{post.isOwn}}">
+        <text class="nav-more-icon">⋮</text>
+      </view>
+      <view class="nav-placeholder" wx:else></view>
+    </view>
+  </view>
+
+  <!-- 操作弹窗 -->
+  <view class="action-sheet-mask" wx:if="{{showActionSheet}}" bindtap="hideActionSheet">
+    <view class="action-sheet" catchtap="preventBubble">
+      <view class="action-sheet-title">帖子选项</view>
+      <view class="action-sheet-item" bindtap="editPost">
+        <text>编辑</text>
+      </view>
+      <view class="action-sheet-item" bindtap="togglePinned">
+        <text>置顶</text>
+      </view>
+      <view class="action-sheet-item" bindtap="setPrivate">
+        <text>设置为私密</text>
+      </view>
+      <view class="action-sheet-item" bindtap="shareToFriends">
+        <text>分享给互关好友</text>
+      </view>
+      <view class="action-sheet-item action-sheet-green" bindtap="shareToWechat">
+        <text>分享给微信好友</text>
+      </view>
+      <view class="action-sheet-item action-sheet-red" bindtap="deletePost">
+        <text>删除帖子</text>
+      </view>
+      <view class="action-sheet-cancel" bindtap="hideActionSheet">
+        <text>取消</text>
+      </view>
+    </view>
+  </view>
+
+  <scroll-view class="content" scroll-y bindscrolltolower="loadMoreComments">
+    <!-- 图片轮播 -->
+    <view class="image-swiper-wrap" wx:if="{{post.images && post.images.length}}">
+      <swiper class="image-swiper" indicator-dots="{{post.images.length > 1}}" indicator-color="rgba(255,255,255,0.5)" indicator-active-color="#FFFFFF" current="{{swiperCurrent}}" bindchange="onSwiperChange">
+        <swiper-item wx:for="{{post.images}}" wx:key="*this">
+          <image class="swiper-image" src="{{item}}" mode="aspectFill"></image>
+        </swiper-item>
+      </swiper>
+      <view class="image-counter" wx:if="{{post.images.length > 1}}">{{swiperCurrent + 1}}/{{post.images.length}}</view>
+    </view>
+
+    <!-- 用户信息行 -->
+    <view class="user-info-row">
+      <view class="user-info-left">
+        <image class="user-info-avatar" src="{{post.user.avatar}}" mode="aspectFill" catchtap="goToUserProfile" data-uid="{{post.user.uid}}" data-name="{{post.user.name}}" data-avatar="{{post.user.avatar}}"></image>
+        <text class="user-info-name">{{post.user.name}}</text>
+      </view>
+      <view class="user-info-right">
+        <view class="follow-btn" wx:if="{{!post.isFollowed}}" bindtap="toggleFollow">
+          <text>+关注</text>
+        </view>
+        <view class="follow-btn followed" wx:if="{{post.isFollowed}}" bindtap="toggleFollow">
+          <text>已关注</text>
+        </view>
+        <view class="share-btn" bindtap="showShareSheet">
+          <image class="share-btn-icon" src="/images/SVG/转发.svg" mode="aspectFit"></image>
+        </view>
+      </view>
+    </view>
+
+    <view class="post-title">{{post.title}}</view>
+    <text class="post-body">{{post.displayContent}}</text>
+
+    <!-- 二手来源：跳转商品详情 -->
+    <view class="source-link-bar" wx:if="{{post.sourceType === 'IDLE_PRODUCT'}}" bindtap="goToMarketDetail">
+      <text class="source-link-text">查看商品详情与购买 →</text>
+    </view>
+    <!-- 租赁来源：跳转租赁详情 -->
+    <view class="source-link-bar" wx:if="{{post.sourceType === 'RENTAL_PRODUCT'}}" bindtap="goToRentalDetail">
+      <text class="source-link-text">查看租赁详情与下单 →</text>
+    </view>
+    <!-- 代课来源：跳转跑腿详情 -->
+    <view class="source-link-bar" wx:if="{{post.sourceType === 'PROXY_DEMAND' || post.sourceType === 'PROXY_SUPPLY'}}" bindtap="goToProxyDetail">
+      <text class="source-link-text">查看代课详情 →</text>
+    </view>
+
+    <view class="meta-row">
+      <text class="school-tag" wx:if="{{post.school}}">【{{post.school}}】</text>
+      <text class="post-time">{{post.time}}</text>
+    </view>
+
+    <!-- 评论区 -->
+    <view class="comments-section">
+      <view class="comments-title"><text>评论（{{post.stats.comments}}）</text></view>
+      <view class="comment-title-divider"></view>
+      <view class="empty-state" wx:if="{{flatComments.length === 0}}">
+        <text>暂无评论</text>
+      </view>
+
+      <!-- 分组评论列表：每组为一级评论 + 其下所有回复 -->
+      <block wx:for="{{groupedComments}}" wx:key="rootId">
+        <!-- 顶级评论：带头像 -->
+        <view class="comment-item" bindlongpress="showCommentOptions" data-id="{{item.root.id}}" data-name="{{item.root.name}}" data-content="{{item.root.content}}">
+          <image class="comment-avatar" src="{{item.root.avatar}}" mode="aspectFill"></image>
+          <view class="comment-body">
+            <text class="comment-text comment-inline-text" bindtap="replyComment" data-id="{{item.root.id}}"><text class="comment-name">{{item.root.name}}</text><text class="comment-reply-text-black">：</text>{{item.root.content}}</text>
+            <view class="comment-footer">
+              <text class="comment-time">{{item.root.time}}</text>
+              <view class="comment-actions">
+                <view class="comment-action" bindtap="toggleCommentLike" data-id="{{item.root.id}}">
+                  <image class="comment-action-icon" src="/images/SVG/{{item.root.liked ? '点赞-已赞' : '点赞'}}.svg" mode="aspectFit" style="opacity: {{item.root.liked ? 1 : 0.4}};"></image>
+                  <text class="comment-action-count" wx:if="{{item.root.likes}}" style="color: {{item.root.liked ? 'var(--color-red)' : 'var(--color-text-secondary)'}};">{{item.root.likes}}</text>
+                </view>
+                <view class="comment-action" bindtap="replyComment" data-id="{{item.root.id}}">
+                  <image class="comment-action-icon" src="/images/SVG/评论.svg" mode="aspectFit"></image>
+                  <text class="comment-action-count">{{item.root.totalReplies || 0}}</text>
+                </view>
+              </view>
+            </view>
+          </view>
+        </view>
+
+        <!-- 子回复组：统一灰色框包裹所有回复，默认只展示第一条，其余在按钮下方向下展开 -->
+        <view class="comment-reply-wrap" wx:if="{{item.replies.length > 0}}">
+          <!-- 默认展示第一条回复 -->
+          <view class="comment-reply" bindlongpress="showCommentOptions" data-id="{{item.replies[0].id}}" data-name="{{item.replies[0].name}}" data-content="{{item.replies[0].content}}">
+            <view class="comment-body">
+              <text class="comment-text reply-text-inline" bindtap="replyComment" data-id="{{item.replies[0].id}}"><text class="comment-reply-nick">{{item.replies[0].name}}</text><text wx:if="{{item.replies[0].replyTo && item.replies[0].depth > 1}}" class="comment-reply-text-black"> 回复 </text><text wx:if="{{item.replies[0].replyTo && item.replies[0].depth > 1}}" class="comment-reply-nick">{{item.replies[0].replyTo}}</text><text class="comment-reply-text-black">：</text>{{item.replies[0].content}}</text>
+              <view class="comment-footer">
+                <text class="comment-time reply-time">{{item.replies[0].time}}</text>
+                <view class="comment-actions">
+                  <view class="comment-action" bindtap="toggleCommentLike" data-id="{{item.replies[0].id}}">
+                    <image class="comment-action-icon" src="/images/SVG/{{item.replies[0].liked ? '点赞-已赞' : '点赞'}}.svg" mode="aspectFit" style="opacity: {{item.replies[0].liked ? 1 : 0.4}};"></image>
+                    <text class="comment-action-count" wx:if="{{item.replies[0].likes}}" style="color: {{item.replies[0].liked ? 'var(--color-red)' : 'var(--color-text-secondary)'}};">{{item.replies[0].likes}}</text>
+                  </view>
+                </view>
+              </view>
+            </view>
+          </view>
+
+          <!-- 剩余回复：按 expandedCount 渐进展开，每次 8 条 -->
+          <view class="comment-replies-collapse" style="max-height: {{(item._animClosing || item.expandedCount === 0) ? '0' : '1200rpx'}}; opacity: {{(item._animClosing || item.expandedCount === 0) ? 0 : 1}};">
+            <view class="comment-reply" wx:for="{{item.replies}}" wx:for-item="reply" wx:for-index="replyIdx" wx:key="id" wx:if="{{replyIdx >= 1 && replyIdx <= item.expandedCount}}" bindlongpress="showCommentOptions" data-id="{{reply.id}}" data-name="{{reply.name}}" data-content="{{reply.content}}">
+              <view class="comment-body">
+                <text class="comment-text reply-text-inline" bindtap="replyComment" data-id="{{reply.id}}"><text class="comment-reply-nick">{{reply.name}}</text><text wx:if="{{reply.replyTo && reply.depth > 1}}" class="comment-reply-text-black"> 回复 </text><text wx:if="{{reply.replyTo && reply.depth > 1}}" class="comment-reply-nick">{{reply.replyTo}}</text><text class="comment-reply-text-black">：</text>{{reply.content}}</text>
+                <view class="comment-footer">
+                  <text class="comment-time reply-time">{{reply.time}}</text>
+                  <view class="comment-actions">
+                    <view class="comment-action" bindtap="toggleCommentLike" data-id="{{reply.id}}">
+                      <image class="comment-action-icon" src="/images/SVG/{{reply.liked ? '点赞-已赞' : '点赞'}}.svg" mode="aspectFit" style="opacity: {{reply.liked ? 1 : 0.4}};"></image>
+                      <text class="comment-action-count" wx:if="{{reply.likes}}" style="color: {{reply.liked ? 'var(--color-red)' : 'var(--color-text-secondary)'}};">{{reply.likes}}</text>
+                    </view>
+                  </view>
+                </view>
+              </view>
+            </view>
+          </view>
+
+          <!-- 展开/更多按钮：位于已展开回复下方，随回复下移；首次显示剩余总数，之后固定"展开更多回复" -->
+          <view class="comment-reply-expand" wx:if="{{item.replies.length > 1 && item.expandedCount < item.replies.length - 1}}" bindtap="toggleRepliesExpand" data-index="{{index}}">
+            <text wx:if="{{item.expandedCount === 0}}">展开{{item.replies.length - 1}}条回复</text>
+            <text wx:else>展开更多回复</text>
+          </view>
+
+          <!-- 收起按钮：全部展开后显示 -->
+          <view class="comment-reply-expand comment-reply-collapse" wx:if="{{item.replies.length > 1 && item.expandedCount >= item.replies.length - 1}}" bindtap="toggleRepliesExpand" data-index="{{index}}">
+            <text>收起回复</text>
+          </view>
+        </view>
+      </block>
+
+      <!-- 加载更多提示 -->
+      <view class="load-more-hint" wx:if="{{commentHasMore}}">
+        <text wx:if="{{commentLoading}}">加载中...</text>
+        <text wx:else>上拉加载更多</text>
+      </view>
+      <view class="load-more-hint" wx:elif="{{flatComments.length > 0 && !commentHasMore}}">
+        <text>— 没有更多评论了 —</text>
+      </view>
+    </view>
+  </scroll-view>
+
+  <!-- 底部操作栏 -->
+  <view class="bottom-bar">
+    <image class="bottom-user-avatar" src="{{currentUserAvatar}}" mode="aspectFill"></image>
+    <view class="bottom-input-wrap">
+      <image class="bottom-input-icon" src="/images/SVG/评论笔.svg" mode="aspectFit"></image>
+      <input class="bottom-comment-input"
+             placeholder="{{replyTarget ? '回复 @' + replyTarget.name + '...' : '说点什么...'}}"
+             value="{{commentInput}}"
+             bindinput="onCommentInput"
+             placeholder-class="input-placeholder" />
+    </view>
+    <view class="bottom-actions">
+      <view class="bottom-action" bindtap="toggleLike">
+        <image class="bottom-action-icon" src="/images/SVG/{{post.liked ? '点赞-已赞' : '点赞'}}.svg" mode="aspectFit" style="opacity: {{post.liked ? 1 : 0.4}};"></image>
+        <text class="bottom-action-count" wx:if="{{post.stats.likes}}" style="color: {{post.liked ? 'var(--color-red)' : 'var(--color-text-secondary)'}};">{{post.stats.likes}}</text>
+      </view>
+      <view class="bottom-action" bindtap="toggleFavorite">
+        <image class="bottom-action-icon" src="/images/SVG/{{post.favorited ? '收藏-已收藏' : '收藏'}}.svg" mode="aspectFit" style="opacity: {{post.favorited ? 1 : 0.4}};"></image>
+        <text class="bottom-action-count" wx:if="{{post.stats.favorites}}" style="color: {{post.favorited ? 'var(--color-red)' : 'var(--color-text-secondary)'}};">{{post.stats.favorites}}</text>
+      </view>
+    </view>
+    <view class="bottom-plus-btn" bindtap="{{replyTarget ? 'cancelReply' : 'addImage'}}">
+      <image wx:if="{{!replyTarget}}" class="bottom-action-icon" src="/images/SVG/新增.svg" mode="aspectFit"></image>
+      <text wx:else class="bottom-cancel-text">✕</text>
+    </view>
+    <view class="bottom-send-btn" bindtap="submitComment">
+      <text>发送</text>
+    </view>
+  </view>
+
+  <!-- 分享弹窗 -->
+  <view class="post-options-mask {{showShareModal ? 'show' : ''}}" bindtap="hideShareSheet">
+    <view class="post-options-sheet {{showShareModal ? 'show' : ''}}" catchtap="onShareSheetTap">
+      <view class="post-options-title">分享</view>
+      <view class="post-options-list">
+        <view class="post-option-btn btn-gray" bindtap="sharePostToFriends">
+          <image class="option-icon" src="/images/SVG/好友.svg" mode="aspectFit"></image>
+          <text class="option-text">分享给互关好友</text>
+        </view>
+      </view>
+      <view class="post-option-report" bindtap="reportPost">
+        <text class="report-text">举报</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 评论选项弹窗 -->
+  <view class="comment-options-mask {{showCommentOptionsModal ? 'show' : ''}}" bindtap="hideCommentOptions">
+    <view class="comment-options-sheet {{showCommentOptionsModal ? 'show' : ''}}" catchtap="onCommentSheetTap">
+      <view class="comment-options-title">评论选项</view>
+      <view class="comment-options-list">
+        <view class="comment-option-btn btn-gray" bindtap="copyComment">
+          <text class="option-text">复制</text>
+        </view>
+        <view class="comment-option-btn btn-gray" bindtap="replyCommentAction">
+          <text class="option-text">回复</text>
+        </view>
+        <view class="comment-option-btn btn-gray" bindtap="shareCommentToFriends">
+          <image class="option-icon" src="/images/SVG/好友.svg" mode="aspectFit"></image>
+          <text class="option-text">分享给互关好友</text>
+        </view>
+        <view class="comment-option-btn btn-green" bindtap="shareCommentToWechat">
+          <image class="option-icon" src="/images/SVG/微信.svg" mode="aspectFit"></image>
+          <text class="option-text">分享给微信好友</text>
+        </view>
+      </view>
+      <view class="comment-option-btn btn-gray" bindtap="deleteCommentAction" wx:if="{{commentIsOwn}}">
+        <text class="option-text" style="color: #FF6B6B;">删除</text>
+      </view>
+      <view class="comment-option-report" bindtap="reportComment">
+        <text class="report-text">举报</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 举报弹窗 -->
+  <view class="report-mask {{showReportModal ? 'show' : ''}}" bindtap="hideReportModal">
+    <view class="report-sheet {{showReportModal ? 'show' : ''}}" catchtap="onReportSheetTap">
+      <view class="report-header">
+        <text class="report-title">{{reportTargetType === 2 ? '举报评论' : '举报帖子'}}</text>
+        <view class="report-close" bindtap="hideReportModal">
+          <text>✕</text>
+        </view>
+      </view>
+      <view class="report-section">
+        <text class="report-section-title">请选择举报原因</text>
+        <view class="report-reason-grid">
+          <view wx:for="{{reportReasons}}" wx:key="code" class="report-reason-item {{reportSelectedReason === item.code ? 'selected' : ''}}" data-code="{{item.code}}" bindtap="onReportReasonSelect">
+            <text class="report-reason-text">{{item.desc}}</text>
+          </view>
+        </view>
+      </view>
+      <view class="report-section">
+        <text class="report-section-title">补充说明（选填）</text>
+        <view class="report-remark-wrap">
+          <textarea class="report-remark-input" placeholder="请输入补充说明（最多200字）" placeholder-class="report-remark-placeholder" maxlength="200" value="{{reportRemark}}" bindinput="onReportRemarkInput" auto-height />
+          <view class="report-remark-count">{{reportRemark.length}}/200</view>
+        </view>
+      </view>
+      <view class="report-submit-btn {{reportSelectedReason ? 'active' : 'disabled'}}" bindtap="submitReport">
+        <text>{{reportSubmitting ? '提交中...' : '提交举报'}}</text>
+      </view>
+    </view>
+  </view>
+</view>

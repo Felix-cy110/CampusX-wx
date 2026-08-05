@@ -1,0 +1,39 @@
+<!-- 点赞我的用户 -->
+<view class="page">
+  <view class="status-bar-placeholder" style="height: {{statusBarHeight}}px;"></view>
+  <view class="nav-bar" style="height: {{navBarHeight}}px;">
+    <image class="nav-back" src="/images/SVG/返回.svg" mode="aspectFit" bindtap="navigateBack"></image>
+    <text class="nav-title">收到点赞</text>
+    <view class="nav-placeholder"></view>
+  </view>
+
+  <scroll-view class="user-list" wx:if="{{likedList.length > 0}}" scroll-y enhanced show-scrollbar="{{false}}" bindscrolltolower="onScrollToLower" lower-threshold="100">
+    <view class="user-list-inner">
+      <view class="user-item" wx:for="{{likedList}}" wx:key="cursorId" bindtap="onItemTap" data-post-id="{{item.postId}}" hover-class="user-item-hover" hover-stay-time="80">
+        <image class="avatar-md" src="{{item.avatar}}" mode="aspectFill"></image>
+        <view class="flex-1 ml-20">
+          <view class="user-info-row">
+            <text class="user-name">{{item.name}}</text>
+            <text class="user-time">{{item.time}}</text>
+          </view>
+          <text class="user-desc">赞了你的帖子</text>
+          <view class="liked-ref ellipsis">{{item.postTitle}}</view>
+        </view>
+      </view>
+      <view class="loading-tip" wx:if="{{loading}}">
+        <text>加载中...</text>
+      </view>
+      <view class="loading-tip" wx:if="{{!hasMore && likedList.length > 0}}">
+        <text>没有更多了</text>
+      </view>
+    </view>
+  </scroll-view>
+
+  <view class="empty-state" wx:else>
+    <view class="empty-icon-wrap">
+      <text class="empty-icon">❤️</text>
+    </view>
+    <text class="empty-title">暂无点赞</text>
+    <text class="empty-desc">当有人赞了你的帖子，会显示在这里</text>
+  </view>
+</view>

@@ -1,0 +1,62 @@
+<!-- 地址表单 -->
+<view class="page">
+  <view style="height: {{statusBarHeight}}px; background: #fff;"></view>
+  <view class="nav-bar" style="height: {{navBarHeight}}px;">
+    <image class="nav-back" src="/images/SVG/返回.svg" mode="aspectFit" bindtap="onBack"></image>
+    <text class="nav-title">{{isEditing ? '编辑地址' : '添加地址'}}</text>
+    <view style="width: 80rpx;"></view>
+  </view>
+
+  <view class="container">
+    <!-- 校区 / 楼栋 / 房间号 + 设为默认 -->
+    <view class="form-section">
+      <view class="form-item">
+        <text class="form-label">校区<text class="required">*</text></text>
+        <view class="input-wrap">
+          <input
+            class="form-input"
+            placeholder="请输入校区名称"
+            placeholder-class="input-placeholder"
+            value="{{campus}}"
+            bindinput="onCampusInput"
+          />
+        </view>
+      </view>
+      <view class="form-item form-item-border">
+        <text class="form-label">楼栋<text class="required">*</text></text>
+        <view class="input-wrap">
+          <input
+            class="form-input"
+            placeholder="请输入楼栋号"
+            placeholder-class="input-placeholder"
+            value="{{building}}"
+            bindinput="onBuildingInput"
+          />
+        </view>
+      </view>
+      <view class="form-item form-item-border">
+        <text class="form-label">房间号<text class="required">*</text></text>
+        <view class="input-wrap">
+          <input
+            class="form-input"
+            placeholder="请输入房间号"
+            placeholder-class="input-placeholder"
+            value="{{room}}"
+            bindinput="onRoomInput"
+          />
+        </view>
+      </view>
+      <view class="form-item form-item-border form-item-switch">
+        <text class="form-label">设为默认地址</text>
+        <switch checked="{{isDefault}}" bindchange="onDefaultChange" color="#255AC5" />
+      </view>
+    </view>
+
+    <!-- 提交按钮 -->
+    <view class="submit-area">
+      <view class="btn btn-primary submit-btn {{canSubmit ? '' : 'btn-disabled'}}" bindtap="submit">
+        <text>{{isEditing ? '保存修改' : '确认提交'}}</text>
+      </view>
+    </view>
+  </view>
+</view>

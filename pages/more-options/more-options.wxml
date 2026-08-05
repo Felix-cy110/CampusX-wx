@@ -1,0 +1,30 @@
+<view class="page-container">
+  <view style="height: {{statusBarHeight}}px;"></view>
+  <view class="custom-nav" style="height: {{navBarHeight}}px;">
+    <image class="nav-back" src="/images/SVG/返回.svg" mode="aspectFit" bindtap="onBack"></image>
+    <text class="nav-title">更多选项</text>
+    <view class="nav-placeholder"></view>
+  </view>
+  <!-- 菜单列表 -->
+  <view class="menu-list">
+    <view
+      wx:for="{{menuItems}}"
+      wx:key="id"
+      class="menu-item {{item.danger ? 'danger' : ''}}"
+      data-id="{{item.id}}"
+      data-name="{{item.name}}"
+      bindtap="onMenuTap"
+    >
+      <view class="menu-left">
+        <image class="menu-icon" src="{{item.icon}}" mode="aspectFit"></image>
+        <text class="menu-name">{{item.name}}</text>
+      </view>
+      <text wx:if="{{item.arrow}}" class="menu-arrow">›</text>
+    </view>
+  </view>
+
+  <!-- 版本信息 -->
+  <view class="version-info">
+    <text>版本：{{version}}</text>
+  </view>
+</view>

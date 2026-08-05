@@ -1,0 +1,56 @@
+<!-- 我的集市帖子 -->
+<scroll-view class="page" scroll-y enhanced show-scrollbar="{{false}}" refresher-enabled refresher-triggered="{{refreshing}}" bindrefresherrefresh="onRefresh" bindscrolltolower="loadMore" lower-threshold="150">
+  <view class="content-list" wx:if="{{marketItems.length > 0}}">
+    <view class="post-card" wx:for="{{marketItems}}" wx:key="id" bindtap="goToDetail" data-id="{{item.id}}" data-type="{{item.type}}">
+      <!-- 商品头部 -->
+      <view class="post-header">
+        <view class="post-user-info">
+          <view class="post-user-row">
+            <text class="post-user-name">{{item.title}}</text>
+            <text class="post-type-tag">{{item.type === 'book' ? '二手书' : '闲置'}}</text>
+          </view>
+        </view>
+        <view class="post-more" catchtap="onDelete" data-id="{{item.id}}">
+          <text class="delete-text">下架</text>
+        </view>
+      </view>
+
+      <!-- 图片 -->
+      <view class="post-images" wx:if="{{item.images && item.images.length > 0}}">
+        <image class="post-image" wx:for="{{item.images}}" wx:for-item="img" wx:for-index="imgIdx" wx:key="imgIdx" src="{{img}}" mode="aspectFill"></image>
+      </view>
+
+      <!-- 底部 -->
+      <view class="post-footer">
+        <view class="post-price">
+          <text class="price-current">￥{{item.price}}</text>
+        </view>
+        <view class="post-stats">
+          <text class="stat-text" wx:if="{{item.isExpiringSoon}}">即将过期</text>
+        </view>
+      </view>
+
+      <!-- 状态标签 -->
+      <view class="post-status-row">
+        <text class="item-status-tag status-{{item.statusVal}}">{{item.status}}</text>
+        <view class="relist-btn" wx:if="{{item.statusVal !== 1}}" catchtap="onRelist" data-id="{{item.id}}">
+          <text>重新上架</text>
+        </view>
+      </view>
+    </view>
+    <!-- 加载更多 -->
+    <view class="loading-state" wx:if="{{hasMore}}">
+      <text>上拉加载更多</text>
+    </view>
+  </view>
+
+  <view class="loading-state" wx:elif="{{loading}}">
+    <text>加载中...</text>
+  </view>
+
+  <view class="empty-state" wx:else>
+    <text>暂无闲置商品</text>
+  </view>
+
+  <view class="bottom-safe"></view>
+</scroll-view>

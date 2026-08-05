@@ -1,0 +1,334 @@
+/* 评分详情页样式 - 匹配Sketch设计稿 */
+
+/* ===== 页面容器 ===== */
+.page {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: var(--color-bg);
+}
+
+/* ===== 固定头部 ===== */
+.fixed-header {
+  flex-shrink: 0;
+}
+.status-bar-placeholder {
+  width: 100%;
+  background-color: #FFFFFF;
+}
+.detail-nav-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 30rpx;
+  background-color: #FFFFFF;
+}
+.nav-back {
+  width: 80rpx;
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+.nav-back-icon {
+  width: 40rpx;
+  height: 40rpx;
+}
+.detail-title {
+  font-size: var(--font-lg);
+  font-weight: 600;
+  color: var(--color-text);
+}
+.nav-more {
+  width: 80rpx;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+.nav-more-icon {
+  font-size: 40rpx;
+  color: var(--color-text);
+  font-weight: 700;
+}
+
+/* ===== 可滚动内容区 ===== */
+.content {
+  flex: 1;
+  height: 0;
+  background: var(--color-bg-white);
+}
+
+/* ===== 帖子头部 ===== */
+.user-info-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24rpx 30rpx;
+}
+.user-info-left {
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+.user-info-avatar {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.user-info-info {
+  display: flex;
+  flex-direction: column;
+  margin-left: 16rpx;
+}
+.user-info-name {
+  font-size: var(--font-md);
+  font-weight: 600;
+  color: var(--color-text);
+}
+.user-info-meta {
+  display: flex;
+  align-items: center;
+  margin-top: 4rpx;
+}
+.user-info-time {
+  font-size: var(--font-xs);
+  color: var(--color-text-secondary);
+  margin-left: 12rpx;
+}
+.user-info-right {
+  flex-shrink: 0;
+}
+
+/* 关注按钮 */
+.follow-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 80rpx;
+  height: 36rpx;
+  border-radius: 24rpx;
+  background: #000000;
+}
+.follow-btn text {
+  font-size: 26rpx;
+  color: #FFFFFF;
+  font-weight: 500;
+}
+.follow-btn.followed {
+  background: transparent;
+  border: 1rpx solid var(--color-border-light);
+}
+.follow-btn.followed text {
+  color: var(--color-text-secondary);
+}
+
+/* ===== 帖子标题 ===== */
+.post-title {
+  font-size: var(--font-xl);
+  font-weight: 700;
+  color: var(--color-text);
+  line-height: 1.4;
+  padding: 8rpx 30rpx 16rpx;
+}
+
+/* ===== 星级评分 ===== */
+.star-section {
+  display: flex;
+  align-items: center;
+  padding: 0 30rpx 16rpx;
+}
+.stars {
+  display: flex;
+  gap: 4rpx;
+}
+.star {
+  font-size: var(--font-lg);
+  color: var(--color-star);
+}
+.score-text {
+  font-size: var(--font-xl);
+  font-weight: 700;
+  color: var(--color-star);
+  margin-left: 12rpx;
+}
+.score-raters {
+  font-size: var(--font-xs);
+  color: var(--color-text-secondary);
+  margin-left: 12rpx;
+}
+
+/* ===== 帖子正文 ===== */
+.post-body {
+  font-size: var(--font-md);
+  color: var(--color-text-dark);
+  line-height: 1.6;
+  padding: 0 30rpx 20rpx;
+}
+
+/* ===== 评论区 ===== */
+.comments-section {
+  padding: 20rpx 30rpx;
+  border-top: 6rpx solid var(--color-border-light);
+}
+.comments-title {
+  font-size: var(--font-md);
+  font-weight: 700;
+  color: var(--color-text);
+  padding-bottom: 20rpx;
+}
+.comment-title-divider {
+  border-bottom: 1rpx solid var(--color-border-light);
+}
+
+/* 评论块（父评论+子回复组） */
+.comment-block {
+  border-bottom: 1rpx solid var(--color-border-light);
+}
+
+.comment-item {
+  display: flex;
+  padding: 20rpx 0 6rpx;
+}
+.comment-avatar {
+  width: 42rpx;
+  height: 42rpx;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 4rpx;
+}
+.comment-body {
+  flex: 1;
+  margin-left: 16rpx;
+}
+.comment-header {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.comment-reply .comment-header {
+  display: block;
+  line-height: 1.6;
+}
+.comment-name {
+  font-size: var(--font-sm);
+  font-weight: 600;
+  color: var(--color-text);
+}
+.comment-reply .comment-name {
+  color: #6CB4EE;
+}
+.comment-reply-to {
+  font-size: var(--font-sm);
+  font-weight: 600;
+  color: var(--color-text);
+}
+.comment-time {
+  font-size: var(--font-xs);
+  color: var(--color-text-secondary);
+  margin-left: 12rpx;
+}
+.comment-reply-label {
+  font-size: var(--font-sm);
+  color: var(--color-text-secondary);
+}
+.comment-text {
+  font-size: var(--font-sm);
+  color: var(--color-text-dark);
+  line-height: 1.5;
+  margin-top: 8rpx;
+}
+.reply-inline {
+  margin-top: 0;
+}
+.comment-actions {
+  display: flex;
+  align-items: center;
+  margin-top: 8rpx;
+}
+.comment-action {
+  display: flex;
+  align-items: center;
+  margin-right: 32rpx;
+}
+.comment-action-icon {
+  font-size: var(--font-sm);
+}
+.comment-action-count {
+  font-size: var(--font-xs);
+  color: var(--color-text-secondary);
+  margin-left: 6rpx;
+}
+
+.comment-replies {
+  background: var(--color-bg);
+  border-radius: var(--radius-sm);
+  padding: 8rpx 0;
+  margin-left: 58rpx;
+  margin-top: 0;
+  margin-bottom: 12rpx;
+}
+
+.comment-reply {
+  display: flex;
+  padding: 6rpx 0;
+}
+
+/* ===== 底部输入栏 ===== */
+.bottom-bar {
+  display: flex;
+  align-items: center;
+  height: 96rpx;
+  padding: 0 20rpx;
+  background: var(--color-bg-white);
+  border-top: 1rpx solid var(--color-border-light);
+  flex-shrink: 0;
+}
+.bottom-comment-input {
+  flex: 1;
+  height: 56rpx;
+  background: var(--color-border-light);
+  border-radius: 28rpx;
+  padding: 0 24rpx;
+  font-size: var(--font-sm);
+  color: var(--color-text);
+}
+.input-placeholder {
+  color: var(--color-text-secondary);
+  font-size: var(--font-sm);
+}
+.bottom-action-group {
+  display: flex;
+  align-items: center;
+  margin-left: 16rpx;
+}
+.bottom-action {
+  display: flex;
+  align-items: center;
+  margin: 0 12rpx;
+}
+.bottom-action-icon {
+  font-size: var(--font-lg);
+}
+.bottom-action-count {
+  font-size: var(--font-xs);
+  color: var(--color-text-secondary);
+  margin-left: 6rpx;
+}
+.bottom-plus-btn {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 50%;
+  background: var(--color-border-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 12rpx;
+  flex-shrink: 0;
+}
+.plus-icon {
+  font-size: 40rpx;
+  color: var(--color-text-dark);
+  line-height: 1;
+}

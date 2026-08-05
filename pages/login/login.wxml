@@ -1,0 +1,28 @@
+<!-- 登录页面 -->
+<view class="page">
+  <view class="status-bar-placeholder" style="height: {{statusBarHeight}}px;"></view>
+  <view class="nav-bar" style="height: {{navBarHeight}}px;">
+    <view class="nav-back" bindtap="goBack">
+      <image src="/images/SVG/返回.svg" mode="aspectFit" class="nav-back-icon"></image>
+    </view>
+  </view>
+  <view class="container">
+    <text class="text-3xl text-bold">登录</text>
+
+    <view class="privacy-box mt-30">
+      <text class="text-bold">需要以下权限</text>
+      <text class="text-sm text-secondary mt-10">以下信息仅用于创建账号使用，任何用户以及学校管理员都无法获取。我们将严格对您的信息进行保密</text>
+      <view class="divider mt-20 mb-20"></view>
+      <text class="text-bold">授权手机号</text>
+      <text class="text-sm text-secondary mt-10">应相关国家法律要求，需要获取您的手机号用于资料鉴权</text>
+    </view>
+
+    <view class="btn btn-wechat mt-30" bindtap="wechatLogin">
+      <text>使用微信快速授权</text>
+    </view>
+
+    <view class="agreement mt-30 text-center">
+      <text class="text-xs text-secondary">我已阅读并同意服务协议与隐私政策</text>
+    </view>
+  </view>
+</view>

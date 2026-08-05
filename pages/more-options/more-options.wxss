@@ -1,0 +1,86 @@
+.page-container {
+  min-height: 100vh;
+  background-color: var(--color-bg);
+}
+
+.custom-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 32rpx;
+  background-color: #fff;
+}
+
+.nav-back {
+  width: 44rpx;
+  height: 44rpx;
+}
+
+.nav-title {
+  font-size: var(--font-lg);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.nav-placeholder {
+  width: 44rpx;
+}
+
+/* 菜单列表 */
+.menu-list {
+  background-color: var(--color-bg-white);
+  margin: 24rpx;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 32rpx 24rpx;
+  border-bottom: 1rpx solid var(--color-border-light);
+}
+
+.menu-item:last-child {
+  border-bottom: none;
+}
+
+.menu-left {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+}
+
+.menu-icon {
+  width: 40rpx;
+  height: 40rpx;
+}
+
+.menu-name {
+  font-size: var(--font-base);
+  color: var(--color-text);
+}
+
+.menu-item.danger .menu-name {
+  color: var(--color-red);
+}
+
+.menu-arrow {
+  font-size: 40rpx;
+  color: var(--color-text-secondary);
+  font-weight: 300;
+}
+
+/* 版本信息 */
+.version-info {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48rpx 0;
+}
+
+.version-info text {
+  font-size: var(--font-sm);
+  color: var(--color-text-secondary);
+}

@@ -1,0 +1,64 @@
+<view class="page-container">
+  <!-- 页面标题 -->
+  <view class="page-header">
+    <text class="page-title">投诉与纠纷</text>
+    <text class="page-desc">选择投诉类型并填写详细原因，我们会尽快处理</text>
+  </view>
+
+  <!-- Tab切换 -->
+  <view class="tab-bar">
+    <view
+      wx:for="{{tabs}}"
+      wx:key="index"
+      class="tab-item {{activeTab === index ? 'active' : ''}}"
+      data-index="{{index}}"
+      bindtap="switchTab"
+    >{{item}}</view>
+  </view>
+
+  <!-- 分类网格 -->
+  <view class="section-title">选择投诉类型</view>
+  <view class="category-grid">
+    <view
+      wx:for="{{categories}}"
+      wx:key="id"
+      class="category-card {{selectedCategory === item.id ? 'selected' : ''}}"
+      data-id="{{item.id}}"
+      bindtap="selectCategory"
+    >
+      <text class="category-icon">{{item.icon}}</text>
+      <text class="category-name">{{item.name}}</text>
+    </view>
+  </view>
+
+  <!-- 输入原因 -->
+  <view class="section-title">投诉原因</view>
+  <view class="reason-wrap">
+    <textarea
+      class="reason-textarea"
+      placeholder="请详细描述投诉原因..."
+      placeholder-class="input-placeholder"
+      maxlength="{{reasonMax}}"
+      value="{{reason}}"
+      bindinput="onReasonInput"
+      auto-height
+    />
+    <view class="char-count">{{reason.length}}/{{reasonMax}}</view>
+  </view>
+
+  <!-- 匿名提交 -->
+  <view class="option-row" bindtap="toggleAnonymous">
+    <view class="option-left">
+      <text class="option-label">匿名提交</text>
+      <text class="option-desc">你的身份信息将不会公开</text>
+    </view>
+    <view class="toggle {{isAnonymous ? 'on' : ''}}">
+      <view class="toggle-knob"></view>
+    </view>
+  </view>
+
+  <!-- 提交按钮 -->
+  <view class="submit-btn {{canSubmit ? 'active' : 'disabled'}}" bindtap="onSubmit">
+    <text>提交投诉</text>
+  </view>
+</view>

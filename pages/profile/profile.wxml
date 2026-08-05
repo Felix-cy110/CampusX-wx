@@ -1,0 +1,230 @@
+<!-- 个人资料页 - 匹配 Sketch 集市画板设计 -->
+<view class="page">
+  <!-- 固定顶部：状态栏 + 操作按钮栏 -->
+  <view class="fixed-header">
+    <view class="status-bar-placeholder" style="height: {{statusBarHeight}}px;"></view>
+    <view class="top-bar" style="height: {{navBarHeight}}px;">
+      <view class="top-bar-left" bindtap="goToOrders">
+        <image class="icon-bag" src="/images/SVG/订单购物车.svg" mode="aspectFit"></image>
+        <text class="top-bar-text">订单</text>
+      </view>
+      <view class="top-bar-right">
+        <view class="top-edit-btn" bindtap="goToEditProfile">
+          <text class="icon-edit">✎</text>
+          <text class="top-bar-text-white">编辑</text>
+        </view>
+        <view class="top-settings-btn" bindtap="goToSettings">
+          <text class="icon-settings">⚙</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 顶部渐变背景区域 -->
+  <view class="profile-header-bg">
+      <!-- 头像 + 名称 + UID + 学校 + 操作按钮 -->
+      <view class="avatar-section">
+        <image class="profile-avatar" src="{{userInfo.avatar}}" mode="aspectFill" bindtap="goToEditProfile"></image>
+        <view class="name-area">
+          <view class="name-row">
+            <text class="profile-name">{{userInfo.nickname}}</text>
+            <image class="gender-icon" src="{{userInfo.genderIcon || '/images/icon-male.png'}}" mode="aspectFit" wx:if="{{userInfo.genderIcon}}"></image>
+          </view>
+          <text class="profile-uid">UID:{{userInfo.uid}}</text>
+          <!-- 学校/专业/入学年份标签 -->
+          <view class="school-tags" wx:if="{{userInfo.school}}">
+            <text class="school-tag">{{userInfo.school}}</text>
+            <text class="school-tag" wx:if="{{userInfo.major}}">{{userInfo.major}}</text>
+            <text class="school-tag" wx:if="{{userInfo.enrollYear}}">{{userInfo.enrollYear}}级</text>
+          </view>
+          <!-- 顶部操作按钮已上移至 fixed-header，避免与胶囊按钮重叠 -->
+        </view>
+      </view>
+
+      <!-- 关注统计行 -->
+      <view class="stats-row">
+        <view class="stats-item" bindtap="goToFollowing">
+          <text class="stats-num">{{userInfo.stats ? userInfo.stats.following : 0}}</text>
+          <text class="stats-label">关注</text>
+        </view>
+        <view class="stats-item" bindtap="goToFollowers">
+          <text class="stats-num">{{userInfo.stats ? userInfo.stats.followers : 0}}</text>
+          <text class="stats-label">粉丝</text>
+        </view>
+        <view class="stats-item">
+          <text class="stats-num">{{userInfo.stats ? userInfo.stats.likes : 0}}</text>
+          <text class="stats-label">被点赞</text>
+        </view>
+      </view>
+
+      <!-- 邀请码卡片 -->
+      <view class="info-card invite-card" wx:if="{{userInfo.inviteCode}}">
+        <view class="card-row">
+          <view class="card-left">
+            <text class="card-emoji">🎁</text>
+            <text class="card-text">我的邀请码：<text class="invite-code">{{userInfo.inviteCode}}</text></text>
+          </view>
+          <text class="card-link" bindtap="copyInviteCode">复制</text>
+        </view>
+        <view class="invite-desc" wx:if="{{userInfo.invitedBy}}">
+          <text>邀请人：{{userInfo.invitedBy}}</text>
+        </view>
+      </view>
+
+      <!-- 三个功能按钮 -->
+      <view class="func-btns">
+        <view class="func-btn" bindtap="goToMyBooklist">
+          <image class="func-icon" src="/images/SVG/书单.svg" mode="aspectFit"></image>
+          <text class="func-label">我的书单</text>
+        </view>
+        <view class="func-btn" bindtap="goToAddress">
+          <image class="func-icon" src="/images/SVG/地址.svg" mode="aspectFit"></image>
+          <text class="func-label">收货地址</text>
+        </view>
+        <view class="func-btn" bindtap="goToSchoolModify">
+          <image class="func-icon" src="/images/SVG/学校信息.svg" mode="aspectFit"></image>
+          <text class="func-label">切换学校</text>
+          <text class="func-sub" wx:if="{{userInfo.nextModifyDays > 0}}">剩{{userInfo.nextModifyDays}}天</text>
+          <text class="func-sub available" wx:else>可修改</text>
+        </view>
+      </view>
+    </view>
+
+  <!-- 子Tab切换：我发布的 / 我的收藏 -->
+  <view class="sub-tabs">
+    <view class="sub-tab {{currentSubTab === 'published' ? 'active' : ''}}" bindtap="switchSubTab" data-tab="published">
+      <text>我发布的</text>
+    </view>
+    <view class="sub-tab {{currentSubTab === 'favorited' ? 'active' : ''}}" bindtap="switchSubTab" data-tab="favorited">
+      <text>我的收藏</text>
+    </view>
+    <view class="sub-tab-indicator" style="left: calc(100% * {{subIndicatorRatio}});"></view>
+  </view>
+
+  <!-- 内容类型Tab：动态 / 二手 / 跑腿 -->
+  <view class="content-tabs">
+    <view class="content-tab {{currentContentTab === 'posts' ? 'active' : ''}}" bindtap="switchContentTab" data-tab="posts">
+      <text>动态</text>
+    </view>
+    <view class="content-tab {{currentContentTab === 'market' ? 'active' : ''}}" bindtap="switchContentTab" data-tab="market">
+      <text>二手</text>
+    </view>
+    <view class="content-tab {{currentContentTab === 'errand' ? 'active' : ''}}" bindtap="switchContentTab" data-tab="errand">
+      <text>跑腿</text>
+    </view>
+    <view class="content-tab-indicator" style="left: calc(100% * {{contentIndicatorRatio}});"></view>
+  </view>
+
+  <!-- 帖子列表区域（可滚动 + 下拉刷新） -->
+  <scroll-view class="post-list-scroll" scroll-y enhanced scroll-top="{{_scrollTop}}" show-scrollbar="{{false}}" enable-back-to-top refresher-enabled refresher-triggered="{{refreshing}}" bindrefresherrefresh="onRefresh" bindscrolltolower="onContentLoadMore" lower-threshold="150">
+    <!-- 帖子列表 -->
+    <view class="post-list">
+      <block wx:if="{{filteredContentList.length > 0}}">
+        <view class="post-card {{item.pinned ? 'post-pinned' : ''}}" wx:for="{{filteredContentList}}" wx:key="id" bindtap="goToPostDetail" data-id="{{item.id}}">
+          <!-- 帖子标签：置顶 / 私密 -->
+          <view class="post-badges" wx:if="{{item.pinned || item.isPrivate}}">
+            <view class="post-badge badge-pinned" wx:if="{{item.pinned}}">
+              <text class="badge-text">置顶</text>
+            </view>
+            <view class="post-badge badge-private" wx:if="{{item.isPrivate}}">
+              <text class="badge-text">私密</text>
+            </view>
+          </view>
+
+          <!-- 帖子头部：头像 + 名字 + 时间 -->
+          <view class="post-header">
+            <image class="post-avatar" src="{{item.user.avatar}}" mode="aspectFill"></image>
+            <view class="post-user-info">
+              <text class="post-user-name">{{item.user.name}}</text>
+              <text class="post-time">{{item.time}}</text>
+            </view>
+            <view class="post-more" wx:if="{{item.user.uid === userInfo.uid}}" catchtap="showPostOptions" data-id="{{item.id}}"><text class="more-dots">...</text></view>
+          </view>
+
+          <!-- 帖子内容 -->
+          <text class="post-content-text">{{item.content}}</text>
+
+          <!-- 帖子图片 -->
+          <view class="post-images" wx:if="{{item.images && item.images.length > 0}}">
+            <image class="post-image" wx:for="{{item.images}}" wx:for-item="img" wx:for-index="imgIdx" wx:key="imgIdx" src="{{img}}" mode="aspectFill"></image>
+          </view>
+
+          <!-- 帖子底部：点赞评论（跑腿类型不显示） + 商品状态 -->
+          <view class="post-footer">
+            <view class="post-stats" wx:if="{{item.type !== 'errand'}}">
+              <view class="post-stat-item">
+                <image class="stat-icon" src="/images/SVG/点赞.svg" mode="aspectFit"></image>
+                <text class="stat-num">{{item.stats.likes}}</text>
+              </view>
+              <view class="post-stat-item">
+                <image class="stat-icon" src="/images/SVG/评论.svg" mode="aspectFit"></image>
+                <text class="stat-num">{{item.stats.comments}}</text>
+              </view>
+            </view>
+            <!-- 商品状态标签（集市/二手类） -->
+            <view class="item-status-tag status-{{item.itemStatus}}" wx:if="{{item.itemStatus}}">
+              <text>{{item.itemStatus === 'available' ? '在售' : (item.itemStatus === 'taken' ? '已售出' : item.itemStatus)}}</text>
+            </view>
+          </view>
+        </view>
+      </block>
+
+      <!-- 空状态 -->
+      <view class="empty-state" wx:else>
+        <text wx:if="{{contentLoading}}">加载中...</text>
+        <text wx:else>{{currentSubTab === 'published' ? '暂无发布内容' : '暂无收藏内容'}}</text>
+      </view>
+
+      <!-- 加载更多提示 -->
+      <view class="load-more-hint" wx:if="{{!contentLoading && filteredContentList.length > 0}}">
+        <text wx:if="{{loadingMore}}">加载中...</text>
+        <text wx:elif="{{contentHasMore}}">上拉加载更多</text>
+        <text wx:else>— 没有更多了 —</text>
+      </view>
+    </view>
+
+    <!-- 未登录状态 -->
+    <view class="not-logged-in" wx:if="{{!isLoggedIn}}">
+      <view class="empty-state">
+        <text>未登录，点击登录</text>
+        <view class="btn btn-primary mt-30" bindtap="goToLogin">登录</view>
+      </view>
+    </view>
+
+    <!-- 底部安全区 -->
+    <view class="bottom-safe"></view>
+  </scroll-view>
+
+  <!-- 帖子选项弹窗 -->
+  <view class="post-options-mask {{showPostOptionsModal ? 'show' : ''}}" bindtap="hidePostOptions">
+    <view class="post-options-sheet {{showPostOptionsModal ? 'show' : ''}}" catchtap="onSheetTap">
+      <view class="post-options-title">帖子选项</view>
+      <scroll-view class="post-options-scroll" scroll-y enhanced show-scrollbar="{{false}}">
+        <view class="post-options-list">
+          <view class="post-option-btn btn-gray" bindtap="onEditPost">
+            <text class="option-text">编辑</text>
+          </view>
+          <view class="post-option-btn btn-gray" bindtap="onSetPinned">
+            <text class="option-text">{{selectedPostIsPinned ? '取消置顶' : '置顶'}}</text>
+          </view>
+          <view class="post-option-btn btn-gray" bindtap="onSetPrivate">
+            <image class="option-icon" src="/images/SVG/私密.svg" mode="aspectFit"></image>
+            <text class="option-text">{{selectedPostIsPrivate ? '取消私密' : '设置为私密'}}</text>
+          </view>
+          <view class="post-option-btn btn-gray" bindtap="onShareToFriends">
+            <image class="option-icon" src="/images/SVG/好友.svg" mode="aspectFit"></image>
+            <text class="option-text">分享给互关好友</text>
+          </view>
+          <view class="post-option-btn btn-green" bindtap="onShareToWechat">
+            <image class="option-icon" src="/images/SVG/微信.svg" mode="aspectFit"></image>
+            <text class="option-text">分享给微信好友</text>
+          </view>
+          <view class="post-option-btn btn-red" bindtap="onDeletePost">
+            <image class="option-icon" src="/images/SVG/删除.svg" mode="aspectFit"></image>
+            <text class="option-text">删除帖子</text>
+          </view>
+        </view>
+      </scroll-view>
+    </view>
+  </view>
+</view>

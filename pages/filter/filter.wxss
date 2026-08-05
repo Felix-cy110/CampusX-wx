@@ -1,0 +1,160 @@
+.page {
+  min-height: 100vh;
+  background-color: var(--color-bg);
+  padding-bottom: 160rpx;
+}
+
+/* 区域 */
+.section {
+  margin-top: 20rpx;
+  background-color: var(--color-bg-white);
+  padding: 28rpx 30rpx;
+}
+
+.section-header {
+  margin-bottom: 4rpx;
+}
+
+.section-title {
+  font-size: var(--font-md);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+/* 排序方式 */
+.sort-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 20rpx;
+  padding: 20rpx 24rpx;
+  background-color: var(--color-bg);
+  border-radius: var(--radius-sm);
+}
+
+.sort-text {
+  font-size: var(--font-base);
+  color: var(--color-text);
+}
+
+.sort-arrow {
+  font-size: var(--font-md);
+  color: var(--color-text-secondary);
+}
+
+/* 价格区间 */
+.price-range {
+  display: flex;
+  align-items: center;
+  margin-top: 20rpx;
+}
+
+.price-input-box {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  height: 72rpx;
+  padding: 0 16rpx;
+  background-color: var(--color-bg);
+  border-radius: var(--radius-sm);
+}
+
+.price-label {
+  font-size: var(--font-base);
+  color: var(--color-text);
+  font-weight: 600;
+  margin-right: 8rpx;
+}
+
+.price-input {
+  flex: 1;
+  font-size: var(--font-base);
+  color: var(--color-text);
+}
+
+.input-placeholder {
+  color: var(--color-text-secondary);
+  font-size: var(--font-sm);
+}
+
+.price-sep {
+  margin: 0 16rpx;
+  font-size: var(--font-sm);
+  color: var(--color-text-secondary);
+  flex-shrink: 0;
+}
+
+.price-confirm {
+  margin-top: 20rpx;
+  height: 72rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-primary);
+  border-radius: var(--radius-sm);
+  color: #FFFFFF;
+  font-size: var(--font-base);
+  font-weight: 500;
+}
+
+/* 分类网格 */
+.category-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20rpx;
+  margin-top: 20rpx;
+}
+
+.category-item {
+  padding: 16rpx 32rpx;
+  border-radius: 32rpx;
+  background-color: var(--color-bg);
+  font-size: var(--font-sm);
+  color: var(--color-text-secondary);
+  transition: all 0.2s;
+}
+
+.category-item.active {
+  background-color: var(--color-primary);
+  color: #FFFFFF;
+  font-weight: 500;
+}
+
+/* 底部按钮 */
+.bottom-btns {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  padding: 20rpx 30rpx;
+  background-color: var(--color-bg-white);
+  border-top: 1rpx solid var(--color-border-light);
+  gap: 24rpx;
+}
+
+.btn-reset {
+  flex: 1;
+  height: 88rpx;
+  border-radius: var(--radius-md);
+  border: 2rpx solid var(--color-border);
+  background-color: var(--color-bg-white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-md);
+  color: var(--color-text);
+}
+
+.btn-apply {
+  flex: 2;
+  height: 88rpx;
+  border-radius: var(--radius-md);
+  background-color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-md);
+  color: #FFFFFF;
+  font-weight: 600;
+}

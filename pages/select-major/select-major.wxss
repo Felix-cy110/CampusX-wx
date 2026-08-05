@@ -1,0 +1,185 @@
+/* 选择专业页 */
+.page {
+  height: 100vh;
+  background-color: var(--color-bg);
+  display: flex;
+  flex-direction: column;
+}
+
+/* 状态栏占位 */
+.status-bar-placeholder {
+  width: 100%;
+  background-color: #FFFFFF;
+  flex-shrink: 0;
+}
+
+/* 导航栏：与胶囊按钮平齐 */
+.nav-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 30rpx;
+  background-color: #FFFFFF;
+  flex-shrink: 0;
+}
+.nav-back {
+  width: 80rpx;
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+.nav-back-icon {
+  width: 40rpx;
+  height: 40rpx;
+}
+.nav-title {
+  font-size: var(--font-lg);
+  font-weight: 600;
+  color: var(--color-text);
+}
+.nav-placeholder {
+  width: 80rpx;
+}
+
+/* 搜索栏 */
+.search-bar {
+  padding: 16rpx 30rpx;
+  background-color: var(--color-bg-white);
+  flex-shrink: 0;
+}
+
+.search-wrapper {
+  display: flex;
+  align-items: center;
+  height: 72rpx;
+  padding: 0 24rpx;
+  background-color: var(--color-bg);
+  border-radius: var(--radius-md);
+}
+
+.search-icon {
+  font-size: var(--font-sm);
+  color: var(--color-text-secondary);
+  margin-right: 12rpx;
+}
+
+.search-input {
+  flex: 1;
+  font-size: var(--font-base);
+  color: var(--color-text);
+}
+
+.search-clear {
+  font-size: var(--font-sm);
+  color: var(--color-text-secondary);
+  padding: 8rpx;
+}
+
+/* 左右分栏内容区 */
+.content {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+/* 左侧：院系列表 */
+.dept-list {
+  width: 180rpx;
+  height: 100%;
+  background-color: var(--color-bg);
+}
+
+.dept-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 96rpx;
+  padding: 0 20rpx;
+}
+
+.dept-item.active {
+  background-color: #FFFFFF;
+}
+
+.dept-item.active .dept-item-name {
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.dept-item-name {
+  font-size: var(--font-sm);
+  color: var(--color-text-secondary);
+}
+
+/* 右侧：专业列表 */
+.major-list {
+  flex: 1;
+  height: 100%;
+  background-color: #FFFFFF;
+}
+
+.major-item {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 24rpx 30rpx;
+  border-bottom: 1rpx solid var(--color-border-light);
+}
+
+.major-name {
+  font-size: var(--font-base);
+  color: var(--color-text);
+  font-weight: 500;
+}
+
+.major-count {
+  font-size: var(--font-xs);
+  color: var(--color-text-secondary);
+  margin-top: 4rpx;
+}
+
+/* 搜索结果列表 */
+.search-result-list {
+  flex: 1;
+  background-color: var(--color-bg-white);
+}
+
+.search-dept-header {
+  padding: 24rpx 30rpx 16rpx;
+  background-color: var(--color-bg);
+}
+
+.search-dept-name {
+  font-size: var(--font-sm);
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+.search-major-item {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 24rpx 30rpx;
+  background-color: var(--color-bg-white);
+  border-bottom: 1rpx solid var(--color-border-light);
+}
+
+.search-major-name {
+  font-size: var(--font-base);
+  color: var(--color-text);
+  font-weight: 500;
+}
+
+.search-major-count {
+  font-size: var(--font-xs);
+  color: var(--color-text-secondary);
+  margin-top: 4rpx;
+}
+
+/* 空状态 */
+.empty-state {
+  padding: 80rpx 0;
+  text-align: center;
+  color: var(--color-text-secondary);
+  font-size: var(--font-sm);
+}

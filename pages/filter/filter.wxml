@@ -1,0 +1,75 @@
+<view class="page">
+  <!-- 排序方式 -->
+  <view class="section">
+    <view class="section-header">
+      <text class="section-title">排序方式</text>
+    </view>
+    <view class="sort-row" bindtap="onSortChange">
+      <text class="sort-text">发布时间 近-远</text>
+      <text class="sort-arrow">&gt;</text>
+    </view>
+  </view>
+
+  <!-- 价格区间 -->
+  <view class="section">
+    <view class="section-header">
+      <text class="section-title">价格区间</text>
+    </view>
+    <view class="price-range">
+      <view class="price-input-box">
+        <text class="price-label">¥</text>
+        <input
+          class="price-input"
+          type="digit"
+          placeholder="最低价"
+          placeholder-class="input-placeholder"
+          value="{{priceFrom}}"
+          bindinput="onPriceFromInput"
+        />
+      </view>
+      <text class="price-sep">至</text>
+      <view class="price-input-box">
+        <text class="price-label">¥</text>
+        <input
+          class="price-input"
+          type="digit"
+          placeholder="最高价"
+          placeholder-class="input-placeholder"
+          value="{{priceTo}}"
+          bindinput="onPriceToInput"
+        />
+      </view>
+    </view>
+    <view class="price-confirm" bindtap="onConfirmPrice">
+      <text>确定</text>
+    </view>
+  </view>
+
+  <!-- 分类筛选 -->
+  <view class="section">
+    <view class="section-header">
+      <text class="section-title">分类</text>
+    </view>
+    <view class="category-grid">
+      <view
+        class="category-item {{selectedCategory === item ? 'active' : ''}}"
+        wx:for="{{categories}}"
+        wx:key="*this"
+        bindtap="onSelectCategory"
+        data-category="{{item}}"
+      >
+        <text>{{item}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 底部按钮 -->
+  <view class="bottom-btns safe-bottom">
+    <view class="btn-reset" bindtap="onReset">
+      <text>重置</text>
+    </view>
+    <view class="btn-apply" bindtap="onApply">
+      <text>应用筛选</text>
+    </view>
+  </view>
+</view>

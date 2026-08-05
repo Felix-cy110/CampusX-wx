@@ -1,0 +1,111 @@
+<!-- 组队详情页 - 匹配Sketch设计稿 -->
+<view class="page">
+  <scroll-view class="content" scroll-y>
+    <!-- 帖子头部：头像 + 用户名 + 时间 + 标签 + 更多按钮 -->
+    <view class="post-header">
+      <view class="post-header-left">
+        <image class="post-header-avatar" src="{{team.user.avatar}}" mode="aspectFill" catchtap="goToUserProfile" data-name="{{team.user.name}}" data-avatar="{{team.user.avatar}}"></image>
+        <view class="post-header-info">
+          <text class="post-header-name">{{team.user.name}}</text>
+          <view class="post-header-meta">
+            <text class="tag {{team.type === 'carpool' ? 'tag-orange' : team.type === 'study' ? 'tag-green' : team.type === 'sport' ? 'tag' : team.type === 'game' ? 'tag' : ''}}">{{team.tag}}</text>
+            <text class="post-header-time">{{team.time}}</text>
+          </view>
+        </view>
+      </view>
+      <view class="post-header-right">
+        <view class="header-follow-btn" wx:if="{{!isFollowed}}" bindtap="toggleFollow">
+          <text>+关注</text>
+        </view>
+        <view class="header-follow-btn followed" wx:if="{{isFollowed}}" bindtap="toggleFollow">
+          <text>已关注</text>
+        </view>
+        <view class="header-more-btn" bindtap="showMoreOptions">
+          <text class="more-icon">···</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 帖子标题 -->
+    <text class="post-title">{{team.title}}</text>
+
+    <!-- 帖子正文 -->
+    <text class="post-body">{{team.content}}</text>
+
+    <!-- 报酬信息 -->
+    <text class="reward-text" wx:if="{{team.reward}}">报酬：{{team.reward}}￥</text>
+
+    <!-- 评论区 -->
+    <view class="comments-section">
+      <text class="comments-title">评论（{{team.stats.comments}}）</text>
+      <view class="comment-title-divider"></view>
+      <view class="empty-state" wx:if="{{comments.length === 0}}">
+        <text>暂无评论</text>
+      </view>
+      <block wx:for="{{comments}}" wx:key="id">
+        <view class="comment-block">
+        <view class="comment-item">
+          <image class="comment-avatar" src="{{item.avatar}}" mode="aspectFill"></image>
+          <view class="comment-body">
+            <view class="comment-header">
+              <text class="comment-name">{{item.name}}</text>
+              <text class="comment-time">{{item.time}}</text>
+            </view>
+            <text class="comment-text">{{item.content}}</text>
+            <view class="comment-actions">
+              <view class="comment-action" bindtap="toggleCommentLike" data-id="{{item.id}}">
+                <text class="comment-action-icon" style="color: {{item.liked ? 'var(--color-red)' : 'var(--color-text-secondary)'}};">❤</text>
+                <text class="comment-action-count">{{item.likes || 0}}</text>
+              </view>
+              <view class="comment-action" bindtap="replyComment" data-id="{{item.id}}">
+                <text class="comment-action-icon">💬</text>
+                <text class="comment-action-count">{{item.replies ? item.replies.length : 0}}</text>
+              </view>
+            </view>
+          </view>
+        </view>
+        <view class="comment-replies" wx:if="{{item.replies && item.replies.length > 0}}">
+        <view class="comment-reply" wx:for="{{item.replies}}" wx:for-item="reply" wx:key="id">
+          <view class="comment-body">
+            <view class="comment-header">
+              <text class="comment-name">{{reply.name}}</text>
+              <text wx:if="{{reply.replyTo}}">
+                <text class="comment-reply-label"> 回复 </text>
+                <text class="comment-reply-to">{{reply.replyTo}}</text>
+              </text>
+              <text class="comment-text reply-inline">  {{reply.content}}</text>
+              <text class="comment-time">{{reply.time}}</text>
+            </view>
+          </view>
+        </view>
+        </view>
+        </view>
+      </block>
+    </view>
+  </scroll-view>
+
+  <!-- 底部操作栏 -->
+  <view class="bottom-bar">
+    <input class="bottom-comment-input" placeholder="输入评论" placeholder-class="input-placeholder" />
+    <view class="bottom-action-group">
+      <view class="bottom-action" bindtap="toggleLike">
+        <text class="bottom-action-icon" style="color: {{team.isLiked ? 'var(--color-red)' : 'var(--color-text-secondary)'}};">❤</text>
+        <text class="bottom-action-count">{{team.stats.likes}}</text>
+      </view>
+      <view class="bottom-action" bindtap="toggleFavorite">
+        <text class="bottom-action-icon" style="color: {{isFavorited ? 'var(--color-star)' : 'var(--color-text-secondary)'}};">⭐</text>
+        <text class="bottom-action-count">{{team.stats.comments}}</text>
+      </view>
+    </view>
+    <view class="bottom-plus-btn" bindtap="addComment">
+      <text class="plus-icon">+</text>
+    </view>
+  </view>
+
+  <!-- 底部接单按钮 -->
+  <view class="join-bar">
+    <view class="btn {{hasJoined ? 'btn-ghost' : 'btn-primary'}}" bindtap="joinTeam">
+      <text>{{hasJoined ? '等待接单' : '我要接单'}}</text>
+    </view>
+  </view>
+</view>

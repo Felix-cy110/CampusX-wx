@@ -1,0 +1,127 @@
+const mock = require('../../utils/mock.js')
+
+Page({
+  data: {
+    rating: {},
+    comments: [],
+    ratingId: '',
+    isLiked: false,
+    isFavorited: false,
+    starArray: [1, 2, 3, 4, 5],
+    isFollowed: false,
+    statusBarHeight: 0,
+    navBarHeight: 0
+  },
+
+  onLoad(options) {
+    const systemInfo = wx.getSystemInfoSync()
+    const menuButton = wx.getMenuButtonBoundingClientRect()
+    const statusBarHeight = systemInfo.statusBarHeight
+    const navBarHeight = (menuButton.top - statusBarHeight) * 2 + menuButton.height
+    this.setData({ statusBarHeight, navBarHeight })
+    const id = parseInt(options.id) || 301
+    const rating = mock.ratings.find(r => r.id === id) || mock.ratings[0]
+    rating.totalRaters = '3248'
+    rating.isLiked = false
+    this.setData({
+      rating,
+      ratingId: id,
+      starArray: this.getStarArray(rating.score || 0),
+      comments: [
+        {
+          id: 1, name: '蔡俊', avatar: '/images/avatars/蔡俊.png', time: '58秒',
+          content: '真的很好吃，下次还去',
+          likes: 15, liked: false,
+          replies: [
+            { id: 11, name: '李明', avatar: '/images/avatars/李明.png', time: '30秒', content: '我也是常客了', replyTo: '蔡俊' }
+          ]
+        },
+        {
+          id: 2, name: '王芳', avatar: '/images/avatars/王芳.png', time: '8分钟',
+          content: '中辣正好，微辣没味道',
+          likes: 8, liked: false,
+          replies: []
+        }
+      ]
+    })
+  },
+
+  getStarArray(score) {
+    const fullStars = Math.floor(score)
+    const hasHalf = score - fullStars >= 0.25
+    const result = []
+    for (let i = 0; i < 5; i++) {
+      if (i < fullStars) {
+        result.push('full')
+      } else if (i === fullStars && hasHalf) {
+        result.push('half')
+      } else {
+        result.push('empty')
+      }
+    }
+    return result
+  },
+
+  goBack() {
+    wx.navigateBack()
+  },
+
+  toggleLike() {
+    const rating = this.data.rating
+    rating.isLiked = !rating.isLiked
+    rating.stats.likes += rating.isLiked ? 1 : -1
+    this.setData({ rating })
+    wx.showToast({
+      title: rating.isLiked ? '已点赞' : '已取消点赞',
+      icon: 'none'
+    })
+  },
+
+  toggleFavorite() {
+    const isFavorited = !this.data.isFavorited
+    this.setData({ isFavorited })
+    wx.showToast({
+      title: isFavorited ? '已收藏' : '已取消收藏',
+      icon: 'none'
+    })
+  },
+
+  showMoreOptions() {
+    wx.showActionSheet({
+      itemList: ['举报帖子', '分享给好友', '分享到微信']
+    })
+  },
+
+  goToUserProfile(e) {
+    const { name, avatar } = e.currentTarget.dataset
+    wx.setStorageSync('selectedUser', { name, avatar })
+    wx.switchTab({ url: '/pages/profile/profile' })
+  },
+
+  toggleCommentLike(e) {
+    const commentId = e.currentTarget.dataset.id
+    const comments = this.data.comments.map(c => {
+      if (c.id === commentId) {
+        c.liked = !c.liked
+        c.likes += c.liked ? 1 : -1
+      }
+      return c
+    })
+    this.setData({ comments })
+  },
+
+  replyComment(e) {
+    const commentId = e.currentTarget.dataset.id
+    wx.showToast({ title: '回复评论 ' + commentId, icon: 'none' })
+  },
+
+  addComment() {
+    wx.showToast({ title: '打开评论输入', icon: 'none' })
+  },
+
+  toggleFollow() {
+    const isFollowed = !this.data.isFollowed
+    this.setData({ isFollowed })
+    wx.showToast({ title: isFollowed ? '已关注' : '已取消关注', icon: 'none' })
+  }
+})

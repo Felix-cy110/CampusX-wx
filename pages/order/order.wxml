@@ -1,0 +1,98 @@
+<view class="page">
+  <!-- 自定义导航栏 -->
+  <view class="status-bar-placeholder" style="height: {{statusBarHeight}}px;"></view>
+  <view class="nav-bar" style="height: {{navBarHeight}}px;">
+    <view class="nav-back" bindtap="goBack">
+      <image class="nav-back-icon" src="/images/SVG/返回.svg" mode="aspectFit"></image>
+    </view>
+    <text class="nav-title">订单</text>
+    <view class="nav-placeholder"></view>
+  </view>
+
+  <!-- 一级 Tab 切换 -->
+  <view class="tab-bar">
+    <view
+      class="tab-item {{currentTab === item.key ? 'active' : ''}}"
+      wx:for="{{tabs}}"
+      wx:key="key"
+      bindtap="switchTab"
+      data-key="{{item.key}}"
+    >
+      <text class="tab-label">{{item.label}}</text>
+    </view>
+  </view>
+
+  <!-- 二级 Tab 切换（买入/卖出） -->
+  <view class="side-bar">
+    <view
+      class="side-item {{currentSide === 'buy' ? 'active' : ''}}"
+      bindtap="switchSide"
+      data-side="buy"
+    >
+      <text class="side-label">{{currentTab === 'rental' ? '我租到的' : currentTab === 'errand' ? '我的接单' : '我买到的'}}</text>
+    </view>
+    <view
+      class="side-item {{currentSide === 'sell' ? 'active' : ''}}"
+      bindtap="switchSide"
+      data-side="sell"
+    >
+      <text class="side-label">{{currentTab === 'rental' ? '我租出的' : currentTab === 'errand' ? '我的挂单' : '我卖出的'}}</text>
+    </view>
+  </view>
+
+  <!-- 订单列表 -->
+  <view class="order-list">
+    <view
+      class="order-card"
+      wx:for="{{filteredOrders}}"
+      wx:key="id"
+      data-id="{{item.id}}"
+      data-type="{{item.type}}"
+      data-side="{{item.side}}"
+      bindtap="onOrderTap"
+    >
+      <!-- 用户信息 -->
+      <view class="order-user">
+        <image class="user-avatar" src="{{item.user.avatar}}" mode="aspectFill"></image>
+        <text class="user-name">{{item.user.name}}</text>
+        <view class="side-tag {{item.side}}">
+          <text class="side-tag-text">{{item.side === 'buy' ? '买' : '卖'}}</text>
+        </view>
+      </view>
+
+      <!-- 内容区域 -->
+      <view class="order-body">
+        <text class="order-content">{{item.content}}</text>
+        <image class="order-image" wx:if="{{item.image}}" src="{{item.image}}" mode="aspectFill"></image>
+      </view>
+
+      <!-- 备注提示 -->
+      <view class="order-remark" wx:if="{{item.remark}}">
+        <text class="remark-text">{{item.remark}}</text>
+      </view>
+
+      <!-- 底部信息行 -->
+      <view class="order-footer">
+        <text class="type-label" style="color: {{item.typeLabelColor}};">{{item.typeLabel}}</text>
+        <view class="price-wrap">
+          <text class="price-label">{{item.priceLabel}}</text>
+          <text class="price-symbol">¥</text>
+          <text class="price-value">{{item.price.toFixed(2)}}</text>
+        </view>
+        <view class="status-tag" style="background-color: {{item.statusBg}};">
+          <text class="status-text">{{item.status}}</text>
+        </view>
+      </view>
+
+      <!-- 确认收货按钮 -->
+      <view class="confirm-btn-wrap" wx:if="{{item.showConfirmBtn}}" catchtap="onConfirmReceipt" data-id="{{item.id}}" data-type="{{item.type}}" data-side="{{item.side}}">
+        <view class="confirm-btn">确认收货</view>
+      </view>
+    </view>
+
+    <!-- 空状态 -->
+    <view wx:if="{{filteredOrders.length === 0}}" class="empty-state">
+      <text class="empty-text">暂无订单</text>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,87 @@
+/* 探索页样式 */
+
+.page {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--color-bg);
+}
+
+/* ========== 未加入学校 ========== */
+.not-joined {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  text-align: center;
+}
+
+.not-joined-text {
+  font-size: var(--font-lg);
+  color: var(--color-text-secondary);
+  white-space: pre-line;
+  line-height: 1.6;
+}
+
+/* ========== 固定头部 ========== */
+.fixed-header {
+  flex-shrink: 0;
+}
+
+.status-bar-placeholder {
+  width: 100%;
+  background-color: var(--color-bg-white);
+}
+
+.explore-nav-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 30rpx;
+  background-color: var(--color-bg-white);
+}
+
+.explore-title {
+  font-size: var(--font-lg);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+/* ========== 可滚动内容 ========== */
+.page-content {
+  flex: 1;
+  height: 0;
+}
+
+/* ========== 功能入口列表 ========== */
+.entry-list {
+  background-color: var(--color-bg-white);
+  padding-bottom: calc(120rpx + env(safe-area-inset-bottom));
+}
+
+.entry-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 32rpx 30rpx;
+  border-bottom: 1rpx solid var(--color-border-light);
+}
+
+.entry-item:last-child {
+  border-bottom: none;
+}
+
+.entry-item:active {
+  background-color: var(--color-bg);
+}
+
+.entry-item-text {
+  font-size: var(--font-lg);
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+.entry-item-arrow {
+  font-size: var(--font-xl);
+  color: var(--color-text-secondary);
+}

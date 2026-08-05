@@ -1,0 +1,57 @@
+<view class="page-container">
+  <!-- 遮罩层 -->
+  <view class="overlay" bindtap="onCancel"></view>
+
+  <!-- 底部弹出层 -->
+  <view class="share-panel">
+    <!-- 标题 -->
+    <view class="panel-header">
+      <text class="panel-title">分享到</text>
+    </view>
+
+    <!-- 用户列表 -->
+    <view class="user-list">
+      <view
+        wx:for="{{shareUsers}}"
+        wx:key="id"
+        class="user-item"
+      >
+        <view class="user-avatar">
+          <text class="avatar-text">{{item.name[0]}}</text>
+        </view>
+        <text class="user-name">{{item.name}}</text>
+        <view
+          class="share-to-btn"
+          data-name="{{item.name}}"
+          bindtap="shareToUser"
+        >
+          <text>分享</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 底部分享操作 -->
+    <view class="share-section">
+      <text class="share-section-title">分享到其他平台</text>
+      <view class="share-actions">
+        <view
+          wx:for="{{shareActions}}"
+          wx:key="id"
+          class="action-item"
+          data-name="{{item.name}}"
+          bindtap="onShareAction"
+        >
+          <view class="action-icon-wrap">
+            <text class="action-icon">{{item.icon}}</text>
+          </view>
+          <text class="action-name">{{item.name}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 取消按钮 -->
+    <view class="cancel-btn" bindtap="onCancel">
+      <text>取消</text>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,130 @@
+/* 选择学校页 */
+.page {
+  min-height: 100vh;
+  background-color: var(--color-bg);
+  display: flex;
+  flex-direction: column;
+}
+
+/* 状态栏占位 */
+.status-bar-placeholder {
+  width: 100%;
+  background-color: #FFFFFF;
+}
+
+/* 导航栏：与胶囊按钮平齐 */
+.nav-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 30rpx;
+  background-color: #FFFFFF;
+}
+.nav-back {
+  width: 80rpx;
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+.nav-back-icon {
+  width: 40rpx;
+  height: 40rpx;
+}
+.nav-title {
+  font-size: var(--font-lg);
+  font-weight: 600;
+  color: var(--color-text);
+}
+.nav-placeholder {
+  width: 80rpx;
+}
+
+/* 搜索栏 */
+.search-bar {
+  padding: 16rpx 30rpx;
+  background-color: var(--color-bg-white);
+}
+
+.search-wrapper {
+  display: flex;
+  align-items: center;
+  height: 72rpx;
+  padding: 0 24rpx;
+  background-color: var(--color-bg);
+  border-radius: var(--radius-md);
+}
+
+.search-icon {
+  width: 28rpx;
+  height: 28rpx;
+  margin-right: 12rpx;
+}
+
+.search-input {
+  flex: 1;
+  font-size: var(--font-base);
+  color: var(--color-text);
+}
+
+.search-clear {
+  font-size: var(--font-sm);
+  color: var(--color-text-secondary);
+  padding: 8rpx;
+}
+
+/* 学校列表 */
+.school-list {
+  flex: 1;
+}
+
+.school-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 28rpx 30rpx;
+  background-color: var(--color-bg-white);
+}
+.school-item + .school-item {
+  border-top: 1rpx solid var(--color-border-light);
+}
+
+.school-info {
+  flex: 1;
+  overflow: hidden;
+}
+
+.school-name {
+  font-size: var(--font-base);
+  color: var(--color-text);
+  display: block;
+}
+
+.school-stats {
+  display: flex;
+  align-items: center;
+  margin-top: 8rpx;
+}
+
+.school-stat-item {
+  font-size: var(--font-xs);
+  color: var(--color-text-secondary);
+  margin-right: 20rpx;
+}
+
+.school-right {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  margin-left: 20rpx;
+}
+
+.school-count {
+  font-size: var(--font-xs);
+  color: var(--color-text-secondary);
+}
+
+.school-arrow {
+  font-size: var(--font-base);
+  color: var(--color-text-secondary);
+  margin-left: 12rpx;
+}

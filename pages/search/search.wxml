@@ -1,0 +1,56 @@
+<view class="page">
+  <!-- 状态栏占位 -->
+  <view class="status-bar-placeholder" style="height: {{statusBarHeight}}px;"></view>
+
+  <!-- 导航栏：搜索标题，与胶囊按钮平齐 -->
+  <view class="search-nav-bar" style="height: {{navBarHeight}}px;">
+    <view class="nav-back" bindtap="goBack">
+      <image class="nav-back-icon" src="/images/SVG/返回.svg" mode="aspectFit"></image>
+    </view>
+    <text class="search-title">搜索</text>
+    <view class="nav-placeholder"></view>
+  </view>
+
+  <!-- 搜索栏 -->
+  <view class="search-bar">
+    <view class="search-input-wrapper">
+      <image class="search-icon" src="/images/SVG/搜索.svg" mode="aspectFit"></image>
+      <input
+        class="search-input"
+        placeholder="搜索..."
+        placeholder-class="placeholder"
+        value="{{searchValue}}"
+        focus="{{true}}"
+        bindinput="onInput"
+        bindconfirm="onSearch"
+        confirm-type="search"
+      />
+      <text class="search-clear" wx:if="{{searchValue}}" bindtap="onClearInput">✕</text>
+    </view>
+  </view>
+
+  <!-- 搜索历史 -->
+  <view class="section" wx:if="{{searchHistory.length > 0}}">
+    <view class="section-header flex-between">
+      <text class="section-title">搜索历史</text>
+      <text class="clear-btn" bindtap="onClearHistory">清除</text>
+    </view>
+    <view class="history-list">
+      <view
+        class="history-item"
+        wx:for="{{searchHistory}}"
+        wx:key="*this"
+        bindtap="onTapHistory"
+        data-keyword="{{item}}"
+      >
+        <image class="history-icon" src="/images/SVG/历史搜索.svg" mode="aspectFit"></image>
+        <text class="history-text">{{item}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 空状态 -->
+  <view class="empty-state" wx:else>
+    <text class="empty-text">暂无搜索历史</text>
+  </view>
+</view>

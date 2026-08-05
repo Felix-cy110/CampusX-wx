@@ -1,0 +1,92 @@
+<view class="page">
+  <view class="status-bar-placeholder" style="height: {{statusBarHeight}}px;"></view>
+  <view class="nav-bar" style="height: {{navBarHeight}}px;">
+    <image class="nav-back" src="/images/SVG/返回.svg" mode="aspectFit" bindtap="navigateBack"></image>
+    <text class="nav-title">活动详情</text>
+    <view style="width: 44rpx;"></view>
+  </view>
+
+  <scroll-view class="content" scroll-y enhanced show-scrollbar="{{false}}">
+    <!-- 加载中 -->
+    <view wx:if="{{loading}}" class="loading-wrap">
+      <text class="loading-text text-secondary">加载中...</text>
+    </view>
+
+    <!-- 活动信息 -->
+    <block wx:if="{{!loading && activity}}">
+    <view class="info-card">
+      <text class="activity-title">{{activity.title}}</text>
+      <text class="activity-desc text-secondary">{{activity.description}}</text>
+      <view class="info-row">
+        <text class="info-label">活动状态</text>
+        <view class="status-tag {{activity.status === 0 ? 'tag-green' : 'tag-gray'}}">
+          <text>{{activity.status === 0 ? '进行中' : (activity.status === 1 ? '已开奖' : '已关闭')}}</text>
+        </view>
+      </view>
+      <view class="info-row">
+        <text class="info-label">活动时间</text>
+        <text class="info-value">{{activity.startTime}} — {{activity.endTime}}</text>
+      </view>
+    </view>
+
+    <!-- 获奖方式 -->
+    <view class="info-card">
+      <text class="section-title">如何获得抽奖号码</text>
+      <view class="rule-item">
+        <text class="rule-dot">·</text>
+        <text class="rule-text">邀请新用户注册并加入学校，每成功邀请 1 人获得 1 个号码</text>
+      </view>
+      <view class="rule-item">
+        <text class="rule-dot">·</text>
+        <text class="rule-text">完成平台交易（二手/跑腿）达标可额外获得号码</text>
+      </view>
+      <view class="rule-item">
+        <text class="rule-dot">·</text>
+        <text class="rule-text">付费发布帖子可获得号码</text>
+      </view>
+    </view>
+
+    <!-- 奖品列表 -->
+    <view class="info-card">
+      <text class="section-title">奖品列表</text>
+      <view class="prize-item" wx:for="{{activity.prizes}}" wx:key="id">
+        <view class="prize-left">
+          <text class="prize-level">{{item.level}}（{{item.quantity}}份）</text>
+          <text class="prize-desc text-secondary">{{item.description}}</text>
+        </view>
+        <view wx:if="{{activity.status === 1}}" class="prize-right">
+          <text wx:if="{{item.winningCode}}" class="winning-code">{{item.winningCode}}</text>
+          <text wx:if="{{item.winnerUserId}}" class="winner-label tag-green">已有人获奖</text>
+          <text wx:elif="{{item.winningCode}}" class="winner-label tag-gray">号码无人持有</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 我的号码 -->
+    <view class="info-card">
+      <text class="section-title">我的号码（{{myTickets.length}} 个）</text>
+      <view wx:if="{{myTickets.length === 0}}" class="no-ticket">
+        <text class="text-secondary">暂无号码，邀请好友获取</text>
+      </view>
+      <view class="ticket-grid" wx:else>
+        <view class="ticket-item" wx:for="{{myTickets}}" wx:key="id">
+          <text class="ticket-code">{{item.code}}</text>
+          <text class="ticket-source text-secondary">{{item.sourceLabel}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="list-bottom"></view>
+    </block>
+  </scroll-view>
+
+  <!-- 底部邀请按钮（活动进行中） -->
+  <view wx:if="{{activity.status === 0}}" class="bottom-bar" style="padding-bottom: calc({{safeAreaBottom}}px + 20rpx);">
+    <view class="invite-code-row">
+      <text class="invite-label">我的邀请码</text>
+      <text class="invite-code">{{inviteCode}}</text>
+      <view class="btn-copy" bindtap="onCopyCode">复制</view>
+    </view>
+    <view class="btn-submit" bindtap="onShareInvite">邀请好友，获取抽奖号码</view>
+  </view>
+</view>

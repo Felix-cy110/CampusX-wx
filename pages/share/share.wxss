@@ -1,0 +1,157 @@
+.page-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+}
+
+.overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.share-panel {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: var(--color-bg-white);
+  border-radius: 24rpx 24rpx 0 0;
+  padding: 32rpx 24rpx;
+  padding-bottom: calc(env(safe-area-inset-bottom) + 24rpx);
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+/* 面板标题 */
+.panel-header {
+  text-align: center;
+  margin-bottom: 20rpx;
+}
+
+.panel-title {
+  font-size: var(--font-md);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+/* 用户列表 */
+.user-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+  margin-bottom: 28rpx;
+  padding-bottom: 24rpx;
+  border-bottom: 1rpx solid var(--color-border-light);
+}
+
+.user-item {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+}
+
+.user-avatar {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 50%;
+  background-color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.avatar-text {
+  color: #FFFFFF;
+  font-size: var(--font-md);
+  font-weight: 600;
+}
+
+.user-name {
+  flex: 1;
+  font-size: var(--font-md);
+  color: var(--color-text);
+}
+
+.share-to-btn {
+  padding: 10rpx 28rpx;
+  background-color: var(--color-primary);
+  border-radius: 28rpx;
+}
+
+.share-to-btn text {
+  font-size: var(--font-sm);
+  color: #FFFFFF;
+  font-weight: 500;
+}
+
+/* 分享操作 */
+.share-section {
+  margin-bottom: 20rpx;
+}
+
+.share-section-title {
+  font-size: var(--font-sm);
+  color: var(--color-text-secondary);
+  margin-bottom: 24rpx;
+  display: block;
+}
+
+.share-actions {
+  display: flex;
+  justify-content: space-around;
+  padding: 8rpx 0;
+}
+
+.action-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.action-icon-wrap {
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: 24rpx;
+  background-color: var(--color-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.action-icon {
+  font-size: 40rpx;
+}
+
+.action-name {
+  font-size: var(--font-xs);
+  color: var(--color-text-secondary);
+}
+
+/* 取消按钮 */
+.cancel-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 88rpx;
+  background-color: var(--color-bg);
+  border-radius: var(--radius-md);
+  margin-top: 12rpx;
+}
+
+.cancel-btn text {
+  font-size: var(--font-md);
+  color: var(--color-text-secondary);
+}

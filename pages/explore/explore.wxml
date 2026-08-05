@@ -1,0 +1,31 @@
+<!-- 探索页 -->
+<view class="page">
+  <!-- 未加入学校 -->
+  <view class="not-joined" wx:if="{{!isJoinedSchool}}">
+    <text class="not-joined-text">尚未加入学校\n请前往主页加入学校</text>
+  </view>
+
+  <block wx:else>
+    <!-- 固定顶部：状态栏 + 导航栏 -->
+    <view class="fixed-header">
+      <view class="status-bar-placeholder" style="height: {{statusBarHeight}}px;"></view>
+      <view class="explore-nav-bar" style="height: {{navBarHeight}}px;">
+        <text class="explore-title">活动</text>
+      </view>
+    </view>
+
+    <!-- 可滚动内容 -->
+    <scroll-view class="page-content" scroll-y enhanced scroll-top="{{_scrollTop}}" show-scrollbar="{{false}}">
+      <view class="entry-list">
+        <view class="entry-item" bindtap="onTapBookPreorder">
+          <text class="entry-item-text">图书预购</text>
+          <text class="entry-item-arrow">›</text>
+        </view>
+        <view class="entry-item" bindtap="onTapInvite">
+          <text class="entry-item-text">邀请新人有奖</text>
+          <text class="entry-item-arrow">›</text>
+        </view>
+      </view>
+    </scroll-view>
+  </block>
+</view>

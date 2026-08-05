@@ -1,0 +1,104 @@
+<view class="page">
+  <view class="status-bar-placeholder" style="height: {{statusBarHeight}}px;"></view>
+  <view class="nav-bar" style="height: {{navBarHeight}}px;">
+    <image class="nav-back" src="/images/SVG/返回.svg" mode="aspectFit" bindtap="navigateBack"></image>
+    <text class="nav-title">预购详情</text>
+    <view class="nav-placeholder"></view>
+  </view>
+
+  <scroll-view class="content" scroll-y enhanced show-scrollbar="{{false}}">
+    <!-- 书籍信息 -->
+    <view class="book-card">
+      <view class="book-info">
+        <text class="book-name">{{presale.bookName}}</text>
+        <text class="book-meta text-secondary">{{presale.author}} · {{presale.publisher}}</text>
+        <text class="book-meta text-secondary">ISBN: {{presale.isbn}}</text>
+        <view class="price-block">
+          <text class="price-main">¥{{presale.price}}</text>
+          <text class="price-sub text-secondary">定金 ¥{{presale.depositAmount}} · 尾款 ¥{{presale.finalAmount}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 活动信息 -->
+    <view class="info-card">
+      <view class="info-row">
+        <text class="info-label">活动状态</text>
+        <view class="status-tag {{presale.status === 1 ? 'tag-green' : 'tag-gray'}}">
+          <text>{{presale.status === 1 ? '进行中' : '已结束'}}</text>
+        </view>
+      </view>
+      <view class="info-row">
+        <text class="info-label">预购时间</text>
+        <text class="info-value">{{presale.startTime}} — {{presale.endTime}}</text>
+      </view>
+      <view class="info-row">
+        <text class="info-label">已预订</text>
+        <text class="info-value">{{presale.orderedCount}} 本</text>
+      </view>
+      <view class="info-row">
+        <text class="info-label">库存</text>
+        <text class="info-value">{{presale.stock > 0 ? presale.stock + ' 本' : '不限量'}}</text>
+      </view>
+      <view class="info-row" wx:if="{{presale.remark}}">
+        <text class="info-label">备注</text>
+        <text class="info-value">{{presale.remark}}</text>
+      </view>
+    </view>
+
+    <!-- 付款说明 -->
+    <view class="info-card">
+      <text class="section-title">付款说明</text>
+      <text class="desc-text">预购采用两阶段付款：下单时支付定金（总价40%），活动结束后支付尾款（总价60%）。取消订单时定金不退；若活动方取消，退还全款。</text>
+    </view>
+
+    <!-- 我的订单 -->
+    <view class="info-card" wx:if="{{myOrder}}">
+      <text class="section-title">我的订单</text>
+      <view class="order-no-row">
+        <text class="info-label">订单号</text>
+        <text class="info-value order-no">{{myOrder.orderNo}}</text>
+      </view>
+      <view class="info-row">
+        <text class="info-label">购买数量</text>
+        <text class="info-value">{{myOrder.quantity}} 本</text>
+      </view>
+      <view class="info-row">
+        <text class="info-label">应付总额</text>
+        <text class="info-value price-text">¥{{myOrder.totalAmount}}</text>
+      </view>
+      <view class="info-row">
+        <text class="info-label">订单状态</text>
+        <text class="info-value {{myOrder.statusColor}}">{{myOrder.statusLabel}}</text>
+      </view>
+      <view class="info-row" wx:if="{{myOrder.status === 1}}">
+        <text class="info-label">尾款截止</text>
+        <text class="info-value">{{myOrder.finalPayDeadline}}</text>
+      </view>
+      <!-- 操作按钮 -->
+      <view class="order-actions">
+        <view wx:if="{{myOrder.status === 0}}" class="btn-action btn-primary-outline" bindtap="onPayDeposit">支付定金 ¥{{myOrder.depositAmount}}</view>
+        <view wx:if="{{myOrder.status === 1}}" class="btn-action btn-primary-outline" bindtap="onPayFinal">支付尾款 ¥{{myOrder.finalAmount}}</view>
+        <view wx:if="{{myOrder.status === 0 || myOrder.status === 1}}" class="btn-action btn-cancel" bindtap="onCancelOrder">取消订单</view>
+      </view>
+    </view>
+
+    <view class="list-bottom"></view>
+  </scroll-view>
+
+  <!-- 底部下单栏（无订单且活动进行中） -->
+  <view wx:if="{{!myOrder && presale.status === 1}}" class="bottom-bar" style="padding-bottom: calc({{safeAreaBottom}}px + 20rpx);">
+    <view class="quantity-row">
+      <text class="quantity-label">数量</text>
+      <view class="quantity-ctrl">
+        <view class="qty-btn" bindtap="decreaseQty">−</view>
+        <text class="qty-num">{{quantity}}</text>
+        <view class="qty-btn" bindtap="increaseQty">+</view>
+      </view>
+      <text class="total-price">¥{{totalPrice}}</text>
+    </view>
+    <view class="btn-submit" bindtap="onSubmitOrder">
+      <text>预购 · 先付定金 ¥{{depositPrice}}</text>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,208 @@
+.page {
+  min-height: 100vh;
+  background: var(--color-bg);
+  display: flex;
+  flex-direction: column;
+}
+
+.fixed-header {
+  background: var(--color-bg-white);
+  flex-shrink: 0;
+}
+
+.status-bar-placeholder {
+  width: 100%;
+  background: var(--color-bg-white);
+}
+
+/* 导航栏 */
+.nav-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20rpx;
+  background: var(--color-bg-white);
+  border-bottom: 1rpx solid var(--color-border-light);
+  box-sizing: border-box;
+}
+
+.nav-back {
+  width: 80rpx;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-back-icon {
+  width: 40rpx;
+  height: 40rpx;
+}
+
+.nav-title {
+  font-size: var(--font-lg);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.nav-placeholder {
+  width: 80rpx;
+}
+
+.form-scroll {
+  flex: 1;
+  background: var(--color-bg-white);
+}
+
+.form-card {
+  padding: 20rpx 24rpx;
+  background: var(--color-bg-white);
+}
+
+/* 输入框容器 */
+.input-wrap {
+  background: var(--color-bg);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  margin-bottom: 16rpx;
+}
+
+.form-input {
+  width: 100%;
+  height: 76rpx;
+  padding: 0 20rpx;
+  font-size: var(--font-base);
+  color: var(--color-text);
+  box-sizing: border-box;
+}
+
+.input-placeholder {
+  color: var(--color-text-secondary);
+  font-size: var(--font-base);
+}
+
+/* 时间选择器 */
+.time-row {
+  display: flex;
+  gap: 16rpx;
+  margin-bottom: 16rpx;
+}
+
+.time-picker {
+  flex: 1;
+}
+
+.time-picker-box {
+  padding: 18rpx 20rpx;
+  background: var(--color-bg);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-base);
+  color: var(--color-text);
+}
+
+.picker-placeholder {
+  color: var(--color-text-secondary);
+}
+
+/* 上课地点 - 三个输入框同行 */
+.location-row {
+  display: flex;
+  gap: 12rpx;
+  margin-bottom: 16rpx;
+}
+
+.location-input {
+  flex: 1;
+  height: 76rpx;
+  padding: 0 16rpx;
+  background: var(--color-bg);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-base);
+  color: var(--color-text);
+  box-sizing: border-box;
+}
+
+/* 备注 */
+.textarea-wrap {
+  background: var(--color-bg);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  padding: 16rpx 20rpx;
+}
+
+.form-textarea {
+  width: 100%;
+  min-height: 120rpx;
+  font-size: var(--font-base);
+  color: var(--color-text);
+}
+
+.char-count {
+  text-align: right;
+  font-size: var(--font-xs);
+  color: var(--color-text-secondary);
+  margin: 8rpx 0 16rpx;
+}
+
+/* 仅限本校开关 */
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20rpx 0;
+  font-size: var(--font-base);
+  color: var(--color-text);
+}
+
+.toggle-switch {
+  width: 80rpx;
+  height: 44rpx;
+  border-radius: 22rpx;
+  background: var(--color-border-light);
+  position: relative;
+  transition: background 0.2s;
+}
+
+.toggle-switch.on {
+  background: var(--color-primary);
+}
+
+.toggle-knob {
+  width: 36rpx;
+  height: 36rpx;
+  border-radius: 18rpx;
+  background: #fff;
+  position: absolute;
+  top: 4rpx;
+  left: 4rpx;
+  transition: left 0.2s;
+}
+
+.toggle-knob.on {
+  left: 40rpx;
+}
+
+/* 提交按钮 */
+.submit-area {
+  padding: 0 24rpx;
+}
+
+.submit-btn {
+  width: 100%;
+  height: 80rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-lg);
+  font-weight: 600;
+  border-radius: var(--radius-md);
+}
+
+.submit-btn.disabled {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.safe-bottom-spacer {
+  height: calc(env(safe-area-inset-bottom) + 24rpx);
+}

@@ -1,0 +1,50 @@
+<view class="page">
+  <view class="fixed-header">
+    <view class="status-bar-placeholder" style="height: {{statusBarHeight}}px;"></view>
+    <view class="nav-bar" style="height: {{navBarHeight}}px;">
+      <view class="nav-back" bindtap="goBack">
+        <image class="nav-back-icon" src="/images/SVG/返回.svg" mode="aspectFit"></image>
+      </view>
+      <text class="nav-title">申请新增教师</text>
+      <view class="nav-placeholder"></view>
+    </view>
+  </view>
+
+  <scroll-view class="form-scroll" scroll-y enhanced show-scrollbar="{{false}}">
+    <view class="form-card">
+      <view class="section">
+        <view class="section-title">教师姓名<text class="required">*</text></view>
+        <view class="input-wrap">
+          <input
+            class="form-input"
+            placeholder="请输入要添加的教师姓名"
+            placeholder-class="input-placeholder"
+            value="{{teacherName}}"
+            bindinput="onTeacherNameInput"
+          />
+        </view>
+      </view>
+
+      <view class="section">
+        <view class="section-title">课程名称</view>
+        <view class="input-wrap">
+          <input
+            class="form-input"
+            placeholder="请输入课程名称（选填）"
+            placeholder-class="input-placeholder"
+            value="{{courseName}}"
+            bindinput="onCourseNameInput"
+          />
+        </view>
+      </view>
+    </view>
+
+    <view class="submit-area">
+      <view class="btn btn-primary submit-btn {{submitting ? 'btn-disabled' : ''}}" bindtap="onSubmit">
+        <text>{{submitting ? '提交中...' : '提交申请'}}</text>
+      </view>
+    </view>
+
+    <view class="safe-bottom-spacer"></view>
+  </scroll-view>
+</view>

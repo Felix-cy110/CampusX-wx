@@ -1,0 +1,101 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/explore/explore",
+    "pages/inbox/inbox",
+    "pages/profile/profile",
+    "pages/login/login",
+    "pages/wechat-auth/wechat-auth",
+    "pages/complete-info/complete-info",
+    "pages/select-school/select-school",
+    "pages/select-major/select-major",
+    "pages/post-detail/post-detail",
+    "pages/user-home/user-home",
+    "pages/market-detail/market-detail",
+    "pages/team-detail/team-detail",
+    "pages/rating-detail/rating-detail",
+
+    "pages/publish-post/publish-post",
+    "pages/publish-errand/publish-errand",
+    "pages/errand-detail/errand-detail",
+    "pages/publish-rating/publish-rating",
+    "pages/teacher-ratings/teacher-ratings",
+    "pages/apply-teacher/apply-teacher",
+    "pages/school-appeal/school-appeal",
+    "pages/chat/chat",
+    "pages/search/search",
+    "pages/search-result/search-result",
+    "pages/order/order",
+    "pages/recharge/recharge",
+    "pages/recharge-success/recharge-success",
+    "pages/complaint/complaint",
+    "pages/edit-profile/edit-profile",
+    "pages/my-market/my-market",
+    "pages/my-booklist/my-booklist",
+    "pages/following/following",
+    "pages/followers/followers",
+    "pages/liked/liked",
+    "pages/purchased/purchased",
+    "pages/order-detail/order-detail",
+    "pages/share/share",
+    "pages/address/address",
+    "pages/address-form/address-form",
+    "pages/filter/filter",
+    "pages/exit-school/exit-school",
+    "pages/more-options/more-options",
+    "pages/published/published",
+    "pages/comments/comments",
+    "pages/system-msg/system-msg",
+    "pages/book-preorder/book-preorder",
+    "pages/book-preorder-detail/book-preorder-detail",
+    "pages/invite/invite",
+    "pages/invite-detail/invite-detail"
+  ],
+  "window": {
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "CampusX",
+    "navigationBarBackgroundColor": "#FFFFFF",
+    "backgroundColor": "#F5F5F5"
+  },
+  "tabBar": {
+    "custom": true,
+    "color": "#A6A6A6",
+    "selectedColor": "#255AC5",
+    "backgroundColor": "#FFFFFF",
+    "borderStyle": "white",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "text": "主页",
+        "iconPath": "images/tab-home.png",
+        "selectedIconPath": "images/tab-home-active.png"
+      },
+      {
+        "pagePath": "pages/explore/explore",
+        "text": "探索",
+        "iconPath": "images/tab-explore.png",
+        "selectedIconPath": "images/tab-explore-active.png"
+      },
+      {
+        "pagePath": "pages/inbox/inbox",
+        "text": "收件箱",
+        "iconPath": "images/tab-inbox.png",
+        "selectedIconPath": "images/tab-inbox-active.png"
+      },
+      {
+        "pagePath": "pages/profile/profile",
+        "text": "个人资料",
+        "iconPath": "images/tab-profile.png",
+        "selectedIconPath": "images/tab-profile-active.png"
+      }
+    ]
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json",
+  "networkTimeout": {
+    "request": 60000,
+    "connectSocket": 60000,
+    "uploadFile": 60000,
+    "downloadFile": 60000
+  }
+}

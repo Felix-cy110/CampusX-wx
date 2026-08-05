@@ -1,0 +1,69 @@
+<!-- 编辑资料 -->
+<view class="page">
+  <view style="height: {{statusBarHeight}}px;"></view>
+  <view class="custom-nav" style="height: {{navBarHeight}}px;">
+    <image class="nav-back" src="/images/SVG/返回.svg" mode="aspectFit" bindtap="onBack"></image>
+    <text class="nav-title">编辑资料</text>
+    <view class="nav-placeholder"></view>
+  </view>
+  <!-- 头像 -->
+  <view class="section">
+    <view class="section-header">
+      <text>头像</text>
+    </view>
+    <view class="avatar-area" bindtap="onChooseAvatar">
+      <image class="avatar-lg" src="{{avatar}}" mode="aspectFill" wx:if="{{avatar}}"></image>
+      <view class="avatar-placeholder avatar-lg" wx:else></view>
+      <text class="text-xs text-secondary mt-10">点击更换头像</text>
+    </view>
+  </view>
+
+  <!-- 表单区域 -->
+  <view class="form-section">
+    <!-- 昵称 -->
+    <view class="form-item">
+      <text class="form-label">昵称</text>
+      <input class="form-input" value="{{nickname}}" placeholder="请输入昵称" bindinput="onInputNickname" />
+    </view>
+
+    <!-- 入学时间 -->
+    <view class="form-item">
+      <text class="form-label">入学时间</text>
+      <picker mode="selector" range="{{years}}" value="{{yearIndex}}" bindchange="onSelectYear" class="form-picker">
+        <view class="form-picker">
+          <text class="{{enrollmentYear ? '' : 'text-secondary'}}">{{enrollmentYear || '请选择入学时间'}}</text>
+          <text class="text-secondary">></text>
+        </view>
+      </picker>
+    </view>
+
+    <!-- 选择高校 -->
+    <view class="form-item" bindtap="onSelectSchool">
+      <text class="form-label">选择高校</text>
+      <view class="form-picker">
+        <text>{{school}}</text>
+        <text class="text-secondary">></text>
+      </view>
+    </view>
+
+    <!-- 选择专业 -->
+    <view class="form-item" bindtap="onSelectMajor">
+      <text class="form-label">选择专业</text>
+      <view class="form-picker">
+        <text>{{major}}</text>
+        <text class="text-secondary">></text>
+      </view>
+    </view>
+
+    <!-- 手机号 -->
+    <view class="form-item">
+      <text class="form-label">手机号</text>
+      <input class="form-input" value="{{phone}}" type="number" placeholder="请输入手机号" bindinput="onInputPhone" />
+    </view>
+  </view>
+
+  <!-- 保存按钮 -->
+  <view class="save-area">
+    <view class="btn btn-primary" bindtap="onSave">保存</view>
+  </view>
+</view>

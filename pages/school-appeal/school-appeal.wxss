@@ -1,0 +1,160 @@
+.page {
+  min-height: 100vh;
+  background: #FFFFFF;
+  padding: 48rpx 30rpx 30rpx;
+  box-sizing: border-box;
+}
+
+/* 输入原因 */
+.reason-section {
+  position: relative;
+  margin-bottom: 30rpx;
+}
+
+.reason-textarea {
+  width: 100%;
+  min-height: 280rpx;
+  background: #F2F2F2;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  font-size: 28rpx;
+  color: #333333;
+  box-sizing: border-box;
+}
+
+.placeholder {
+  color: #999999;
+  font-size: 28rpx;
+}
+
+.char-count {
+  position: absolute;
+  right: 24rpx;
+  bottom: 24rpx;
+  font-size: 24rpx;
+  color: #999999;
+}
+
+/* 上传证件 */
+.upload-section {
+  margin-bottom: 30rpx;
+}
+
+.upload-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20rpx;
+  margin-bottom: 16rpx;
+}
+
+.upload-item {
+  position: relative;
+  width: 160rpx;
+  height: 160rpx;
+  border-radius: 16rpx;
+  overflow: hidden;
+  background: #F2F2F2;
+}
+
+.uploaded-img {
+  width: 100%;
+  height: 100%;
+}
+
+.img-remove {
+  position: absolute;
+  top: 8rpx;
+  right: 8rpx;
+  width: 36rpx;
+  height: 36rpx;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #FFFFFF;
+  font-size: 28rpx;
+  line-height: 1;
+}
+
+.upload-add {
+  width: 160rpx;
+  height: 160rpx;
+  border-radius: 16rpx;
+  background: #F2F2F2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.add-icon {
+  font-size: 48rpx;
+  color: #999999;
+}
+
+.upload-tip {
+  font-size: 24rpx;
+  color: #999999;
+  line-height: 1.6;
+}
+
+.upload-tip-highlight {
+  color: #FF6B6B;
+}
+
+/* 选择高校 / 选择专业 */
+.picker-section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24rpx;
+}
+
+.picker-label {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #333333;
+  flex-shrink: 0;
+  margin-right: 24rpx;
+}
+
+.picker-value-box {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #F2F2F2;
+  border-radius: 12rpx;
+  padding: 20rpx 24rpx;
+}
+
+.picker-value {
+  font-size: 28rpx;
+  color: #333333;
+}
+
+.picker-arrow {
+  font-size: 24rpx;
+  color: #999999;
+  margin-left: 16rpx;
+}
+
+/* 提交按钮 */
+.submit-area {
+  display: flex;
+  justify-content: center;
+  margin-top: 80rpx;
+}
+
+.submit-btn {
+  width: 60%;
+  height: 88rpx;
+  background: #AAAAAA;
+  border-radius: 44rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32rpx;
+  color: #FFFFFF;
+  font-weight: 500;
+}
