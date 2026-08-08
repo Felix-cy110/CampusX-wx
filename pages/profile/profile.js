@@ -561,19 +561,39 @@ Page({
     wx.showToast({ title: post && post.isPrivate ? '已设置为私密' : '已取消私密', icon: 'success' })
   },
 
-  /* 切换置顶状态（仅为管理员提供，暂为本地状态） */
+  /* 切换置顶状态 */
   onSetPinned() {
     const id = this.data.selectedPostId
+    const that = this
     this.hidePostOptions()
-    const list = this.data.filteredContentList.map(item => {
-      if (String(item.id) === String(id)) {
-        return { ...item, pinned: !item.pinned }
-      }
-      return item
-    })
-    this.setData({ filteredContentList: list })
-    const post = list.find(item => String(item.id) === String(id))
-    wx.showToast({ title: post && post.pinned ? '已置顶' : '已取消置顶', icon: 'success' })
+
+    const item = this.data.filteredContentList.find(item => String(item.id) === String(id))
+    if (!item || item._backendType !== 'post') {
+      wx.showToast({ title: '仅支持帖子置顶', icon: 'none' })
+      return
+    }
+
+    const backendId = item._backendId
+    const newPinned = !item.pinned
+
+    wx.showLoading({ title: newPinned ? '置顶中...' : '取消置顶...' })
+    request({ url: '/api/post/' + backendId + '/top', method: 'POST' })
+      .then(() => {
+        wx.hideLoading()
+        const list = that.data.filteredContentList.map(i => {
+          if (String(i.id) === String(id)) {
+            return { ...i, pinned: newPinned }
+          }
+          return i
+        })
+        that.setData({ filteredContentList: list })
+        wx.showToast({ title: newPinned ? '已置顶' : '已取消置顶', icon: 'success' })
+      })
+      .catch(err => {
+        wx.hideLoading()
+        console.error('置顶操作失败:', err)
+        wx.showToast({ title: (err && err.message) || '操作失败', icon: 'none' })
+      })
   },
 
   /* 分享给互关好友 */
