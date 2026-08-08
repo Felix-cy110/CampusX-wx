@@ -461,6 +461,14 @@ function mapConversation(vo) {
 function formatLastMessage(msg, msgType) {
   if (msgType === 3) return '消息已撤回'
   if (msgType === 2) return '[图片]'
+  if (msgType === 4) {
+    try {
+      var data = JSON.parse(msg || '{}')
+      return data.title || '分享了一条帖子'
+    } catch (e) {
+      return '分享了一条帖子'
+    }
+  }
   return msg || ''
 }
 
