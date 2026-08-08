@@ -576,8 +576,62 @@ Page({
   /* 分享给互关好友 */
   onShareToFriends() {
     const id = this.data.selectedPostId
+    const that = this
     this.hidePostOptions()
-    wx.showToast({ title: '分享功能开发中', icon: 'none' })
+
+    const item = this.data.filteredContentList.find(item => String(item.id) === String(id))
+    if (!item || item._backendType !== 'post') {
+      wx.showToast({ title: '仅支持分享帖子', icon: 'none' })
+      return
+    }
+
+    const backendId = item._backendId
+
+    // 先获取互关好友列表
+    wx.showLoading({ title: '加载好友...' })
+    request({ url: '/api/v1/follow/mutual', data: { limit: 50 } })
+      .then(friends => {
+        wx.hideLoading()
+        if (!friends || friends.length === 0) {
+          wx.showToast({ title: '暂无互关好友', icon: 'none' })
+          return
+        }
+
+        // 用 actionSheet 展示好友列表
+        const names = friends.slice(0, 6).map(f => f.nickname || '用户' + f.userId)
+        if (friends.length > 6) {
+          names.push('更多好友...')
+        }
+
+        wx.showActionSheet({
+          itemList: names,
+          success(res) {
+            const index = res.tapIndex
+            if (index >= friends.length) {
+              wx.showToast({ title: '请前往关注列表选择', icon: 'none' })
+              return
+            }
+            const friend = friends[index]
+            wx.showLoading({ title: '分享中...' })
+            request({
+              url: '/api/post/' + backendId + '/share/' + friend.userId,
+              method: 'POST'
+            }).then(() => {
+              wx.hideLoading()
+              wx.showToast({ title: '已分享给' + friend.nickname, icon: 'success' })
+            }).catch(err => {
+              wx.hideLoading()
+              console.error('分享失败:', err)
+              wx.showToast({ title: (err && err.message) || '分享失败', icon: 'none' })
+            })
+          }
+        })
+      })
+      .catch(err => {
+        wx.hideLoading()
+        console.error('获取互关好友失败:', err)
+        wx.showToast({ title: '获取好友列表失败', icon: 'none' })
+      })
   },
 
   /* 分享给微信好友 */

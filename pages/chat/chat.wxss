@@ -261,6 +261,28 @@
   box-shadow: var(--shadow-sm);
 }
 
+.link-card-me {
+  background: var(--color-primary);
+  border-top-left-radius: 16rpx;
+  border-top-right-radius: 4rpx;
+}
+
+.link-card-me .link-title {
+  color: #FFFFFF;
+}
+
+.link-card-me .link-desc {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.link-card-me .link-footer {
+  border-top-color: rgba(255, 255, 255, 0.2);
+}
+
+.link-card-me .link-source {
+  color: rgba(255, 255, 255, 0.75);
+}
+
 .link-title {
   font-size: var(--font-base);
   font-weight: 600;
