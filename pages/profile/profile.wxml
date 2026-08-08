@@ -121,13 +121,10 @@
     <view class="post-list">
       <block wx:if="{{filteredContentList.length > 0}}">
         <view class="post-card {{item.pinned ? 'post-pinned' : ''}}" wx:for="{{filteredContentList}}" wx:key="id" bindtap="goToPostDetail" data-id="{{item.id}}">
-          <!-- 帖子标签：置顶 / 私密 -->
-          <view class="post-badges" wx:if="{{item.pinned || item.isPrivate}}">
+          <!-- 帖子标签：置顶 -->
+          <view class="post-badges" wx:if="{{item.pinned}}">
             <view class="post-badge badge-pinned" wx:if="{{item.pinned}}">
               <text class="badge-text">置顶</text>
-            </view>
-            <view class="post-badge badge-private" wx:if="{{item.isPrivate}}">
-              <text class="badge-text">私密</text>
             </view>
           </view>
 
@@ -206,10 +203,6 @@
           </view>
           <view class="post-option-btn btn-gray" bindtap="onSetPinned">
             <text class="option-text">{{selectedPostIsPinned ? '取消置顶' : '置顶'}}</text>
-          </view>
-          <view class="post-option-btn btn-gray" bindtap="onSetPrivate">
-            <image class="option-icon" src="/images/SVG/私密.svg" mode="aspectFit"></image>
-            <text class="option-text">{{selectedPostIsPrivate ? '取消私密' : '设置为私密'}}</text>
           </view>
           <view class="post-option-btn btn-gray" bindtap="onShareToFriends">
             <image class="option-icon" src="/images/SVG/好友.svg" mode="aspectFit"></image>
