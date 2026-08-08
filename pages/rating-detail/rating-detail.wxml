@@ -12,7 +12,7 @@
       </view>
     </view>
   </view>
-  <scroll-view class="content" scroll-y>
+  <scroll-view class="content" scroll-y style="margin-top: {{statusBarHeight + navBarHeight}}px;">
     <!-- 用户信息行：头像 + 用户名 + 时间 + 标签 + 关注按钮 -->
     <view class="user-info-row">
       <view class="user-info-left">
