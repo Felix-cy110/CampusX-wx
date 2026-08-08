@@ -1,0 +1,157 @@
+<!-- 收件箱 -->
+<view class="page">
+  <!-- 固定顶部：状态栏 + 导航栏 -->
+  <view class="fixed-header">
+    <view class="status-bar-placeholder" style="height: {{statusBarHeight}}px;"></view>
+    <view class="inbox-nav-bar" style="height: {{navBarHeight}}px;">
+      <text class="inbox-title">收件箱</text>
+      <view class="nav-actions">
+        <view class="nav-btn" bindtap="onMoreTap" hover-class="nav-btn-hover" hover-stay-time="80">
+          <text class="nav-btn-text">···</text>
+        </view>
+        <view class="nav-btn" bindtap="onSettingsTap" hover-class="nav-btn-hover" hover-stay-time="80">
+          <view class="nav-icon-target"></view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 通知分类栏 -->
+  <view class="notify-bar">
+    <view class="notify-item" hover-class="notify-item-active" hover-stay-time="80" bindtap="goToLiked">
+      <view class="notify-icon-wrap" style="background: linear-gradient(135deg, #FF7878, #FF9A9A);">
+        <image class="notify-icon-img" src="/images/SVG/收到点赞.svg" mode="aspectFit"></image>
+        <view class="notify-badge" wx:if="{{notifications.likes.count}}">
+          <text class="badge-text">{{notifications.likes.count > 99 ? '99+' : notifications.likes.count}}</text>
+        </view>
+      </view>
+      <text class="notify-label">收到点赞</text>
+    </view>
+    <view class="notify-item" hover-class="notify-item-active" hover-stay-time="80" bindtap="goToFollowers">
+      <view class="notify-icon-wrap" style="background: linear-gradient(135deg, #2A82E4, #5BA3F0);">
+        <image class="notify-icon-img" src="/images/SVG/新粉丝.svg" mode="aspectFit"></image>
+        <view class="notify-badge" wx:if="{{notifications.followers.count}}">
+          <text class="badge-text">{{notifications.followers.count > 99 ? '99+' : notifications.followers.count}}</text>
+        </view>
+      </view>
+      <text class="notify-label">新粉丝</text>
+    </view>
+    <view class="notify-item" hover-class="notify-item-active" hover-stay-time="80" bindtap="goToComments">
+      <view class="notify-icon-wrap" style="background: linear-gradient(135deg, #14B554, #45D67A);">
+        <image class="notify-icon-img" src="/images/SVG/评论和@.svg" mode="aspectFit"></image>
+        <view class="notify-badge" wx:if="{{notifications.comments.count}}">
+          <text class="badge-text">{{notifications.comments.count > 99 ? '99+' : notifications.comments.count}}</text>
+        </view>
+      </view>
+      <text class="notify-label">评论和@</text>
+    </view>
+    <view class="notify-item" hover-class="notify-item-active" hover-stay-time="80" bindtap="goToSystemMsg">
+      <view class="notify-icon-wrap" style="background: linear-gradient(135deg, #FFC300, #FFD966);">
+        <image class="notify-icon-img" src="/images/SVG/系统消息.svg" mode="aspectFit"></image>
+        <view class="notify-badge" wx:if="{{notifications.system.count}}">
+          <text class="badge-text">{{notifications.system.count > 99 ? '99+' : notifications.system.count}}</text>
+        </view>
+      </view>
+      <text class="notify-label">系统消息</text>
+    </view>
+  </view>
+
+  <!-- 子 tab：互关/临时会话 -->
+  <view class="sub-tabs">
+    <view class="sub-tab-item {{chatTab === 'friend' ? 'active' : ''}}" bindtap="switchChatTab" data-tab="friend">
+      <text class="sub-tab-text">互关</text>
+      <view class="sub-tab-indicator" wx:if="{{chatTab === 'friend'}}"></view>
+    </view>
+    <view class="sub-tab-item {{chatTab === 'temp' ? 'active' : ''}}" bindtap="switchChatTab" data-tab="temp">
+      <text class="sub-tab-text">临时会话</text>
+      <view class="sub-tab-indicator" wx:if="{{chatTab === 'temp'}}"></view>
+    </view>
+  </view>
+
+  <!-- 可滚动聊天列表 -->
+  <scroll-view
+    class="page-content"
+    scroll-y
+    enhanced
+    refresher-enabled
+    refresher-default-style="black"
+    refresher-triggered="{{refreshing}}"
+    bindrefresherrefresh="onRefresh"
+    bindrefresherpulling="onPulling"
+    bindscroll="onScroll"
+    scroll-top="{{_scrollTop}}"
+    show-scrollbar="{{false}}"
+  >
+    <!-- 骨架加载 -->
+    <view class="skeleton-list" wx:if="{{loading}}">
+      <view class="skeleton-item" wx:for="{{4}}" wx:key="*this">
+        <view class="skeleton-avatar"></view>
+        <view class="skeleton-content">
+          <view class="skeleton-line skeleton-line-short"></view>
+          <view class="skeleton-line skeleton-line-long"></view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 会话列表 -->
+    <view class="chat-list" wx:elif="{{filteredConversations.length > 0}}">
+      <view
+        class="swipe-container"
+        wx:for="{{filteredConversations}}"
+        wx:key="id"
+        data-index="{{index}}"
+      >
+        <!-- 删除按钮（隐藏在右侧） -->
+        <view class="swipe-delete" bindtap="deleteConversation" data-index="{{index}}">
+          <text class="swipe-delete-text">删除</text>
+        </view>
+
+        <!-- 可滑动的内容 -->
+        <view
+          class="chat-item {{swipeIndex === index ? 'swiping' : ''}}"
+          style="transform: translateX({{swipeIndex === index ? swipeOffset : 0}}px); transition: {{isDragging ? 'none' : 'transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)'}}"
+          bindtouchstart="onTouchStart"
+          bindtouchmove="onTouchMove"
+          bindtouchend="onTouchEnd"
+          catchtap="goToChat"
+          data-conv-id="{{item.conversationId}}"
+          data-user-id="{{item.otherUserId}}"
+          data-name="{{item.name}}"
+          data-avatar="{{item.avatar}}"
+          data-order-id="{{item.orderId}}"
+          data-order-type="{{item.orderType}}"
+          data-unread="{{item.unread}}"
+        >
+          <!-- 未读圆点 -->
+          <view class="unread-dot" wx:if="{{item.unread > 0}}"></view>
+
+          <image class="chat-avatar" src="{{item.avatar}}" mode="aspectFill"></image>
+          <view class="chat-info">
+            <view class="chat-info-top">
+              <text class="chat-name">{{item.name}}</text>
+              <text class="chat-time">{{item.time}}</text>
+            </view>
+            <view class="chat-bottom">
+              <text class="chat-msg ellipsis">{{item.lastMsg}}</text>
+              <view class="chat-badge" wx:if="{{item.unread > 0}}">{{item.unread > 99 ? '99+' : item.unread}}</view>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 空状态 -->
+    <view class="empty-state" wx:elif="{{!loading}}">
+      <view class="empty-icon-wrap">
+        <image class="empty-icon" src="/images/SVG/chat.svg" mode="aspectFit"></image>
+      </view>
+      <text class="empty-title">暂无会话</text>
+      <text class="empty-desc">去首页发现有趣的人，开启对话吧</text>
+    </view>
+  </scroll-view>
+
+  <!-- 回到顶部按钮 -->
+  <view class="scroll-top-btn {{showScrollTop ? 'visible' : ''}}" bindtap="scrollToTop">
+    <text class="scroll-top-arrow">↑</text>
+  </view>
+</view>

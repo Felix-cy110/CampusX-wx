@@ -1,0 +1,303 @@
+const app = getApp()
+const { request, BASE_URL, toFullUrl } = require('../../utils/request')
+
+Page({
+  data: {
+    avatar: '',              // 显示用的头像 URL
+    avatarTempPath: '',      // 本地临时路径（新选择的头像）
+    avatarChanged: false,    // 头像是否变更
+    userId: '',
+    nickname: '',
+    enrollmentYear: '',
+    schoolId: null,
+    school: '',
+    majorId: null,
+    major: '',
+    departmentId: null,
+    department: '',
+    schoolChanged: false,    // 学校/专业是否变更
+    phone: '',
+    years: [],
+    yearIndex: 0,
+    statusBarHeight: 0,
+    navBarHeight: 0
+  },
+
+  onLoad() {
+    const systemInfo = wx.getSystemInfoSync()
+    const menuButton = wx.getMenuButtonBoundingClientRect()
+    this.setData({
+      statusBarHeight: systemInfo.statusBarHeight,
+      navBarHeight: (menuButton.top - systemInfo.statusBarHeight) * 2 + menuButton.height
+    })
+
+    const currentYear = new Date().getFullYear()
+    const years = []
+    for (let y = currentYear; y >= currentYear - 10; y--) {
+      years.push(String(y))
+    }
+
+    // 先从全局数据读取显示，同时请求最新数据
+    const cached = app.globalData.userInfo || {}
+    const enrollmentYear = cached.enrollYear || ''
+    const yearIndex = years.indexOf(String(enrollmentYear))
+
+    this.setData({
+      years,
+      yearIndex: yearIndex >= 0 ? yearIndex : 0,
+      avatar: cached.avatar || '',
+      nickname: cached.nickname || '',
+      userId: cached.uid || '',
+      enrollmentYear: enrollmentYear,
+      schoolId: cached.campusId || null,
+      school: cached.school || '',
+      majorId: cached.majorId || null,
+      major: cached.major || '',
+      departmentId: cached.departmentId || null,
+      department: cached.department || '',
+      phone: cached.phone || ''
+    })
+
+    // 从后端获取最新数据
+    this.fetchUserInfo()
+  },
+
+  onShow() {
+    // 从 storage 读取选择高校的结果
+    const selectedSchool = wx.getStorageSync('selectedSchool')
+    if (selectedSchool) {
+      try {
+        const school = JSON.parse(selectedSchool)
+        this.setData({
+          schoolId: school.id,
+          school: school.name,
+          schoolChanged: true
+        })
+        wx.removeStorageSync('selectedSchool')
+      } catch (e) {
+        console.error('解析学校数据失败:', e)
+      }
+    }
+
+    // 从 storage 读取选择专业的结果
+    const selectedMajor = wx.getStorageSync('selectedMajor')
+    if (selectedMajor) {
+      try {
+        const major = JSON.parse(selectedMajor)
+        this.setData({
+          departmentId: major.departmentId,
+          department: major.departmentName,
+          majorId: major.majorId,
+          major: major.majorName,
+          schoolChanged: true
+        })
+        wx.removeStorageSync('selectedMajor')
+      } catch (e) {
+        console.error('解析专业数据失败:', e)
+      }
+    }
+  },
+
+  // 从后端获取最新用户信息
+  fetchUserInfo() {
+    request({
+      url: '/api/v1/user/me',
+      method: 'GET'
+    }).then(vo => {
+      const years = this.data.years
+      const enrollmentYear = vo.enrollmentYear || ''
+      const yearIndex = years.indexOf(String(enrollmentYear))
+
+      this.setData({
+        avatar: toFullUrl(vo.avatarUrl) || '',
+        nickname: vo.nickname || '',
+        userId: String(vo.userId),
+        enrollmentYear: enrollmentYear || '',
+        yearIndex: yearIndex >= 0 ? yearIndex : 0,
+        schoolId: vo.campusId,
+        school: vo.campusName || '',
+        majorId: vo.majorId,
+        major: vo.majorName || '',
+        departmentId: vo.departmentId,
+        department: vo.departmentName || '',
+        phone: vo.phone || ''
+      })
+    }).catch(err => {
+      console.error('获取用户信息失败:', err)
+    })
+  },
+
+  onBack() { wx.navigateBack() },
+
+  // 选择头像
+  onChooseAvatar() {
+    const that = this
+    wx.chooseImage({
+      count: 1,
+      sizeType: ['compressed'],
+      sourceType: ['album', 'camera'],
+      success: (res) => {
+        const tempFilePath = res.tempFilePaths[0]
+        that.setData({
+          avatar: tempFilePath,
+          avatarTempPath: tempFilePath,
+          avatarChanged: true
+        })
+      }
+    })
+  },
+
+  onInputNickname(e) {
+    this.setData({ nickname: e.detail.value })
+  },
+
+  onSelectYear(e) {
+    const index = e.detail.value
+    this.setData({
+      yearIndex: index,
+      enrollmentYear: this.data.years[index]
+    })
+  },
+
+  onSelectSchool() {
+    wx.navigateTo({ url: '/pages/select-school/select-school' })
+  },
+
+  onSelectMajor() {
+    if (!this.data.schoolId) {
+      wx.showToast({ title: '请先选择高校', icon: 'none' })
+      return
+    }
+    wx.navigateTo({ url: '/pages/select-major/select-major' })
+  },
+
+  onInputPhone(e) {
+    this.setData({ phone: e.detail.value })
+  },
+
+  onSave() {
+    const that = this
+    const { avatarChanged, avatarTempPath, avatar, nickname, enrollmentYear,
+            schoolId, departmentId, majorId, schoolChanged, phone } = this.data
+
+    wx.showLoading({ title: '保存中...' })
+
+    // 头像上传或直接保存
+    const doSave = (avatarUrl) => {
+      // 保存基本信息
+      const savePromise = request({
+        url: '/api/v1/user/info',
+        method: 'PUT',
+        data: {
+          nickname: nickname || '微信用户',
+          avatarUrl: avatarUrl || avatar || '',
+          phone: phone || undefined,
+          enrollmentYear: enrollmentYear ? Number(enrollmentYear) : undefined
+        }
+      })
+
+      return savePromise
+    }
+
+    const saveAll = (avatarUrl) => {
+      doSave(avatarUrl).then(() => {
+        // 如果学校/专业变更了，调用自助修改接口
+        if (schoolChanged && schoolId && departmentId && majorId) {
+          return request({
+            url: '/api/v1/user/self-modify-school',
+            method: 'PUT',
+            data: {
+              campusId: schoolId,
+              departmentId: departmentId,
+              majorId: majorId
+            }
+          })
+        }
+      }).then((selfModifyResult) => {
+        // 如果学校变更了，更新 JWT token（包含最新的 campusId）
+        if (selfModifyResult && selfModifyResult.token) {
+          wx.setStorageSync('token', selfModifyResult.token)
+        }
+        // 刷新用户信息
+        return request({
+          url: '/api/v1/user/me',
+          method: 'GET'
+        })
+      }).then(vo => {
+        wx.hideLoading()
+        // 更新全局数据
+        const userInfo = mapUserInfo(vo)
+        app.globalData.userInfo = userInfo
+        wx.setStorageSync('userInfo', userInfo)
+
+        wx.showToast({ title: '保存成功', icon: 'success' })
+        setTimeout(() => { wx.navigateBack() }, 1500)
+      }).catch(err => {
+        wx.hideLoading()
+        console.error('保存失败:', err)
+        // 如果是自助修改学校失败，显示冷却期提示
+        if (err && err.data && err.data.daysUntilNextModify !== undefined) {
+          wx.showToast({ title: '学校修改冷却中，还剩' + err.data.daysUntilNextModify + '天', icon: 'none' })
+        } else {
+          wx.showToast({ title: (err && err.message) || '保存失败', icon: 'none' })
+        }
+      })
+    }
+
+    // 如果头像变更了，先上传
+    if (avatarChanged && avatarTempPath) {
+      wx.uploadFile({
+        url: BASE_URL + '/api/v1/upload/image',
+        filePath: avatarTempPath,
+        name: 'file',
+        header: {
+          Authorization: 'Bearer ' + (wx.getStorageSync('token') || '')
+        },
+        success: (uploadRes) => {
+          try {
+            const result = JSON.parse(uploadRes.data)
+            if (result.code === 200 && result.data && result.data.url) {
+              saveAll(result.data.url)
+            } else {
+              wx.hideLoading()
+              wx.showToast({ title: '头像上传失败', icon: 'none' })
+            }
+          } catch (e) {
+            wx.hideLoading()
+            wx.showToast({ title: '头像上传失败', icon: 'none' })
+          }
+        },
+        fail: () => {
+          wx.hideLoading()
+          wx.showToast({ title: '头像上传失败', icon: 'none' })
+        }
+      })
+    } else {
+      saveAll(avatar)
+    }
+  }
+})
+
+/**
+ * 将后端 UserInfoVO 映射为前端展示格式
+ */
+function mapUserInfo(vo) {
+  return {
+    uid: String(vo.userId),
+    nickname: vo.nickname || '',
+    avatar: toFullUrl(vo.avatarUrl) || '',
+    phone: vo.phone || '',
+    campusId: vo.campusId,
+    school: vo.campusName || '',
+    departmentId: vo.departmentId,
+    department: vo.departmentName || '',
+    majorId: vo.majorId,
+    major: vo.majorName || '',
+    enrollYear: vo.enrollmentYear || '',
+    inviteCode: vo.inviteCode || '',
+    invitedByUserId: vo.invitedByUserId,
+    invitedBy: vo.invitedByUserName || null,
+    nextModifyDays: vo.daysUntilNextModify,
+    stats: { following: 0, followers: 0, likes: vo.likedCount || 0 }
+  }
+}

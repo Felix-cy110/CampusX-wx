@@ -1,0 +1,55 @@
+<view class="page">
+  <!-- 输入原因 -->
+  <view class="reason-section">
+    <textarea
+      class="reason-textarea"
+      placeholder="输入原因"
+      placeholder-class="placeholder"
+      value="{{reason}}"
+      bindinput="onReasonInput"
+      maxlength="150"
+    />
+    <view class="char-count">{{reason.length}}/150</view>
+  </view>
+
+  <!-- 上传证件 -->
+  <view class="upload-section">
+    <view class="upload-grid">
+      <view class="upload-item" wx:for="{{idImages}}" wx:key="index">
+        <image class="uploaded-img" src="{{item}}" mode="aspectFill"></image>
+        <view class="img-remove" data-index="{{index}}" catchtap="removeImage">
+          <text>×</text>
+        </view>
+      </view>
+      <view class="upload-add" bindtap="addImage" wx:if="{{idImages.length < 3}}">
+        <text class="add-icon">+</text>
+      </view>
+    </view>
+    <text class="upload-tip">请上传你的<text class="upload-tip-highlight">学生证和二代身份证正反照片</text></text>
+  </view>
+
+  <!-- 选择高校 -->
+  <view class="picker-section" bindtap="selectSchool">
+    <text class="picker-label">选择高校</text>
+    <view class="picker-value-box">
+      <text class="picker-value">{{targetSchool || ''}}</text>
+      <text class="picker-arrow">▼</text>
+    </view>
+  </view>
+
+  <!-- 选择专业 -->
+  <view class="picker-section" bindtap="selectMajor">
+    <text class="picker-label">选择专业</text>
+    <view class="picker-value-box">
+      <text class="picker-value">{{targetMajor || ''}}</text>
+      <text class="picker-arrow">▼</text>
+    </view>
+  </view>
+
+  <!-- 提交按钮 -->
+  <view class="submit-area">
+    <view class="submit-btn" bindtap="onSubmit">
+      <text>提交</text>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,45 @@
+/* 登录页面 */
+.page {
+  min-height: 100vh;
+  background: var(--color-bg);
+}
+
+/* 自定义导航栏 */
+.nav-bar {
+  display: flex;
+  align-items: center;
+  padding: 0 20rpx;
+  position: relative;
+}
+
+.nav-back {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64rpx;
+  height: 64rpx;
+}
+
+.nav-back-icon {
+  width: 40rpx;
+  height: 40rpx;
+}
+
+.container {
+  padding: 60rpx 30rpx;
+}
+.privacy-box {
+  background: var(--color-bg-white);
+  border-radius: var(--radius-md);
+  padding: 24rpx;
+}
+.privacy-box text {
+  display: block;
+}
+.btn-wechat {
+  background-color: var(--color-wechat-green);
+  color: #FFFFFF;
+}
+.agreement {
+  padding: 0 60rpx;
+}

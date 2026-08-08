@@ -1,0 +1,315 @@
+/* 用户主页样式（参考 profile 页 + post-detail 导航栏） */
+
+.page {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background-color: var(--color-bg);
+}
+
+/* ===== 固定导航栏 ===== */
+.fixed-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background-color: #FFFFFF;
+}
+
+.status-bar-placeholder {
+  width: 100%;
+  background-color: #FFFFFF;
+}
+
+.nav-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16rpx;
+  background-color: #FFFFFF;
+}
+
+.nav-back {
+  width: 64rpx;
+  height: 64rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-back-icon {
+  width: 40rpx;
+  height: 40rpx;
+}
+
+.nav-title {
+  font-size: var(--font-lg);
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.nav-placeholder {
+  width: 64rpx;
+  height: 64rpx;
+}
+
+/* ===== 页面内容 ===== */
+.page-content {
+  flex: 1;
+  padding-top: calc(var(--status-bar-height, 44rpx) + var(--nav-bar-height, 88rpx));
+}
+
+/* ===== 顶部背景 ===== */
+.profile-header-bg {
+  background: linear-gradient(180deg, #255AC5 0%, #4A7FE0 60%, #F5F5F5 100%);
+  padding: 40rpx 32rpx 30rpx;
+}
+
+/* ===== 头像区域 ===== */
+.avatar-section {
+  display: flex;
+  align-items: center;
+  margin-bottom: 32rpx;
+}
+
+.profile-avatar {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 50%;
+  border: 4rpx solid rgba(255, 255, 255, 0.5);
+  flex-shrink: 0;
+}
+
+.name-area {
+  margin-left: 24rpx;
+  flex: 1;
+}
+
+.name-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8rpx;
+}
+
+.profile-name {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #FFFFFF;
+}
+
+/* ===== 学校标签 ===== */
+.school-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8rpx;
+  margin-top: 8rpx;
+}
+
+.school-tag {
+  font-size: 22rpx;
+  color: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.2);
+  padding: 4rpx 14rpx;
+  border-radius: 20rpx;
+}
+
+/* ===== 统计数据行 ===== */
+.stats-row {
+  display: flex;
+  justify-content: space-around;
+  padding: 20rpx 0;
+  margin-bottom: 20rpx;
+}
+
+.stats-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.stats-num {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #FFFFFF;
+}
+
+.stats-label {
+  font-size: 22rpx;
+  color: rgba(255, 255, 255, 0.75);
+  margin-top: 4rpx;
+}
+
+/* ===== 操作按钮 ===== */
+.action-btns {
+  display: flex;
+  gap: 20rpx;
+}
+
+.action-btn {
+  flex: 1;
+  height: 72rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 36rpx;
+  font-size: 28rpx;
+  font-weight: 600;
+}
+
+.follow-btn {
+  background-color: #FFFFFF;
+  color: var(--color-primary);
+}
+
+.follow-btn.followed {
+  background-color: rgba(255, 255, 255, 0.3);
+  color: #FFFFFF;
+  border: 2rpx solid rgba(255, 255, 255, 0.6);
+}
+
+.chat-btn {
+  background-color: rgba(255, 255, 255, 0.25);
+  color: #FFFFFF;
+  border: 2rpx solid rgba(255, 255, 255, 0.5);
+}
+
+/* ===== 帖子区域 ===== */
+.posts-section {
+  background-color: #F5F5F5;
+  padding: 20rpx 0 0;
+}
+
+.section-title {
+  padding: 12rpx 24rpx 20rpx;
+}
+
+.section-title text {
+  font-size: var(--font-md);
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+/* ===== 帖子卡片 ===== */
+.post-card {
+  background-color: #FFFFFF;
+  padding: 24rpx;
+  margin-bottom: 2rpx;
+}
+
+.post-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16rpx;
+}
+
+.post-avatar {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.post-user-info {
+  margin-left: 16rpx;
+  flex: 1;
+}
+
+.post-user-name {
+  font-size: var(--font-sm);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  display: block;
+}
+
+.post-time {
+  font-size: var(--font-xs);
+  color: var(--color-text-secondary);
+  margin-top: 4rpx;
+  display: block;
+}
+
+.post-content-text {
+  font-size: var(--font-sm);
+  color: var(--color-text-primary);
+  line-height: 1.6;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ===== 帖子图片 ===== */
+.post-images {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8rpx;
+  margin-top: 16rpx;
+}
+
+.post-image {
+  width: 200rpx;
+  height: 200rpx;
+  border-radius: var(--radius-sm);
+}
+
+/* ===== 帖子底部 ===== */
+.post-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 16rpx;
+  padding-top: 16rpx;
+  border-top: 1rpx solid #F0F0F0;
+}
+
+.post-stats {
+  display: flex;
+  gap: 32rpx;
+}
+
+.post-stat-item {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+}
+
+.stat-icon {
+  font-size: 24rpx;
+}
+
+.stat-num {
+  font-size: 22rpx;
+  color: var(--color-text-secondary);
+}
+
+/* ===== 空状态 ===== */
+.empty-state {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 80rpx 0;
+}
+
+.empty-state text {
+  font-size: var(--font-sm);
+  color: var(--color-text-secondary);
+}
+
+/* ===== 加载更多 ===== */
+.load-more-hint {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 30rpx 0;
+}
+
+.load-more-hint text {
+  font-size: var(--font-xs);
+  color: var(--color-text-secondary);
+}
+
+/* ===== 底部安全区 ===== */
+.bottom-safe {
+  height: 40rpx;
+}

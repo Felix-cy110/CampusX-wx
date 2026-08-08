@@ -1,0 +1,359 @@
+<view class="page">
+  <!-- 导航栏 -->
+  <view class="fixed-header">
+    <view class="status-bar-placeholder" style="height: {{statusBarHeight}}px;"></view>
+    <view class="nav-bar" style="height: {{navBarHeight}}px;">
+      <view class="nav-back" bindtap="goBack">
+        <image class="nav-back-icon" src="/images/SVG/返回.svg" mode="aspectFit"></image>
+      </view>
+      <text class="nav-title">{{isEditMode ? '编辑帖子' : '发布'}}</text>
+      <view class="nav-placeholder"></view>
+    </view>
+  </view>
+
+  <!-- 模式切换 Tab -->
+  <view class="tab-bar" wx:if="{{!isEditMode}}">
+    <view class="tab-item {{mode === 'feed' ? 'active' : ''}}" bindtap="switchMode" data-mode="feed">
+      <text>图文帖子</text>
+    </view>
+    <view class="tab-item {{mode === 'secondhand' ? 'active' : ''}}" bindtap="switchMode" data-mode="secondhand">
+      <text>二手挂单</text>
+    </view>
+    <view class="tab-indicator" style="left: calc(30rpx + (100% - 60rpx) * {{tabIndicatorRatio}});"></view>
+  </view>
+
+  <scroll-view class="form-scroll" scroll-y enhanced show-scrollbar="{{false}}">
+    <!-- ===== 图文帖子表单 ===== -->
+    <block wx:if="{{mode === 'feed'}}">
+    <view class="form-card">
+      <!-- 提示条 -->
+      <view class="notice-bar" bindtap="switchToSecondhand" wx:if="{{!isEditMode}}">
+        <text class="notice-text">如需发布二手交易请移步至"二手挂单"</text>
+      </view>
+
+      <!-- 输入标题 -->
+      <view class="section">
+        <view class="section-title">标题<text class="required">*</text></view>
+        <view class="input-wrap">
+          <input
+            class="form-input"
+            placeholder="请输入标题"
+            placeholder-class="input-placeholder"
+            value="{{title}}"
+            bindinput="onTitleInput"
+            maxlength="{{titleMax}}"
+          />
+        </view>
+        <view class="char-count">{{title.length}}/{{titleMax}}</view>
+      </view>
+
+      <!-- 输入内容 -->
+      <view class="section">
+        <view class="section-title">内容</view>
+        <view class="textarea-wrap">
+          <textarea
+            class="form-textarea"
+            placeholder="请输入内容..."
+            placeholder-class="input-placeholder"
+            value="{{content}}"
+            bindinput="onContentInput"
+            maxlength="{{contentMax}}"
+            auto-height
+          />
+        </view>
+        <view class="content-actions">
+          <view class="quick-fill-btn {{content === '如题' ? 'active' : ''}}" bindtap="fillContentAsTitle">如题</view>
+        </view>
+        <view class="char-count">{{content.length}}/{{contentMax}}</view>
+      </view>
+
+      <!-- 添加图片 -->
+      <view class="section">
+        <view class="image-grid">
+          <view class="image-item" wx:for="{{images}}" wx:key="*this">
+            <image class="uploaded-img" src="{{item}}" mode="aspectFill"></image>
+            <view class="img-remove" data-index="{{index}}" catchtap="removeImage">
+              <text class="img-remove-icon">+</text>
+            </view>
+          </view>
+          <view class="image-add" bindtap="addImage" wx:if="{{images.length < 9}}">
+            <text class="add-icon">+</text>
+            <text class="add-text">添加图片</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 显示联系方式 -->
+      <view class="section">
+        <view class="toggle-row" bindtap="toggleContact">
+          <text class="toggle-label">显示联系方式</text>
+          <view class="toggle-switch {{showContact ? 'on' : ''}}">
+            <view class="toggle-knob"></view>
+          </view>
+        </view>
+        <text class="toggle-desc">开启后，他人可查看你的联系方式</text>
+        <view class="input-wrap mt-20" wx:if="{{showContact}}">
+          <input
+            class="form-input"
+            placeholder="请输入联系方式（微信/手机号等）"
+            placeholder-class="input-placeholder"
+            value="{{contact}}"
+            bindinput="onContactInput"
+          />
+        </view>
+      </view>
+
+      <!-- 目标学校 -->
+      <view class="section">
+        <view class="picker-row" bindtap="selectTargetSchool">
+          <text class="{{targetSchool ? '' : 'picker-placeholder'}}">{{targetSchool || '选择目标学校（默认为本校）'}}</text>
+          <text class="picker-arrow">›</text>
+        </view>
+      </view>
+
+      <!-- 付费选项 -->
+      <view class="section" wx:if="{{isCrossSchool}}">
+        <!-- 跨校发帖费用 -->
+        <view class="payment-option" wx:if="{{quotaLoaded}}">
+          <view class="payment-info">
+            <text class="payment-label">跨校发帖</text>
+            <text class="payment-desc" wx:if="{{quotaInfo.remainingFreeCount > 0}}">本月剩余免费次数：{{quotaInfo.remainingFreeCount}} 次</text>
+            <text class="payment-desc" wx:else>本月免费额度已用完</text>
+          </view>
+          <view class="payment-amount">
+            <text class="amount-value" wx:if="{{quotaInfo.remainingFreeCount > 0}}">免费</text>
+            <text class="amount-value paid" wx:else>¥10.00</text>
+          </view>
+        </view>
+        <view class="payment-option" wx:else>
+          <view class="payment-info">
+            <text class="payment-label">跨校发帖</text>
+            <text class="payment-desc loading-text">正在获取额度信息...</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="section" wx:elif="{{!isCrossSchool}}">
+        <!-- 本校发帖：抽奖号码选项 -->
+        <view class="payment-option" bindtap="toggleLottery">
+          <view class="payment-info">
+            <text class="payment-label">付费获得抽奖号码</text>
+            <text class="payment-desc">支付后获得一个抽奖号码</text>
+          </view>
+          <view class="payment-right">
+            <text class="amount-value mini">¥0.50</text>
+            <view class="toggle-switch {{buyLotteryTicket ? 'on' : ''}}">
+              <view class="toggle-knob"></view>
+            </view>
+          </view>
+        </view>
+      </view>
+
+    </view>
+    </block>
+
+    <!-- ===== 二手挂单表单 ===== -->
+    <block wx:if="{{mode === 'secondhand'}}">
+    <view class="form-card">
+      <!-- 选择闲置类型 -->
+      <view class="section">
+        <view class="section-title">闲置类型<text class="required">*</text></view>
+        <view class="group-grid">
+          <view
+            wx:for="{{idleTypes}}"
+            wx:key="value"
+            class="group-tag {{selectedIdleType === item.value ? 'active' : ''}}"
+            data-value="{{item.value}}"
+            bindtap="selectIdleType"
+          >{{item.label}}</view>
+        </view>
+      </view>
+
+      <!-- 物品名称（其他闲置时显示） -->
+      <view class="section" wx:if="{{selectedIdleType === 'item'}}">
+        <view class="section-title">物品名称<text class="required">*</text></view>
+        <view class="input-wrap">
+          <input
+            class="form-input"
+            placeholder="请输入物品名称"
+            placeholder-class="input-placeholder"
+            value="{{title}}"
+            bindinput="onTitleInput"
+            maxlength="200"
+          />
+        </view>
+      </view>
+
+      <!-- 物品分类（其他闲置时显示） -->
+      <view class="section" wx:if="{{selectedIdleType === 'item'}}">
+        <view class="section-title">物品分类<text class="required">*</text></view>
+        <view class="group-grid">
+          <view
+            wx:for="{{itemCategories}}"
+            wx:key="*this"
+            class="group-tag {{selectedItemCategory === item ? 'active' : ''}}"
+            data-cat="{{item}}"
+            bindtap="selectItemCategory"
+          >{{item}}</view>
+        </view>
+      </view>
+
+      <!-- 书名（二手书时显示） -->
+      <block wx:if="{{selectedIdleType === 'book'}}">
+        <view class="section">
+          <view class="section-title">书名<text class="required">*</text></view>
+          <view class="input-wrap">
+            <input
+              class="form-input"
+              placeholder="请输入书名"
+              placeholder-class="input-placeholder"
+              value="{{title}}"
+              bindinput="onTitleInput"
+              maxlength="200"
+            />
+          </view>
+        </view>
+        <view class="section">
+          <view class="section-title">作者<text class="optional-tag">选填</text></view>
+          <view class="input-wrap">
+            <input class="form-input" placeholder="请输入作者" placeholder-class="input-placeholder" value="{{bookAuthor}}" bindinput="onBookAuthorInput" maxlength="100" />
+          </view>
+        </view>
+        <view class="section">
+          <view class="section-title">出版社<text class="optional-tag">选填</text></view>
+          <view class="input-wrap">
+            <input class="form-input" placeholder="请输入出版社" placeholder-class="input-placeholder" value="{{bookPublisher}}" bindinput="onBookPublisherInput" maxlength="100" />
+          </view>
+        </view>
+        <view class="section">
+          <view class="section-title">版次<text class="optional-tag">选填</text></view>
+          <view class="input-wrap">
+            <input class="form-input" placeholder="请输入版次" placeholder-class="input-placeholder" value="{{bookEdition}}" bindinput="onBookEditionInput" maxlength="50" />
+          </view>
+        </view>
+        <!-- 是否有笔记划线 -->
+        <view class="section">
+          <view class="section-title">是否有笔记划线<text class="required">*</text></view>
+          <view class="group-grid">
+            <view class="group-tag {{hasNotes === 0 ? 'active' : ''}}" data-value="0" bindtap="selectHasNotes">无</view>
+            <view class="group-tag {{hasNotes === 1 ? 'active' : ''}}" data-value="1" bindtap="selectHasNotes">有</view>
+          </view>
+        </view>
+      </block>
+
+      <!-- 描述 -->
+      <view class="section">
+        <view class="section-title">描述<text class="optional-tag">选填</text></view>
+        <view class="textarea-wrap">
+          <textarea
+            class="form-textarea"
+            placeholder="请描述物品状况、使用时长等..."
+            placeholder-class="input-placeholder"
+            value="{{description}}"
+            bindinput="onDescriptionInput"
+            maxlength="{{descriptionMax}}"
+            auto-height
+          />
+        </view>
+        <view class="char-count">{{description.length}}/{{descriptionMax}}</view>
+      </view>
+
+      <!-- 添加图片 -->
+      <view class="section">
+        <view class="section-title">添加图片<text class="optional-tag">选填</text></view>
+        <view class="image-grid">
+          <view class="image-item" wx:for="{{images}}" wx:key="*this">
+            <image class="uploaded-img" src="{{item}}" mode="aspectFill"></image>
+            <view class="img-remove" data-index="{{index}}" catchtap="removeImage">
+              <text class="img-remove-icon">+</text>
+            </view>
+          </view>
+          <view class="image-add" bindtap="addImage" wx:if="{{images.length < 9}}">
+            <text class="add-icon">+</text>
+            <text class="add-text">添加图片</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 交货方式 -->
+      <view class="section">
+        <view class="section-title">交货方式<text class="required">*</text></view>
+        <view class="group-grid">
+          <view
+            wx:for="{{deliveryTypes}}"
+            wx:key="value"
+            class="group-tag {{selectedDeliveryType === item.value ? 'active' : ''}}"
+            data-value="{{item.value}}"
+            bindtap="selectDeliveryType"
+          >{{item.label}}</view>
+        </view>
+      </view>
+
+      <!-- 新旧程度 -->
+      <view class="section">
+        <view class="section-title">新旧程度<text class="required">*</text></view>
+        <view class="group-grid">
+          <view
+            wx:for="{{conditionLevels}}"
+            wx:key="value"
+            class="group-tag {{selectedConditionLevel === item.value ? 'active' : ''}}"
+            data-value="{{item.value}}"
+            bindtap="selectConditionLevel"
+          >{{item.label}}</view>
+        </view>
+      </view>
+
+      <!-- 售价 -->
+      <view class="section">
+        <view class="section-title">售价<text class="required">*</text></view>
+        <view class="price-row">
+          <text class="price-symbol">¥</text>
+          <view class="price-input-wrap">
+          <input
+            class="price-input"
+            type="digit"
+            placeholder="{{priceFocused ? '' : '请输入价格'}}"
+            placeholder-class="input-placeholder"
+            value="{{price}}"
+            bindinput="onPriceInput"
+            bindfocus="onPriceFocus"
+            bindblur="onPriceBlur"
+          />
+          </view>
+          <text class="price-unit">元</text>
+        </view>
+      </view>
+    </view>
+    </block>
+
+    <!-- 费用提示 -->
+    <view class="fee-notice">
+      <block wx:if="{{mode === 'feed' && isCrossSchool && quotaLoaded}}">
+        <text class="fee-text" wx:if="{{quotaInfo.remainingFreeCount > 0}}">跨校发帖将消耗 1 次免费额度，发帖后不退款</text>
+        <text class="fee-text" wx:else>本次跨校发帖将支付 ¥10.00，发帖后不退款</text>
+      </block>
+      <block wx:elif="{{mode === 'feed' && isCrossSchool && !quotaLoaded}}">
+        <text class="fee-text">正在获取额度信息...</text>
+      </block>
+      <block wx:elif="{{mode === 'feed' && buyLotteryTicket}}">
+        <text class="fee-text">校内发帖免费，抽奖号码需支付 ¥0.50</text>
+      </block>
+      <block wx:elif="{{mode === 'feed'}}">
+        <text class="fee-text">校内发帖免费</text>
+      </block>
+      <block wx:else>
+        <text class="fee-text">校内发布免费，不退款</text>
+      </block>
+    </view>
+
+    <!-- 提交按钮 -->
+    <view class="submit-area">
+      <view class="btn btn-primary submit-btn" bindtap="onSubmit">
+        <text>{{publishing ? (isEditMode ? '保存中...' : '发布中...') : (isEditMode ? '保存' : '发布')}}</text>
+      </view>
+    </view>
+
+    <!-- 底部安全区 -->
+    <view class="safe-bottom-spacer"></view>
+  </scroll-view>
+</view>

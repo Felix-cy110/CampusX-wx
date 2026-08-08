@@ -1,0 +1,70 @@
+<view class="page">
+  <!-- 自定义导航栏 -->
+  <view class="fixed-header">
+    <view class="status-bar-placeholder" style="height: {{statusBarHeight}}px;"></view>
+    <view class="nav-bar" style="height: {{navBarHeight}}px;">
+      <view class="nav-back" bindtap="goBack">
+        <image class="nav-back-icon" src="/images/SVG/返回.svg" mode="aspectFit"></image>
+      </view>
+      <text class="nav-title">跑腿详情</text>
+      <view class="nav-placeholder"></view>
+    </view>
+  </view>
+
+  <scroll-view class="content" style="padding-top: {{statusBarHeight + navBarHeight}}px;" scroll-y enhanced show-scrollbar="{{false}}" wx:if="{{!loading && demand}}">
+    <!-- 发布者信息 + 课程信息 + 提示 -->
+    <view class="info-card">
+      <!-- 发布者信息 -->
+      <view class="info-block">
+        <view class="user-row" bindtap="goToUserProfile">
+          <image class="user-avatar" src="{{demand.user.avatar}}" mode="aspectFill"></image>
+          <view class="user-info">
+            <text class="user-name">{{demand.user.name}}</text>
+            <text class="user-time">{{demand.time}}</text>
+          </view>
+          <view class="contact-btn" catchtap="contactUser">
+            <text>联系TA</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 课程信息 -->
+      <view class="info-block">
+        <view class="course-title-row">
+          <text class="course-title">{{demand.title}}</text>
+          <view class="fee-tag">
+            <text class="fee-label">报酬</text>
+            <text class="fee-amount">￥{{demand.reward}}</text>
+          </view>
+        </view>
+        <view class="detail-content">
+          <text class="detail-text">{{demand.content}}</text>
+        </view>
+      </view>
+
+      <!-- 仅限本校提示 -->
+      <view class="info-block" wx:if="{{demand._raw && demand._raw.onlySameSchool}}">
+        <view class="info-tip">
+          <text>⚠️ 仅限本校学生接单</text>
+        </view>
+      </view>
+    </view>
+  </scroll-view>
+
+  <!-- 加载中 / 空状态 -->
+  <view class="empty-container" wx:if="{{loading}}">
+    <text>加载中...</text>
+  </view>
+  <view class="empty-container" wx:if="{{!loading && !demand}}">
+    <text>数据不存在</text>
+  </view>
+
+  <!-- 底部下单按钮 -->
+  <view class="bottom-bar" wx:if="{{!loading && demand}}">
+    <view class="bottom-btn {{applying ? 'disabled' : ''}}" bindtap="applyOrder">
+      <text>{{applying ? '下单中...' : '下单'}}</text>
+    </view>
+  </view>
+
+  <view class="safe-bottom-spacer"></view>
+</view>

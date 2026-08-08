@@ -1,0 +1,53 @@
+<view class="page">
+  <!-- 当前额度 -->
+  <view class="quota-display">
+    <text class="quota-label">你拥有额度：</text>
+    <text class="quota-value">{{quota}}次</text>
+  </view>
+
+  <!-- 选择充值选项 -->
+  <view class="section-title">选择充值选项</view>
+  <view class="options-list">
+    <view
+      class="option-card {{selectedOption && selectedOption.amount === item.amount ? 'active' : ''}}"
+      wx:for="{{rechargeOptions}}"
+      wx:key="amount"
+      bindtap="onSelectOption"
+      data-option="{{item}}"
+    >
+      <image class="option-icon" src="/images/SVG/人民币.svg" mode="aspectFit"></image>
+      <text class="option-label">{{item.label}}</text>
+    </view>
+  </view>
+
+  <!-- 自定义充值 -->
+  <view class="custom-header">
+    <text class="section-title">自定义充值</text>
+    <text class="price-tag">十元/次</text>
+  </view>
+  <view class="custom-row">
+    <text class="custom-label">输入充值次数</text>
+    <view class="custom-input-box">
+      <input
+        class="custom-input"
+        type="number"
+        placeholder="请输入"
+        placeholder-class="input-placeholder"
+        value="{{customAmount}}"
+        bindinput="onCustomInput"
+      />
+      <text class="input-unit">次</text>
+    </view>
+  </view>
+
+  <!-- 充值按钮 -->
+  <view class="recharge-btn" bindtap="onRecharge">
+    <image class="btn-icon" src="/images/SVG/人民币.svg" mode="aspectFit"></image>
+    <text>充值</text>
+  </view>
+
+  <!-- 注意提示 -->
+  <view class="warning">
+    <text class="warning-text">注意：一旦充值完成，概不退款</text>
+  </view>
+</view>

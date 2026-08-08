@@ -1,0 +1,238 @@
+/* 切换学校 */
+.page {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background-color: var(--color-bg);
+}
+
+/* 导航栏 */
+.status-bar-placeholder {
+  background-color: #FFFFFF;
+  flex-shrink: 0;
+}
+
+.nav-bar {
+  display: flex;
+  align-items: center;
+  background-color: #FFFFFF;
+  padding: 0 24rpx;
+  flex-shrink: 0;
+}
+
+.nav-back {
+  width: 44rpx;
+  height: 44rpx;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+.nav-back-icon {
+  width: 44rpx;
+  height: 44rpx;
+}
+
+.nav-title {
+  flex: 1;
+  text-align: center;
+  font-size: var(--font-lg);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.nav-placeholder {
+  width: 44rpx;
+  flex-shrink: 0;
+}
+
+/* 高校列表 */
+.campus-list {
+  flex: 1;
+  background-color: var(--color-bg-white);
+  overflow: hidden;
+}
+
+.list-header {
+  padding: 24rpx 30rpx 16rpx;
+}
+
+.list-header-text {
+  font-size: var(--font-sm);
+  color: var(--color-text-placeholder);
+}
+
+.campus-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 28rpx 30rpx;
+  border-bottom: 1rpx solid var(--color-border-light);
+}
+
+.campus-item:active {
+  background-color: var(--color-bg);
+}
+
+.campus-item.current {
+  background-color: #F5F8FF;
+}
+
+.campus-info {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.campus-name {
+  font-size: var(--font-base);
+  color: var(--color-text);
+}
+
+.campus-badge {
+  font-size: var(--font-xs);
+  color: var(--color-primary);
+  background-color: #EEF3FF;
+  padding: 4rpx 12rpx;
+  border-radius: 8rpx;
+}
+
+.campus-arrow {
+  width: 36rpx;
+  height: 36rpx;
+  transform: rotate(180deg);
+  opacity: 0.3;
+}
+
+.empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 400rpx;
+  font-size: var(--font-base);
+  color: var(--color-text-placeholder);
+}
+
+/* 底部安全区 */
+.bottom-safe {
+  height: calc(40rpx + constant(safe-area-inset-bottom));
+  height: calc(40rpx + env(safe-area-inset-bottom));
+}
+
+/* ====== 确认弹窗 ====== */
+.modal-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0);
+  z-index: -1;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  transition: background-color 0.25s, z-index 0.25s;
+}
+
+.modal-mask.show {
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+}
+
+.modal-sheet {
+  width: 100%;
+  background-color: #FFFFFF;
+  border-radius: 32rpx 32rpx 0 0;
+  padding: 40rpx 30rpx calc(40rpx + constant(safe-area-inset-bottom));
+  padding-bottom: calc(40rpx + env(safe-area-inset-bottom));
+  transform: translateY(100%);
+  transition: transform 0.25s ease-out;
+}
+
+.modal-sheet.show {
+  transform: translateY(0);
+}
+
+.modal-title {
+  font-size: var(--font-xl);
+  font-weight: 600;
+  color: var(--color-text);
+  text-align: center;
+  margin-bottom: 32rpx;
+}
+
+.modal-body {
+  margin-bottom: 36rpx;
+}
+
+.modal-target {
+  display: block;
+  font-size: var(--font-base);
+  color: var(--color-text-secondary);
+  margin-bottom: 24rpx;
+  text-align: center;
+}
+
+.target-name {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.rule-box {
+  background-color: #FFF8E7;
+  border-radius: var(--radius-md);
+  padding: 24rpx;
+}
+
+.rule-title {
+  display: block;
+  font-size: var(--font-base);
+  font-weight: 600;
+  color: #B8860B;
+  margin-bottom: 16rpx;
+}
+
+.rule-text {
+  display: block;
+  font-size: var(--font-sm);
+  color: #8B6914;
+  line-height: 1.8;
+}
+
+.rule-highlight {
+  color: #D4380D;
+  font-weight: 600;
+}
+
+.modal-btns {
+  display: flex;
+  gap: 20rpx;
+}
+
+.modal-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 88rpx;
+  border-radius: var(--radius-md);
+}
+
+.cancel-btn {
+  background-color: var(--color-bg);
+}
+
+.cancel-btn text {
+  font-size: var(--font-md);
+  color: var(--color-text-secondary);
+}
+
+.confirm-btn {
+  background-color: var(--color-primary);
+}
+
+.confirm-btn text {
+  font-size: var(--font-md);
+  font-weight: 600;
+  color: #FFFFFF;
+}

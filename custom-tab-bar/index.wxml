@@ -1,0 +1,63 @@
+<view class="tab-bar" wx:if="{{!hidden}}">
+  <view class="tab-item" bindtap="switchTab" data-index="0">
+    <image class="tab-icon {{selected === 0 ? 'active-icon' : ''}}" src="{{list[0].iconPath}}" mode="aspectFit"></image>
+    <text class="tab-text {{selected === 0 ? 'active' : ''}}">{{list[0].text}}</text>
+  </view>
+
+  <view class="tab-item" bindtap="switchTab" data-index="1">
+    <image class="tab-icon {{selected === 1 ? 'active-icon' : ''}}" src="{{list[1].iconPath}}" mode="aspectFit"></image>
+    <text class="tab-text {{selected === 1 ? 'active' : ''}}">{{list[1].text}}</text>
+  </view>
+
+  <!-- 中间发布按钮 -->
+  <view class="publish-btn" bindtap="togglePublishPopup">
+    <view class="publish-btn-inner {{popupVisible ? 'active' : ''}}">
+      <view class="publish-line publish-line-h"></view>
+      <view class="publish-line publish-line-v"></view>
+    </view>
+  </view>
+
+  <view class="tab-item" bindtap="switchTab" data-index="2">
+    <view class="tab-icon-wrap">
+      <image class="tab-icon {{selected === 2 ? 'active-icon' : ''}}" src="{{list[2].iconPath}}" mode="aspectFit"></image>
+      <view class="tab-badge" wx:if="{{list[2].badge}}">{{list[2].badge > 99 ? '99+' : list[2].badge}}</view>
+    </view>
+    <text class="tab-text {{selected === 2 ? 'active' : ''}}">{{list[2].text}}</text>
+  </view>
+
+  <view class="tab-item" bindtap="switchTab" data-index="3">
+    <image class="tab-icon {{selected === 3 ? 'active-icon' : ''}}" src="{{list[3].iconPath}}" mode="aspectFit"></image>
+    <text class="tab-text {{selected === 3 ? 'active' : ''}}">{{list[3].text}}</text>
+  </view>
+</view>
+
+<!-- 发布弹出层 -->
+<view class="publish-popup {{popupVisible ? 'visible' : ''}}" wx:if="{{showPublishPopup}}">
+  <view class="publish-mask"></view>
+  <view class="publish-content">
+    <view class="publish-loading" wx:if="{{publishLoading}}">
+      <view class="publish-loading-spinner"></view>
+    </view>
+    <!-- 状态栏占位 -->
+    <view class="status-bar-placeholder" style="height: {{statusBarHeight}}px;"></view>
+    <!-- 导航栏 -->
+    <view class="publish-nav">
+      <view class="publish-placeholder"></view>
+      <text class="publish-title">发布内容</text>
+      <view class="publish-placeholder"></view>
+    </view>
+
+    <text class="publish-section">选择分类</text>
+
+    <!-- 分类卡片网格 -->
+    <view class="publish-grid">
+      <view class="publish-card" wx:for="{{publishCategories}}" wx:key="key" bindtap="selectCategory" data-key="{{item.key}}">
+        <view class="publish-card-icon-wrap" style="background-color: {{item.bgColor}};">
+          <image class="publish-card-icon" src="{{item.icon}}" mode="aspectFit"></image>
+        </view>
+        <text class="publish-card-label">{{item.label}}</text>
+        <text class="publish-card-desc">{{item.desc}}</text>
+      </view>
+    </view>
+  </view>
+</view>

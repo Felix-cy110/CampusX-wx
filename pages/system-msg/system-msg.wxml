@@ -1,0 +1,66 @@
+<!-- 系统消息列表 -->
+<view class="page">
+  <!-- 导航栏 -->
+  <view class="status-bar-placeholder" style="height: {{statusBarHeight}}px;"></view>
+  <view class="nav-bar" style="height: {{navBarHeight}}px;">
+    <image class="nav-back" src="/images/SVG/返回.svg" mode="aspectFit" bindtap="navigateBack"></image>
+    <text class="nav-title">系统消息</text>
+    <view class="nav-placeholder"></view>
+  </view>
+
+  <!-- 消息列表 -->
+  <scroll-view class="msg-scroll" scroll-y enhanced show-scrollbar="{{false}}" wx:if="{{messages.length > 0}}">
+    <view class="msg-list">
+      <view
+        class="msg-item"
+        wx:for="{{messages}}"
+        wx:key="id"
+        data-id="{{item.id}}"
+        bindtap="showDetail"
+        hover-class="msg-item-hover"
+        hover-stay-time="80"
+      >
+        <view class="msg-item-top">
+          <view class="msg-badge {{item.unread ? '' : 'read'}}"></view>
+          <view class="msg-icon-wrap">
+            <image class="msg-icon-img" src="/images/SVG/系统消息.svg" mode="aspectFit"></image>
+          </view>
+          <text class="msg-title ellipsis">{{item.title}}</text>
+          <text class="msg-time">{{item.time}}</text>
+        </view>
+        <view class="msg-item-bottom">
+          <text class="msg-preview ellipsis-2">{{item.brief}}</text>
+        </view>
+      </view>
+    </view>
+  </scroll-view>
+
+  <!-- 空状态 -->
+  <view class="empty-state" wx:else>
+    <view class="empty-icon-wrap">
+      <text class="empty-icon">📭</text>
+    </view>
+    <text class="empty-title">暂无系统消息</text>
+  </view>
+</view>
+
+<!-- 详情滑入面板 -->
+<view class="detail-overlay {{detailAnim ? 'visible' : ''}}" wx:if="{{showDetail}}">
+  <view class="detail-panel">
+    <view class="detail-header">
+      <view class="detail-back" bindtap="hideDetail">
+        <text class="detail-back-arrow">‹</text>
+        <text class="detail-back-text">返回</text>
+      </view>
+      <text class="detail-title">消息详情</text>
+      <view class="detail-placeholder"></view>
+    </view>
+
+    <scroll-view class="detail-body" scroll-y>
+      <text class="detail-article-title">{{detail.title}}</text>
+      <text class="detail-time">{{detail.time}}</text>
+      <view class="detail-divider"></view>
+      <text class="detail-content">{{detail.msg}}</text>
+    </scroll-view>
+  </view>
+</view>

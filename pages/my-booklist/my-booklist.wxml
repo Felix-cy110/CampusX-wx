@@ -1,0 +1,43 @@
+<view class="page">
+  <view style="height: {{statusBarHeight}}px; background: #fff;"></view>
+  <view class="nav-bar" style="height: {{navBarHeight}}px;">
+    <image class="nav-back" src="/images/SVG/返回.svg" mode="aspectFit" bindtap="navigateBack"></image>
+    <text class="nav-title">我的书单</text>
+    <view style="width: 80rpx;"></view>
+  </view>
+
+  <!-- 搜索栏 -->
+  <view class="search-bar">
+    <view class="search-input">
+      <image class="search-icon" src="/images/SVG/搜索.svg" mode="aspectFit"></image>
+      <input class="search-field" placeholder="搜索..." value="{{searchValue}}" bindinput="onSearchInput" />
+    </view>
+  </view>
+
+  <!-- 左右分栏 -->
+  <view class="content">
+    <!-- 左侧学期列表 -->
+    <scroll-view class="semester-list" scroll-y enhanced show-scrollbar="{{false}}">
+      <view
+        class="semester-item {{selectedIndex === index ? 'active' : ''}}"
+        wx:for="{{semesters}}"
+        wx:key="*this"
+        bindtap="selectSemester"
+        data-index="{{index}}"
+      >
+        <text class="semester-name">{{item}}</text>
+      </view>
+    </scroll-view>
+
+    <!-- 右侧书籍列表 -->
+    <scroll-view class="book-list" scroll-y enhanced show-scrollbar="{{false}}">
+      <view class="book-item" wx:for="{{currentBooks}}" wx:key="index">
+        <view class="book-info">
+          <text class="book-title">{{item.title}}</text>
+          <text class="book-publisher">{{item.publisher}}</text>
+        </view>
+        <image class="book-cover" src="{{item.cover}}" mode="aspectFill"></image>
+      </view>
+    </scroll-view>
+  </view>
+</view>

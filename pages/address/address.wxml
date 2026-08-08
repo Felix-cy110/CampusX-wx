@@ -1,0 +1,55 @@
+<!-- 收货地址 -->
+<view class="page">
+  <view style="height: {{statusBarHeight}}px; background: #fff;"></view>
+  <view class="nav-bar" style="height: {{navBarHeight}}px;">
+    <image class="nav-back" src="/images/SVG/返回.svg" mode="aspectFit" bindtap="onBack"></image>
+    <text class="nav-title">收货地址</text>
+    <view style="width: 80rpx;"></view>
+  </view>
+
+  <view class="container">
+    <!-- 已保存的地址列表 -->
+    <view class="address-list" wx:if="{{addressList.length > 0}}">
+      <view class="section-title">已保存的地址</view>
+      <view
+        class="address-card {{item.isDefault ? 'address-card-default' : ''}}"
+        wx:for="{{addressList}}"
+        wx:key="id"
+        data-id="{{item.id}}"
+        bindtap="selectAddress"
+      >
+        <view class="address-info">
+          <view class="address-header">
+            <text class="address-full">{{item.fullAddress}}</text>
+            <view class="default-badge" wx:if="{{item.isDefault}}">
+              <text>默认</text>
+            </view>
+          </view>
+          <view class="address-detail">
+            <text class="address-tag">{{item.campus}}</text>
+            <text class="address-tag">{{item.building}}</text>
+            <text class="address-tag">{{item.room}}</text>
+          </view>
+        </view>
+        <view class="address-actions" catchtap="preventBubble">
+          <view class="action-btn set-default" wx:if="{{!item.isDefault}}" data-id="{{item.id}}" catchtap="setDefault">
+            <text>设为默认</text>
+          </view>
+          <view class="action-btn edit" data-id="{{item.id}}" catchtap="editAddress">
+            <text>编辑</text>
+          </view>
+          <view class="action-btn delete" data-id="{{item.id}}" catchtap="deleteAddress">
+            <text>删除</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 添加新地址按钮 -->
+    <view class="add-btn-area">
+      <view class="btn-add-new" bindtap="addNewAddress">
+        <text>添加新地址</text>
+      </view>
+    </view>
+  </view>
+</view>

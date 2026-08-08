@@ -1,0 +1,28 @@
+<view class="page">
+  <!-- 成功图标 -->
+  <view class="success-area">
+    <view class="checkmark-circle">
+      <text class="checkmark">✓</text>
+    </view>
+    <text class="success-title">充值成功</text>
+  </view>
+
+  <!-- 额度信息 -->
+  <view class="info-card">
+    <view class="info-row">
+      <text class="info-label">本次充值</text>
+      <text class="info-value">{{amount}}次</text>
+    </view>
+    <view class="info-row">
+      <text class="info-label">当前总额度</text>
+      <text class="info-value primary">{{quota}}次</text>
+    </view>
+  </view>
+
+  <!-- 完成按钮 -->
+  <view class="btn-area">
+    <view class="finish-btn btn btn-primary" bindtap="onFinish">
+      <text>完成</text>
+    </view>
+  </view>
+</view>

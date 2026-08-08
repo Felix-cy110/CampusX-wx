@@ -1,0 +1,37 @@
+<view class="page">
+  <view class="status-bar-placeholder" style="height: {{statusBarHeight}}px;"></view>
+  <view class="nav-bar" style="height: {{navBarHeight}}px;">
+    <image class="nav-back" src="/images/SVG/返回.svg" mode="aspectFit" bindtap="navigateBack"></image>
+    <text class="nav-title">邀请新人有奖</text>
+    <view style="width: 44rpx;"></view>
+  </view>
+
+  <view class="tab-bar">
+    <view class="tab-item {{activeTab === 'ongoing' ? 'active' : ''}}" bindtap="switchTab" data-tab="ongoing">进行中</view>
+    <view class="tab-item {{activeTab === 'ended' ? 'active' : ''}}" bindtap="switchTab" data-tab="ended">已开奖</view>
+  </view>
+
+  <scroll-view class="list" scroll-y enhanced show-scrollbar="{{false}}"
+    refresher-enabled refresher-triggered="{{refreshing}}" bindrefresherrefresh="onRefresh"
+    bindscrolltolower="onLoadMore" lower-threshold="100">
+    <view wx:if="{{filteredList.length === 0 && !loading}}" class="empty">
+      <text class="empty-text">暂无活动</text>
+    </view>
+    <view wx:if="{{loading && allActivities.length === 0}}" class="empty">
+      <text class="empty-text">加载中...</text>
+    </view>
+    <view class="item" wx:for="{{filteredList}}" wx:key="id" bindtap="onTapItem" data-id="{{item.id}}">
+      <view class="item-left">
+        <view class="item-title-row">
+          <text class="item-title ellipsis">{{item.title}}</text>
+          <view class="status-tag {{item.status === 0 ? 'tag-green' : 'tag-gray'}}"><text>{{item.status === 0 ? '进行中' : '已开奖'}}</text></view>
+        </view>
+        <text class="item-desc ellipsis-2 text-secondary">{{item.description}}</text>
+        <text class="item-meta text-secondary">{{item.startTime}} — {{item.endTime}} · {{item.prizes.length}} 个奖项</text>
+      </view>
+      <image wx:if="{{item.coverImage}}" class="item-cover" src="{{item.coverImage}}" mode="aspectFill"></image>
+      <view wx:else class="item-cover-placeholder"></view>
+    </view>
+    <view class="list-bottom"></view>
+  </scroll-view>
+</view>

@@ -1,0 +1,85 @@
+<view class="page-container">
+  <!-- 遮罩层 -->
+  <view class="overlay" bindtap="onCancel"></view>
+
+  <!-- 底部弹出层 -->
+  <view class="share-panel">
+    <!-- 标题 -->
+    <view class="panel-header">
+      <text class="panel-title">分享给互关好友</text>
+    </view>
+
+    <!-- 加载中 -->
+    <view class="user-list" wx:if="{{loading}}">
+      <view class="loading-wrap">
+        <text class="loading-text">加载中...</text>
+      </view>
+    </view>
+
+    <!-- 加载失败 -->
+    <view class="user-list" wx:elif="{{loadFailed}}">
+      <view class="loading-wrap">
+        <text class="loading-text">加载失败</text>
+        <text class="loading-retry" bindtap="loadMutualFriends">点击重试</text>
+      </view>
+    </view>
+
+    <!-- 无互关好友 -->
+    <view class="user-list" wx:elif="{{shareUsers.length === 0}}">
+      <view class="loading-wrap">
+        <text class="loading-text">暂无互关好友</text>
+      </view>
+    </view>
+
+    <!-- 互关好友列表 -->
+    <view class="user-list" wx:else>
+      <view
+        wx:for="{{shareUsers}}"
+        wx:key="id"
+        class="user-item"
+      >
+        <image
+          wx:if="{{item.avatar}}"
+          class="user-avatar"
+          src="{{item.avatar}}"
+          mode="aspectFill"
+        ></image>
+        <view wx:else class="user-avatar">
+          <text class="avatar-text">{{item.name[0]}}</text>
+        </view>
+        <text class="user-name">{{item.name}}</text>
+        <view
+          class="share-to-btn"
+          data-user-id="{{item.id}}"
+          bindtap="shareToUser"
+        >
+          <text>分享</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 底部分享操作 -->
+    <view class="share-section">
+      <text class="share-section-title">分享到其他平台</text>
+      <view class="share-actions">
+        <view
+          wx:for="{{shareActions}}"
+          wx:key="id"
+          class="action-item"
+          data-name="{{item.name}}"
+          bindtap="onShareAction"
+        >
+          <view class="action-icon-wrap">
+            <text class="action-icon">{{item.icon}}</text>
+          </view>
+          <text class="action-name">{{item.name}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 取消按钮 -->
+    <view class="cancel-btn" bindtap="onCancel">
+      <text>取消</text>
+    </view>
+  </view>
+</view>

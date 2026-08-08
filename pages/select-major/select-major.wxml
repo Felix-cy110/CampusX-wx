@@ -1,0 +1,76 @@
+<!-- 选择专业页 -->
+<view class="page">
+  <!-- 状态栏占位 -->
+  <view class="status-bar-placeholder" style="height: {{statusBarHeight}}px;"></view>
+
+  <!-- 导航栏：与胶囊按钮平齐 -->
+  <view class="nav-bar" style="height: {{navBarHeight}}px;">
+    <view class="nav-back" bindtap="goBack">
+      <image class="nav-back-icon" src="/images/SVG/返回.svg" mode="aspectFit"></image>
+    </view>
+    <text class="nav-title">选择专业</text>
+    <view class="nav-placeholder"></view>
+  </view>
+
+  <!-- 搜索栏 -->
+  <view class="search-bar">
+    <view class="search-wrapper">
+      <text class="search-icon">🔍</text>
+      <input class="search-input" placeholder="搜索..." value="{{searchText}}" bindinput="onSearch" />
+      <text class="search-clear" wx:if="{{searchText}}" bindtap="clearSearch">✕</text>
+    </view>
+  </view>
+
+  <!-- 左右分栏 -->
+  <view class="content" wx:if="{{!searchText}}">
+    <!-- 左侧：院系列表 -->
+    <scroll-view class="dept-list" scroll-y enhanced show-scrollbar="{{false}}">
+      <view
+        class="dept-item {{selectedDeptIndex === index ? 'active' : ''}}"
+        wx:for="{{departmentList}}"
+        wx:key="id"
+        bindtap="selectDept"
+        data-index="{{index}}"
+      >
+        <text class="dept-item-name">{{item.name}}</text>
+      </view>
+    </scroll-view>
+
+    <!-- 右侧：专业列表 -->
+    <scroll-view class="major-list" scroll-y enhanced show-scrollbar="{{false}}">
+      <view
+        class="major-item"
+        wx:for="{{currentMajors}}"
+        wx:key="id"
+        bindtap="selectMajor"
+        data-id="{{item.id}}"
+        data-name="{{item.name}}"
+      >
+        <text class="major-name">{{item.name}}</text>
+      </view>
+    </scroll-view>
+  </view>
+
+  <!-- 搜索结果列表 -->
+  <scroll-view class="search-result-list" scroll-y wx:if="{{searchText}}">
+    <block wx:for="{{filteredDepartmentList}}" wx:key="id">
+      <view class="search-dept-header">
+        <text class="search-dept-name">{{item.name}}</text>
+      </view>
+      <view
+        class="search-major-item"
+        wx:for="{{item.majors}}"
+        wx:key="id"
+        wx:for-item="major"
+        bindtap="selectMajor"
+        data-id="{{major.id}}"
+        data-name="{{major.name}}"
+      >
+        <text class="search-major-name">{{major.name}}</text>
+      </view>
+    </block>
+    <view class="empty-state" wx:if="{{filteredDepartmentList.length === 0}}">
+      <text>没有找到相关专业</text>
+    </view>
+  </scroll-view>
+</view>

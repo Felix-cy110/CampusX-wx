@@ -1,0 +1,127 @@
+<!-- 用户主页（查看他人资料） -->
+<view class="page">
+  <!-- 固定顶部：状态栏 + 导航栏 -->
+  <view class="fixed-header">
+    <view class="status-bar-placeholder" style="height: {{statusBarHeight}}px;"></view>
+    <view class="nav-bar" style="height: {{navBarHeight}}px;">
+      <view class="nav-back" bindtap="goBack">
+        <image class="nav-back-icon" src="/images/SVG/返回.svg" mode="aspectFit"></image>
+      </view>
+      <text class="nav-title">用户主页</text>
+      <view class="nav-placeholder"></view>
+    </view>
+  </view>
+
+  <!-- 可滚动内容 -->
+  <scroll-view class="page-content" scroll-y enhanced show-scrollbar="{{false}}" bindscrolltolower="loadMorePosts" lower-threshold="150">
+    <!-- 顶部背景区域 -->
+    <view class="profile-header-bg">
+      <!-- 头像 + 名称 + 学校标签 -->
+      <view class="avatar-section">
+        <image class="profile-avatar" src="{{userInfo.avatar}}" mode="aspectFill"></image>
+        <view class="name-area">
+          <view class="name-row">
+            <text class="profile-name">{{userInfo.nickname}}</text>
+          </view>
+          <!-- 学校/专业/入学年份标签 -->
+          <view class="school-tags" wx:if="{{userInfo.campusName}}">
+            <text class="school-tag">{{userInfo.campusName}}</text>
+            <text class="school-tag" wx:if="{{userInfo.majorName}}">{{userInfo.majorName}}</text>
+            <text class="school-tag" wx:if="{{userInfo.enrollmentYear}}">{{userInfo.enrollmentYear}}级</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 统计数据行 -->
+      <view class="stats-row">
+        <view class="stats-item">
+          <text class="stats-num">{{stats.postCount}}</text>
+          <text class="stats-label">帖子</text>
+        </view>
+        <view class="stats-item">
+          <text class="stats-num">{{stats.following}}</text>
+          <text class="stats-label">关注</text>
+        </view>
+        <view class="stats-item">
+          <text class="stats-num">{{stats.followers}}</text>
+          <text class="stats-label">粉丝</text>
+        </view>
+        <view class="stats-item">
+          <text class="stats-num">{{stats.likes}}</text>
+          <text class="stats-label">被点赞</text>
+        </view>
+      </view>
+
+      <!-- 操作按钮 -->
+      <view class="action-btns" wx:if="{{!isOwnProfile}}">
+        <view class="action-btn follow-btn {{isFollowed ? 'followed' : ''}}" bindtap="toggleFollow">
+          <text>{{isFollowed ? '已关注' : '+ 关注'}}</text>
+        </view>
+        <view class="action-btn chat-btn" bindtap="goToChat">
+          <text>私信</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 帖子列表 -->
+    <view class="posts-section">
+      <view class="section-title">
+        <text>TA 的动态</text>
+      </view>
+
+      <block wx:if="{{posts.length > 0}}">
+        <view class="post-card" wx:for="{{posts}}" wx:key="id" bindtap="goToPostDetail" data-id="{{item.id}}">
+          <!-- 帖子头部：头像 + 名字 + 时间 -->
+          <view class="post-header">
+            <image class="post-avatar" src="{{item.user.avatar}}" mode="aspectFill"></image>
+            <view class="post-user-info">
+              <text class="post-user-name">{{item.user.name}}</text>
+              <text class="post-time">{{item.time}}</text>
+            </view>
+          </view>
+
+          <!-- 帖子内容 -->
+          <text class="post-content-text">{{item.content}}</text>
+
+          <!-- 帖子图片 -->
+          <view class="post-images" wx:if="{{item.images && item.images.length > 0}}">
+            <image class="post-image" wx:for="{{item.images}}" wx:for-item="img" wx:for-index="imgIdx" wx:key="imgIdx" src="{{img}}" mode="aspectFill"></image>
+          </view>
+
+          <!-- 帖子底部：点赞评论 -->
+          <view class="post-footer">
+            <view class="post-stats">
+              <view class="feed-stat-item feed-like-btn" catchtap="toggleFeedLike" data-id="{{item.id}}" data-index="{{index}}">
+                <image class="feed-stat-icon" src="/images/SVG/点赞.svg" mode="aspectFit" style="opacity: {{item.liked ? 1 : 0.4}};"></image>
+                <text class="feed-stat-num">{{item.stats.likes}}</text>
+              </view>
+              <view class="post-stat-item">
+                <text class="stat-icon">💬</text>
+                <text class="stat-num">{{item.stats.comments}}</text>
+              </view>
+            </view>
+          </view>
+        </view>
+      </block>
+
+      <!-- 空状态 -->
+      <view class="empty-state" wx:elif="{{!postsLoading}}">
+        <text>TA 还没有发布任何动态</text>
+      </view>
+
+      <view class="empty-state" wx:if="{{postsLoading}}">
+        <text>加载中...</text>
+      </view>
+
+      <!-- 加载更多提示 -->
+      <view class="load-more-hint" wx:if="{{!postsLoading && posts.length > 0}}">
+        <text wx:if="{{loadingMore}}">加载中...</text>
+        <text wx:elif="{{postsHasMore}}">上拉加载更多</text>
+        <text wx:else>— 没有更多了 —</text>
+      </view>
+    </view>
+
+    <!-- 底部安全区 -->
+    <view class="bottom-safe"></view>
+  </scroll-view>
+</view>

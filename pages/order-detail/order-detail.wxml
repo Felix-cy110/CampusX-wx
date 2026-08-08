@@ -1,0 +1,145 @@
+<view class="page">
+  <!-- 自定义导航栏 -->
+  <view class="status-bar-placeholder" style="height: {{statusBarHeight}}px;"></view>
+  <view class="nav-bar" style="height: {{navBarHeight}}px;">
+    <view class="nav-back" bindtap="goBack">
+      <image class="nav-back-icon" src="/images/SVG/返回.svg" mode="aspectFit"></image>
+    </view>
+    <text class="nav-title">订单详情</text>
+    <view class="nav-placeholder"></view>
+  </view>
+
+  <view wx:if="{{loading}}" class="loading-wrap">
+    <text class="loading-text">加载中...</text>
+  </view>
+
+  <block wx:elif="{{order}}">
+    <!-- 状态横幅 -->
+    <view class="status-banner" style="background-color: {{order.statusColor}};">
+      <text class="status-title">{{order.statusDesc}}</text>
+      <text class="status-sub" wx:if="{{order.cancelReason}}">原因：{{order.cancelReason}}</text>
+    </view>
+
+    <!-- 对方用户卡片 -->
+    <view class="user-card">
+      <image class="user-avatar" src="{{order.counterparty.avatar}}" mode="aspectFill"></image>
+      <view class="user-info">
+        <text class="user-name">{{order.counterparty.name}}</text>
+        <text class="user-role">{{side === 'buy' ? '卖家' : '买家'}}</text>
+      </view>
+      <view class="contact-btn" bindtap="contactUser">
+        <image class="contact-icon" src="/images/SVG/私信.svg" mode="aspectFit"></image>
+        <text class="contact-text">联系</text>
+      </view>
+    </view>
+
+    <!-- 商品信息 -->
+    <view class="section">
+      <view class="section-title">商品信息</view>
+      <view class="product-row" bindtap="goToProduct">
+        <image class="product-image" wx:if="{{order.product.image}}" src="{{order.product.image}}" mode="aspectFill"></image>
+        <view class="product-info">
+          <text class="product-title">{{order.product.title || '商品已删除'}}</text>
+          <text class="product-tip" wx:if="{{type !== 'errand'}}">点击查看商品详情</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 价格明细 -->
+    <view class="section">
+      <view class="section-title">价格明细</view>
+      <view class="info-row">
+        <text class="info-label">商品金额</text>
+        <text class="info-value">¥{{order.price.toFixed(2)}}</text>
+      </view>
+      <view class="info-row" wx:if="{{order.deposit > 0}}">
+        <text class="info-label">押金</text>
+        <text class="info-value">¥{{order.deposit.toFixed(2)}}</text>
+      </view>
+      <view class="info-row" wx:if="{{order.serviceFee > 0}}">
+        <text class="info-label">服务费</text>
+        <text class="info-value">¥{{order.serviceFee.toFixed(2)}}</text>
+      </view>
+      <view class="info-row divider-top">
+        <text class="info-label bold">实付款</text>
+        <text class="info-value price-highlight">¥{{order.actualPaid.toFixed(2)}}</text>
+      </view>
+    </view>
+
+    <!-- 租赁时间 -->
+    <view class="section" wx:if="{{order.rentStart}}">
+      <view class="section-title">租赁时间</view>
+      <view class="info-row">
+        <text class="info-label">租期</text>
+        <text class="info-value">{{order.rentStart}} 至 {{order.rentEnd}}</text>
+      </view>
+    </view>
+
+    <!-- 上课时间 -->
+    <view class="section" wx:if="{{order.classTime}}">
+      <view class="section-title">课程信息</view>
+      <view class="info-row">
+        <text class="info-label">上课时间</text>
+        <text class="info-value">{{order.classTime}}</text>
+      </view>
+    </view>
+
+    <!-- 订单信息 -->
+    <view class="section">
+      <view class="section-title">订单信息</view>
+      <view class="info-row">
+        <text class="info-label">订单编号</text>
+        <text class="info-value order-no" selectable="true">{{order.orderNo}}</text>
+      </view>
+      <view class="info-row" wx:if="{{order.createdAt}}">
+        <text class="info-label">下单时间</text>
+        <text class="info-value">{{order.createdAt}}</text>
+      </view>
+      <view class="info-row" wx:if="{{order.payTime}}">
+        <text class="info-label">付款时间</text>
+        <text class="info-value">{{order.payTime}}</text>
+      </view>
+      <view class="info-row" wx:if="{{order.shipTime}}">
+        <text class="info-label">发货时间</text>
+        <text class="info-value">{{order.shipTime}}</text>
+      </view>
+      <view class="info-row" wx:if="{{order.handOverTime}}">
+        <text class="info-label">交接时间</text>
+        <text class="info-value">{{order.handOverTime}}</text>
+      </view>
+      <view class="info-row" wx:if="{{order.returnTime}}">
+        <text class="info-label">归还时间</text>
+        <text class="info-value">{{order.returnTime}}</text>
+      </view>
+      <view class="info-row" wx:if="{{order.confirmTime}}">
+        <text class="info-label">完成时间</text>
+        <text class="info-value">{{order.confirmTime}}</text>
+      </view>
+      <view class="info-row" wx:if="{{order.confirmReturnTime}}">
+        <text class="info-label">确认归还时间</text>
+        <text class="info-value">{{order.confirmReturnTime}}</text>
+      </view>
+    </view>
+
+    <!-- 底部占位（防止被操作栏遮挡） -->
+    <view style="height: 140rpx;" wx:if="{{order.actions.length > 0}}"></view>
+  </block>
+
+  <!-- 空状态 -->
+  <view wx:elif="{{!loading}}" class="empty-state">
+    <text class="empty-text">订单不存在</text>
+  </view>
+
+  <!-- 底部操作栏 -->
+  <view class="action-bar" wx:if="{{order && order.actions.length > 0}}">
+    <view
+      class="action-btn {{item.type}}"
+      wx:for="{{order.actions}}"
+      wx:key="key"
+      bindtap="onAction"
+      data-action="{{item.key}}"
+    >
+      <text class="action-btn-text">{{item.label}}</text>
+    </view>
+  </view>
+</view>

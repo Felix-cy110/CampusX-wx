@@ -1,0 +1,117 @@
+<view class="page">
+  <!-- 固定顶部：状态栏 + 导航栏 -->
+  <view class="fixed-header">
+    <view class="status-bar-placeholder" style="height: {{statusBarHeight}}px;"></view>
+    <view class="detail-nav-bar" style="height: {{navBarHeight}}px;">
+      <view class="nav-back" bindtap="goBack">
+        <image class="nav-back-icon" src="/images/SVG/返回.svg" mode="aspectFit"></image>
+      </view>
+      <text class="detail-title">搜索结果</text>
+      <view class="nav-placeholder"></view>
+    </view>
+  </view>
+
+  <!-- 标签栏 + 筛选按钮 -->
+  <view class="tab-bar">
+    <scroll-view class="tab-scroll" scroll-x="true" enable-flex>
+      <view class="tab-list">
+        <view
+          class="tab-item {{currentTab === item ? 'active' : ''}}"
+          wx:for="{{tabs}}"
+          wx:key="*this"
+          bindtap="switchTab"
+          data-tab="{{item}}"
+        >
+          <text>{{item}}</text>
+          <view class="tab-indicator" wx:if="{{currentTab === item}}"></view>
+        </view>
+      </view>
+    </scroll-view>
+    <view class="filter-btn" bindtap="onFilter">
+      <text class="filter-icon">☰</text>
+    </view>
+  </view>
+
+  <!-- 搜索到用户 -->
+  <view class="section" wx:if="{{searchUsers.length > 0 && showUsers}}">
+    <view class="section-header">
+      <text class="section-title">搜索到用户</text>
+    </view>
+    <view class="user-list">
+      <view
+        class="user-item flex-between"
+        wx:for="{{searchUsers}}"
+        wx:key="name"
+        bindtap="onTapUser"
+        data-user="{{item}}"
+      >
+        <view class="flex user-info">
+          <image class="avatar-search-user" src="{{item.avatar}}" mode="aspectFill"></image>
+          <view class="ml-20">
+            <text class="user-name">{{item.name}}</text>
+            <text class="user-school text-xs text-secondary">{{item.school}}</text>
+          </view>
+        </view>
+        <view class="follow-btn" bindtap="onFollow" data-user-id="{{item.userId}}">关注</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 搜索到帖子 -->
+  <view class="section" wx:if="{{filteredPosts.length > 0 && showPosts}}">
+    <view class="section-header">
+      <text class="section-title">搜索到帖子</text>
+    </view>
+    <view class="post-list">
+      <view
+        class="post-card"
+        wx:for="{{filteredPosts}}"
+        wx:key="index"
+        bindtap="onTapPost"
+        data-post="{{item}}"
+      >
+        <view class="post-header">
+          <image class="avatar-search-post" src="{{item.user.avatar}}" mode="aspectFill"></image>
+          <view class="flex-1 ml-16">
+            <text class="post-username text-bold">{{item.user.name}}</text>
+            <text class="post-time text-xs text-secondary ml-16">{{item.time}}</text>
+          </view>
+        </view>
+        <text class="post-content ellipsis-2">{{item.content}}</text>
+        <view class="post-images" wx:if="{{item.images && item.images.length > 0}}">
+          <image
+            class="post-image"
+            wx:for="{{item.images}}"
+            wx:key="*this"
+            wx:for-item="img"
+            src="{{img}}"
+            mode="aspectFill"
+          ></image>
+        </view>
+        <view class="post-footer">
+          <view class="post-stats">
+            <text class="tag-green" wx:if="{{item.status === '可联系'}}">{{item.status}}</text>
+            <text class="tag-red" wx:if="{{item.status === '已关闭'}}">{{item.status}}</text>
+            <text class="post-price text-bold" wx:if="{{item.price > 0}}">￥{{item.price}}</text>
+            <view class="feed-stat-item feed-like-btn" wx:if="{{item.type === 'post'}}" catchtap="toggleFeedLike" data-id="{{item.id}}" data-index="{{index}}">
+              <image class="feed-stat-icon" src="/images/SVG/点赞.svg" mode="aspectFit" style="opacity: {{item.liked ? 1 : 0.4}};"></image>
+              <text class="feed-stat-num">{{item.stats.likes}}</text>
+            </view>
+            <text class="post-stat text-xs text-secondary ml-20" wx:else>{{item.stats.likes}} 赞</text>
+            <text class="post-stat text-xs text-secondary ml-20">{{item.stats.comments}} 评论</text>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 加载中 -->
+  <view class="empty-state" wx:if="{{loading}}">
+    <text class="empty-text">搜索中...</text>
+  </view>
+
+  <!-- 空结果 -->
+  <view class="empty-state" wx:elif="{{filteredPosts.length === 0 && searchUsers.length === 0}}">
+    <text class="empty-text">{{emptyText}}</text>
+  </view>
+</view>

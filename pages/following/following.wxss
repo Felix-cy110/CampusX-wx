@@ -1,0 +1,138 @@
+/* 关注与粉丝 */
+.page {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background-color: var(--color-bg);
+  overflow: hidden;
+}
+
+.fixed-header {
+  background: #fff;
+}
+.nav-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 30rpx;
+  background: #fff;
+}
+.nav-back {
+  width: 80rpx;
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+.nav-back-icon {
+  width: 40rpx;
+  height: 40rpx;
+}
+.nav-title {
+  font-size: var(--font-lg);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.tab-bar {
+  display: flex;
+  background-color: var(--color-bg-white);
+}
+
+.tab-item {
+  flex: 1;
+  text-align: center;
+  padding: 24rpx 0;
+  font-size: var(--font-md);
+  color: var(--color-text-secondary);
+  position: relative;
+}
+
+.tab-item.active {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.tab-item.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 48rpx;
+  height: 4rpx;
+  background-color: var(--color-primary);
+  border-radius: 2rpx;
+}
+
+.user-list {
+  flex: 1;
+  padding: 0 30rpx;
+  background-color: var(--color-bg-white);
+  margin-top: 0;
+  overflow: hidden;
+}
+
+.empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  font-size: var(--font-base);
+  color: var(--color-text-secondary);
+}
+
+.loading-tip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40rpx 0;
+  font-size: var(--font-sm);
+  color: var(--color-text-placeholder);
+}
+
+.user-item {
+  display: flex;
+  align-items: center;
+  padding: 24rpx 0;
+}
+
+.user-item + .user-item {
+  border-top: 1rpx solid var(--color-border-light);
+}
+
+.user-avatar {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 50%;
+  background: #CCCCCC;
+  flex-shrink: 0;
+}
+
+.user-name {
+  font-size: var(--font-base);
+  color: var(--color-text);
+}
+
+.follow-btn {
+  padding: 12rpx 28rpx;
+  border-radius: 40rpx;
+  border: 2rpx solid var(--color-primary);
+  font-size: var(--font-sm);
+  color: var(--color-primary);
+  background: transparent;
+  flex-shrink: 0;
+  margin-right: 60rpx;
+  line-height: 1;
+}
+
+.follow-btn.followed {
+  border-color: var(--color-border-light);
+  color: var(--color-text-secondary);
+  background-color: var(--color-bg);
+}
+
+/* 底部安全区 */
+.bottom-safe {
+  height: calc(20rpx + constant(safe-area-inset-bottom));
+  height: calc(20rpx + env(safe-area-inset-bottom));
+}

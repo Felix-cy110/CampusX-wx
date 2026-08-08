@@ -1,0 +1,93 @@
+<view class="page">
+  <!-- 导航栏 -->
+  <view class="fixed-header">
+    <view class="status-bar-placeholder" style="height: {{statusBarHeight}}px;"></view>
+    <view class="nav-bar" style="height: {{navBarHeight}}px;">
+      <view class="nav-back" bindtap="goBack">
+        <image class="nav-back-icon" src="/images/SVG/返回.svg" mode="aspectFit"></image>
+      </view>
+      <text class="nav-title">发起跑腿</text>
+      <view class="nav-placeholder"></view>
+    </view>
+  </view>
+
+  <scroll-view class="form-scroll" scroll-y enhanced show-scrollbar="{{false}}">
+    <view class="form-card">
+      <!-- 课程名称 -->
+      <view class="input-wrap">
+        <input
+          class="form-input"
+          placeholder="* 课程名称"
+          placeholder-class="input-placeholder"
+          value="{{courseName}}"
+          bindinput="onCourseNameInput"
+          maxlength="{{courseNameMax}}"
+        />
+      </view>
+
+      <!-- 上课时间 -->
+      <view class="time-row">
+        <picker class="time-picker" mode="date" value="{{classDate}}" bindchange="onDateChange">
+          <view class="time-picker-box">
+            <text class="{{classDate ? '' : 'picker-placeholder'}}">{{classDate || '* 选择日期'}}</text>
+          </view>
+        </picker>
+        <picker class="time-picker" mode="time" value="{{classTime}}" bindchange="onTimeChange">
+          <view class="time-picker-box">
+            <text class="{{classTime ? '' : 'picker-placeholder'}}">{{classTime || '* 选择时间'}}</text>
+          </view>
+        </picker>
+      </view>
+
+      <!-- 上课地点 -->
+      <view class="location-row">
+        <input class="location-input" placeholder="* 校区" placeholder-class="input-placeholder" value="{{locationCampus}}" bindinput="onLocationCampusInput" />
+        <input class="location-input" placeholder="* 楼栋" placeholder-class="input-placeholder" value="{{locationBuilding}}" bindinput="onLocationBuildingInput" />
+        <input class="location-input" placeholder="* 教室号" placeholder-class="input-placeholder" value="{{locationRoom}}" bindinput="onLocationRoomInput" />
+      </view>
+
+      <!-- 代课费 -->
+      <view class="input-wrap">
+        <input
+          class="form-input"
+          type="digit"
+          placeholder="* 代课费（元）"
+          placeholder-class="input-placeholder"
+          value="{{fee}}"
+          bindinput="onFeeInput"
+        />
+      </view>
+
+      <!-- 备注要求 -->
+      <view class="textarea-wrap">
+        <textarea
+          class="form-textarea"
+          placeholder="备注要求（选填，如是否需点名、记笔记等）"
+          placeholder-class="input-placeholder"
+          value="{{remark}}"
+          bindinput="onRemarkInput"
+          maxlength="{{remarkMax}}"
+          auto-height
+        />
+      </view>
+      <view class="char-count">{{remark.length}}/{{remarkMax}}</view>
+
+      <!-- 仅限本校 -->
+      <view class="toggle-row" bindtap="toggleOnlySameSchool">
+        <text>仅限本校接单</text>
+        <view class="toggle-switch {{onlySameSchool ? 'on' : ''}}">
+          <view class="toggle-knob {{onlySameSchool ? 'on' : ''}}"></view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 提交按钮 -->
+    <view class="submit-area">
+      <view class="btn btn-primary submit-btn {{publishing ? 'disabled' : ''}}" bindtap="onSubmit">
+        <text>{{publishing ? '发布中...' : '发布'}}</text>
+      </view>
+    </view>
+
+    <view class="safe-bottom-spacer"></view>
+  </scroll-view>
+</view>

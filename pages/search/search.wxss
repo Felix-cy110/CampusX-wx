@@ -1,0 +1,151 @@
+.page {
+  min-height: 100vh;
+  background-color: var(--color-bg);
+}
+
+/* 状态栏占位 */
+.status-bar-placeholder {
+  width: 100%;
+  background-color: #FFFFFF;
+}
+
+/* 导航栏：搜索标题，与胶囊按钮平齐 */
+.search-nav-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 30rpx;
+  background-color: #FFFFFF;
+}
+
+.nav-back {
+  width: 80rpx;
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.nav-back-icon {
+  width: 40rpx;
+  height: 40rpx;
+}
+
+.search-title {
+  font-size: var(--font-lg);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.nav-placeholder {
+  width: 80rpx;
+}
+
+/* 搜索栏 */
+.search-bar {
+  padding: 12rpx 20rpx 12rpx;
+  box-sizing: border-box;
+  width: 100%;
+  background-color: #FFFFFF;
+}
+
+.search-input-wrapper {
+  display: flex;
+  align-items: center;
+  height: 68rpx;
+  border-radius: 34rpx;
+  background-color: #F2F3F5;
+  padding: 0 24rpx;
+  box-sizing: border-box;
+}
+
+.search-icon {
+  width: 32rpx;
+  height: 32rpx;
+  margin-right: 16rpx;
+  flex-shrink: 0;
+}
+
+.search-input {
+  flex: 1;
+  font-size: var(--font-base);
+  color: var(--color-text);
+}
+
+.placeholder {
+  color: var(--color-text-secondary);
+  font-size: var(--font-base);
+}
+
+.search-clear {
+  width: 36rpx;
+  height: 36rpx;
+  border-radius: 50%;
+  background-color: var(--color-border);
+  color: #FFFFFF;
+  font-size: var(--font-xs);
+  text-align: center;
+  line-height: 36rpx;
+  margin-left: 12rpx;
+}
+
+/* 区域标题 */
+.section {
+  background-color: var(--color-bg-white);
+  padding: 28rpx 30rpx;
+}
+
+.section-header {
+  margin-bottom: 16rpx;
+}
+
+.section-title {
+  font-size: var(--font-md);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.clear-btn {
+  font-size: var(--font-sm);
+  color: var(--color-text-secondary);
+}
+
+/* 搜索历史列表 */
+.history-list {
+  margin-top: 10rpx;
+}
+
+.history-item {
+  display: flex;
+  align-items: center;
+  padding: 30rpx 0;
+  border-bottom: 1rpx solid var(--color-border-light);
+}
+
+.history-item:last-child {
+  border-bottom: none;
+}
+
+.history-icon {
+  width: 28rpx;
+  height: 28rpx;
+  margin-right: 20rpx;
+  flex-shrink: 0;
+}
+
+.history-text {
+  font-size: var(--font-base);
+  color: var(--color-text-secondary);
+}
+
+/* 空状态 */
+.empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 200rpx 0;
+}
+
+.empty-text {
+  font-size: var(--font-base);
+  color: var(--color-text-secondary);
+}

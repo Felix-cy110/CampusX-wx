@@ -1,0 +1,8 @@
+<view class="page">
+  <view class="list">
+    <view class="user-item flex" wx:for="{{users}}" wx:key="name">
+      <image class="avatar-lg" src="{{item.avatar}}" mode="aspectFill"></image>
+      <text class="ml-20">{{item.name}}</text>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,45 @@
+<!-- 微信登录授权页 -->
+<view class="page">
+  <view style="height: {{statusBarHeight}}px; position: fixed; top: 0; left: 0; right: 0; z-index: 3;"></view>
+  <!-- 蒙层 -->
+  <view class="overlay"></view>
+
+  <!-- 授权弹窗 -->
+  <view class="auth-modal">
+    <!-- 应用信息 -->
+    <view class="auth-header">
+      <image class="auth-app-icon" src="/images/tab-home.png" mode="aspectFill"></image>
+      <view class="auth-app-info">
+        <text class="auth-app-name">CampusX</text>
+      </view>
+    </view>
+
+    <text class="auth-title">企鹅市集买手店 申请</text>
+
+    <!-- 手机号信息 -->
+    <view class="auth-phone-section">
+      <text class="auth-phone-label">使用你的手机号码</text>
+      <text class="auth-phone-number">18682000000</text>
+    </view>
+
+    <!-- 微信绑定说明 -->
+    <view class="auth-desc">
+      <text class="auth-desc-text">微信绑定手机号</text>
+    </view>
+
+    <!-- 按钮区域 -->
+    <view class="auth-buttons">
+      <view class="auth-btn auth-btn-deny" bindtap="deny">
+        拒绝
+      </view>
+      <view class="auth-btn auth-btn-allow" bindtap="allow">
+        允许
+      </view>
+    </view>
+
+    <!-- 使用其他手机号 -->
+    <view class="auth-other" bindtap="useOtherPhone">
+      <text class="auth-other-text">使用其他手机号</text>
+    </view>
+  </view>
+</view>

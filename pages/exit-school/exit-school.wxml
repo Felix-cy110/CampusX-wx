@@ -1,0 +1,67 @@
+<!-- 切换学校 -->
+<view class="page">
+  <!-- 自定义导航栏 -->
+  <view class="status-bar-placeholder" style="height: {{statusBarHeight}}px;"></view>
+  <view class="nav-bar" style="height: {{navBarHeight}}px;">
+    <view class="nav-back" bindtap="onBack">
+      <image class="nav-back-icon" src="/images/SVG/返回.svg" mode="aspectFit"></image>
+    </view>
+    <text class="nav-title">切换学校</text>
+    <view class="nav-placeholder"></view>
+  </view>
+
+  <!-- 高校列表 -->
+  <scroll-view class="campus-list" scroll-y enhanced show-scrollbar="{{false}}">
+    <view class="list-header">
+      <text class="list-header-text">选择你要切换的学校</text>
+    </view>
+
+    <view
+      class="campus-item {{String(item.id) === String(currentCampusId) ? 'current' : ''}}"
+      wx:for="{{campusList}}"
+      wx:key="id"
+      bindtap="onTapCampus"
+      data-id="{{item.id}}"
+      data-name="{{item.name}}"
+    >
+      <view class="campus-info">
+        <text class="campus-name">{{item.name}}</text>
+        <text class="campus-badge" wx:if="{{String(item.id) === String(currentCampusId)}}">当前学校</text>
+      </view>
+      <image class="campus-arrow" src="/images/SVG/返回.svg" mode="aspectFit" wx:if="{{String(item.id) !== String(currentCampusId)}}"></image>
+    </view>
+
+    <view class="empty-state" wx:if="{{campusList.length === 0}}">
+      <text>暂无高校数据</text>
+    </view>
+
+    <view class="bottom-safe"></view>
+  </scroll-view>
+
+  <!-- 确认切换弹窗 -->
+  <view class="modal-mask {{showConfirmModal ? 'show' : ''}}" bindtap="onCancelModal">
+    <view class="modal-sheet {{showConfirmModal ? 'show' : ''}}" catchtap="onSheetTap">
+      <view class="modal-title">确认切换学校？</view>
+
+      <view class="modal-body">
+        <text class="modal-target">将切换至：<text class="target-name">{{selectedCampus.name}}</text></text>
+
+        <view class="rule-box">
+          <text class="rule-title">📋 切换规则</text>
+          <text class="rule-text">每 <text class="rule-highlight">180天</text>（约6个月）可自助修改一次学校信息。</text>
+          <text class="rule-text">切换成功后需等待 <text class="rule-highlight">180天</text> 才能再次自助修改。</text>
+          <text class="rule-text">如需在冷却期内修改，请联系客服提交学生证等证明材料申请。</text>
+        </view>
+      </view>
+
+      <view class="modal-btns">
+        <view class="modal-btn cancel-btn" bindtap="onCancelModal">
+          <text>取消</text>
+        </view>
+        <view class="modal-btn confirm-btn" bindtap="onConfirmSwitch">
+          <text>确认切换</text>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>

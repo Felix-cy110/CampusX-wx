@@ -1,0 +1,40 @@
+<!-- 已发布确认页面 -->
+<view class="page">
+  <!-- 导航栏 -->
+  <view class="fixed-header">
+    <view class="status-bar-placeholder" style="height: {{statusBarHeight}}px;"></view>
+    <view class="nav-bar" style="height: {{navBarHeight}}px;">
+      <view class="nav-back" bindtap="goBack">
+        <image class="nav-back-icon" src="/images/SVG/返回.svg" mode="aspectFit"></image>
+      </view>
+      <text class="nav-title">已发布</text>
+      <view class="nav-placeholder"></view>
+    </view>
+  </view>
+
+  <view class="container">
+    <!-- 成功图标 -->
+    <view class="check-area">
+      <view class="check-circle">
+        <text class="check-icon">✓</text>
+      </view>
+    </view>
+
+    <!-- 标题 -->
+    <text class="done-title">已发布</text>
+
+    <!-- 说明文字 -->
+    <view class="notice-area">
+      <text class="notice-title">等待审核</text>
+      <text class="notice-desc">我们需要审核你的内容，大约5分钟内审核完毕。</text>
+      <text class="notice-desc">审核通过后，我们将会公开你的内容</text>
+    </view>
+
+    <!-- 完成按钮 -->
+    <view class="btn btn-primary done-btn" bindtap="finish">
+      <text>完成</text>
+    </view>
+  </view>
+
+  <view class="bottom-safe"></view>
+</view>
