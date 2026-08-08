@@ -464,10 +464,20 @@ function formatLastMessage(msg, msgType) {
   if (msgType === 4) {
     try {
       var data = JSON.parse(msg || '{}')
-      return data.title || '分享了一条帖子'
+      if (data.title) {
+        return data.title
+      }
     } catch (e) {
-      return '分享了一条帖子'
+      // 解析失败，可能是后端截断导致的残缺 JSON，继续尝试正则提取
     }
+    var match = ('' + msg).match(/"title"\s*:\s*"([^"]*)"/)
+    if (!match) {
+      match = ('' + msg).match(/"title"\s*:\s*"([^"]*)/)
+    }
+    if (match && match[1]) {
+      return match[1]
+    }
+    return '分享了一条帖子'
   }
   return msg || ''
 }

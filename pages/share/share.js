@@ -62,7 +62,7 @@ Page({
     wx.showLoading({ title: '分享中...' })
 
     request({
-      url: '/api/v1/post/' + postId + '/share/' + userId,
+      url: '/api/post/' + postId + '/share/' + userId,
       method: 'POST'
     }).then(function () {
       wx.hideLoading()
