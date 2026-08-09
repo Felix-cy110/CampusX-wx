@@ -70,6 +70,6 @@
 
   <!-- 进入按钮 -->
   <view class="btn-area">
-    <view class="btn btn-primary {{canSubmit ? '' : 'btn-disabled'}}" bindtap="submit">进入</view>
+    <view class="btn btn-primary {{canSubmit ? '' : 'btn-incomplete'}}" bindtap="submit">进入</view>
   </view>
 </view>

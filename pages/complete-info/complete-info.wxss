@@ -112,3 +112,8 @@
 .btn-area .btn {
   width: 100%;
 }
+
+/* 资料未完善时保留弱化样式，但仍允许点击以展示具体缺失项。 */
+.btn-area .btn-incomplete {
+  opacity: 0.4;
+}

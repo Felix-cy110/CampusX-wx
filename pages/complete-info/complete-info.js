@@ -95,9 +95,34 @@ Page({
 
   // 检查是否可以提交
   checkCanSubmit() {
-    const { avatarUrl, phone, schoolId, majorId } = this.data
-    const canSubmit = !!(avatarUrl && /^1\d{10}$/.test(phone) && schoolId && majorId)
-    this.setData({ canSubmit })
+    this.setData({ canSubmit: !this.getFormValidationMessage() })
+  },
+
+  // 按页面展示顺序返回第一个未填写或格式不正确的字段
+  getFormValidationMessage() {
+    const {
+      avatarUrl,
+      nickname,
+      enrollmentYear,
+      schoolId,
+      schoolName,
+      departmentId,
+      majorId,
+      majorName,
+      phone
+    } = this.data
+
+    if (!String(avatarUrl || '').trim()) return '请先上传头像'
+    if (!String(nickname || '').trim()) return '请输入昵称'
+    if (!enrollmentYear) return '请选择入学时间'
+    if (!schoolId || !String(schoolName || '').trim()) return '请选择高校'
+    // 院系由选择专业时一并带回，任一缺失都需要用户重新选择专业。
+    if (!departmentId || !majorId || !String(majorName || '').trim()) return '请选择专业'
+
+    const normalizedPhone = String(phone || '').trim()
+    if (!normalizedPhone) return '请输入手机号'
+    if (!/^1\d{10}$/.test(normalizedPhone)) return '请输入正确的手机号'
+    return ''
   },
 
   // 返回
@@ -131,8 +156,7 @@ Page({
             try {
               const result = JSON.parse(uploadRes.data)
               if (result.code === 200 && result.data && result.data.url) {
-                that.setData({ avatarUrl: result.data.url })
-                that.checkCanSubmit()
+                that.setData({ avatarUrl: result.data.url }, () => that.checkCanSubmit())
               } else {
                 if (!handleAuthFailure(result, tokenSnapshot)) {
                   wx.showToast({ title: (result && result.message) || '上传失败', icon: 'none' })
@@ -153,7 +177,7 @@ Page({
 
   // 昵称输入
   onNicknameInput(e) {
-    this.setData({ nickname: e.detail.value })
+    this.setData({ nickname: e.detail.value }, () => this.checkCanSubmit())
   },
 
   // 选择入学年份
@@ -161,7 +185,7 @@ Page({
     const index = e.detail.value
     const yearStr = this.data.enrollmentYears[index]
     const year = parseInt(yearStr)
-    this.setData({ enrollmentYear: year, enrollmentYearIndex: index })
+    this.setData({ enrollmentYear: year, enrollmentYearIndex: index }, () => this.checkCanSubmit())
   },
 
   // 跳转选择学校
@@ -185,27 +209,21 @@ Page({
 
   // 手机号输入
   onPhoneInput(e) {
-    this.setData({ phone: e.detail.value })
-    this.checkCanSubmit()
+    this.setData({ phone: e.detail.value }, () => this.checkCanSubmit())
   },
 
   // 提交
   submit() {
     if (this._submitting) return
-    if (!this.data.avatarUrl) {
-      wx.showToast({ title: '请先上传头像', icon: 'none' })
-      return
-    }
-    if (!/^1\d{10}$/.test(this.data.phone)) {
-      wx.showToast({ title: '请输入正确的手机号', icon: 'none' })
-      return
-    }
-    if (!this.data.canSubmit) {
-      wx.showToast({ title: '请先选择高校和专业', icon: 'none' })
+    const validationMessage = this.getFormValidationMessage()
+    if (validationMessage) {
+      wx.showToast({ title: validationMessage, icon: 'none' })
       return
     }
 
-    const { avatarUrl, nickname, phone, schoolId, schoolName, departmentId, departmentName, majorId, majorName, enrollmentYear } = this.data
+    const { avatarUrl, phone, schoolId, schoolName, departmentId, departmentName, majorId, majorName, enrollmentYear } = this.data
+    const nickname = this.data.nickname.trim()
+    const normalizedPhone = String(phone).trim()
 
     this._submitting = true
     wx.showLoading({ title: '提交中...' })
@@ -213,13 +231,13 @@ Page({
       url: '/api/v1/user/complete-info',
       method: 'POST',
       data: {
-        nickname: nickname || '微信用户',
-        avatarUrl: avatarUrl || '',
-        phone: phone || '',
+        nickname,
+        avatarUrl,
+        phone: normalizedPhone,
         campusId: schoolId,
         departmentId: departmentId,
         majorId: majorId,
-        enrollmentYear: enrollmentYear || new Date().getFullYear()
+        enrollmentYear
       }
     }).then(vo => {
       wx.hideLoading()
@@ -234,16 +252,16 @@ Page({
       const existing = app.globalData.userInfo || {}
       const userInfo = {
         uid: existing.uid || '',
-        nickname: nickname || '微信用户',
+        nickname,
         avatar: toFullUrl(avatarUrl) || '',
-        phone,
+        phone: normalizedPhone,
         campusId: schoolId,
         school: schoolName,
         departmentId,
         department: departmentName,
         majorId,
         major: majorName,
-        enrollYear: enrollmentYear || new Date().getFullYear(),
+        enrollYear: enrollmentYear,
         inviteCode: existing.inviteCode || '',
         invitedByUserId: existing.invitedByUserId || null,
         invitedBy: existing.invitedBy || null,
