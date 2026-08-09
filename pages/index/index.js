@@ -878,28 +878,32 @@ Page({
   toggleBookFavorite(e) {
     if (!this.requireLogin()) return
     const id = e.currentTarget.dataset.id
-    const { filteredBookList, bookPage, bookPageSize } = this.data
-    const list = filteredBookList.map(item => {
-      if (item.id === id) {
-        const newFav = !item.isFavorite
-        // 调用收藏 API
-        const url = newFav
-          ? '/api/v1/favorite/toggle'
-          : '/api/v1/favorite/toggle'
-        request({
-          url,
-          method: 'POST',
-          data: { targetId: id, targetType: 2 }
-        }).catch(() => {})
-        return { ...item, isFavorite: newFav }
-      }
-      return item
-    })
-    const displayList = list.slice(0, bookPage * bookPageSize)
-    this.setData({ filteredBookList: list, bookDisplayList: displayList })
-    wx.showToast({
-      title: list.find(i => i.id === id).isFavorite ? '已收藏' : '已取消收藏',
-      icon: 'none'
+    const target = this.data.filteredBookList.find(item => item.id === id)
+    if (!target) return
+    const oldFav = target.isFavorite
+    const newFav = !oldFav
+    // 乐观更新：先切换本地状态，失败时回滚
+    const applyFav = (fav) => {
+      const list = this.data.filteredBookList.map(item =>
+        item.id === id ? { ...item, isFavorite: fav } : item
+      )
+      const displayList = list.slice(0, this.data.bookPage * this.data.bookPageSize)
+      this.setData({ filteredBookList: list, bookDisplayList: displayList })
+    }
+    applyFav(newFav)
+    // 调用收藏 API
+    request({
+      url: '/api/v1/favorite/toggle',
+      method: 'POST',
+      data: { targetId: id, targetType: 2 }
+    }).then(() => {
+      wx.showToast({
+        title: newFav ? '已收藏' : '已取消收藏',
+        icon: 'none'
+      })
+    }).catch(() => {
+      applyFav(oldFav)
+      wx.showToast({ title: '操作失败', icon: 'none' })
     })
   },
 
@@ -1125,13 +1129,29 @@ Page({
   },
 
   toggleOtherFavorite(e) {
+    if (!this.requireLogin()) return
     const id = e.currentTarget.dataset.id
-    const { otherList } = this.data
-    const list = otherList.map(item => {
-      if (item.id === id) return { ...item, isFavorite: !item.isFavorite }
-      return item
+    const target = this.data.otherList.find(item => item.id === id)
+    if (!target) return
+    const oldFav = target.isFavorite
+    const newFav = !oldFav
+    // 乐观更新：先切换本地状态，失败时回滚
+    const applyFav = (fav) => {
+      const list = this.data.otherList.map(item =>
+        item.id === id ? { ...item, isFavorite: fav } : item
+      )
+      this.setData({ otherList: list }, () => this.filterOtherList())
+    }
+    applyFav(newFav)
+    // 调用收藏 API
+    request({
+      url: '/api/v1/favorite/toggle',
+      method: 'POST',
+      data: { targetId: id, targetType: 2 }
+    }).catch(() => {
+      applyFav(oldFav)
+      wx.showToast({ title: '操作失败', icon: 'none' })
     })
-    this.setData({ otherList: list }, () => this.filterOtherList())
   },
 
   /* ========== 二手闲置 API 加载方法 ========== */
@@ -1252,7 +1272,7 @@ Page({
       category: '教材教辅', // 默认分类，后续可根据实际分类字段调整
       seller: { name: vo.sellerNickname || '南信大同学', avatar: toFullUrl(vo.sellerAvatar) || '/images/avatars/default.png' },
       distance: undefined,
-      isFavorite: false,
+      isFavorite: !!vo.isFavorite,
       isRent: false,
       type: 'secondhand'
     }
@@ -1278,7 +1298,7 @@ Page({
       category: vo.category || '其他闲置',
       seller: { name: vo.sellerNickname || '南信大同学', avatar: toFullUrl(vo.sellerAvatar) || '/images/avatars/default.png' },
       distance: undefined,
-      isFavorite: false,
+      isFavorite: !!vo.isFavorite,
       isRent: false,
       type: 'secondhand'
     }

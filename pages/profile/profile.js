@@ -599,7 +599,15 @@ Page({
   onShareToFriends() {
     const id = this.data.selectedPostId
     this.hidePostOptions()
-    wx.showToast({ title: '分享功能开发中', icon: 'none' })
+    // 查找对应项获取后端 ID 和类型
+    const item = this.data.filteredContentList.find(item => String(item.id) === String(id))
+    if (!item) {
+      wx.showToast({ title: '未找到该内容', icon: 'none' })
+      return
+    }
+    const backendId = item._backendId
+    const backendType = item._backendType || 'post'
+    wx.navigateTo({ url: '/pages/share/share?targetId=' + backendId + '&targetType=' + backendType })
   },
 
   /* 分享给微信好友 */

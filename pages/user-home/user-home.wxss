@@ -155,23 +155,26 @@
   border-radius: 36rpx;
   font-size: 28rpx;
   font-weight: 600;
+  box-sizing: border-box;
+  border: 2rpx solid transparent;
 }
 
 .follow-btn {
   background-color: #FFFFFF;
   color: var(--color-primary);
+  border-color: transparent;
 }
 
 .follow-btn.followed {
   background-color: rgba(255, 255, 255, 0.3);
   color: #FFFFFF;
-  border: 2rpx solid rgba(255, 255, 255, 0.6);
+  border-color: rgba(255, 255, 255, 0.6);
 }
 
 .chat-btn {
   background-color: rgba(255, 255, 255, 0.25);
   color: #FFFFFF;
-  border: 2rpx solid rgba(255, 255, 255, 0.5);
+  border-color: rgba(255, 255, 255, 0.5);
 }
 
 /* ===== 帖子区域 ===== */

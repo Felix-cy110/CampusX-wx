@@ -23,7 +23,7 @@
   <!-- 关注列表 -->
   <scroll-view class="user-list" wx:if="{{currentTab === 'following'}}" scroll-y enhanced show-scrollbar="{{false}}" bindscrolltolower="onFollowingScrollToLower" lower-threshold="100">
     <view class="user-item" wx:for="{{followingList}}" wx:key="uid">
-      <image class="user-avatar" src="{{item.avatar}}" mode="aspectFill"></image>
+      <image class="user-avatar" src="{{item.avatar}}" mode="aspectFill" catchtap="goToUserProfile" data-uid="{{item.uid}}" data-name="{{item.name}}" data-avatar="{{item.avatar}}"></image>
       <text class="user-name flex-1 ml-20">{{item.name}}</text>
       <view class="follow-btn {{item.isFollowed ? 'followed' : ''}}" catchtap="toggleFollow" data-index="{{index}}">
         <text>{{item.isFollowed ? '已关注' : '关注'}}</text>
@@ -42,7 +42,7 @@
   <!-- 粉丝列表 -->
   <scroll-view class="user-list" wx:if="{{currentTab === 'follower'}}" scroll-y enhanced show-scrollbar="{{false}}" bindscrolltolower="onFollowingScrollToLower" lower-threshold="100">
     <view class="user-item" wx:for="{{followerList}}" wx:key="uid">
-      <image class="user-avatar" src="{{item.avatar}}" mode="aspectFill"></image>
+      <image class="user-avatar" src="{{item.avatar}}" mode="aspectFill" catchtap="goToUserProfile" data-uid="{{item.uid}}" data-name="{{item.name}}" data-avatar="{{item.avatar}}"></image>
       <text class="user-name flex-1 ml-20">{{item.name}}</text>
       <view class="follow-btn {{item.isMutual ? 'followed' : ''}}" catchtap="toggleFollowerFollow" data-index="{{index}}">
         <text>{{item.isMutual ? '互关' : '关注'}}</text>
