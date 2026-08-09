@@ -432,6 +432,11 @@ Page({
       || this.data.followingPosts.find(item => String(item.id) === String(id))
     if (post) {
       wx.setStorageSync('selectedPostDetail', post)
+      // 二手商品关联帖：直接跳转到商品详情页
+      if (post.sourceType === 'IDLE_PRODUCT' && post.sourceId) {
+        safeNavigate({ url: `/pages/market-detail/market-detail?id=${post.sourceId}` })
+        return
+      }
     }
     safeNavigate({ url: `/pages/post-detail/post-detail?id=${id}` })
   },
