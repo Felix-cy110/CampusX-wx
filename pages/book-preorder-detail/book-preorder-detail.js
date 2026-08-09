@@ -1,4 +1,4 @@
-const { request } = require('../../utils/request')
+const { request, toFullUrl } = require('../../utils/request')
 
 const STATUS_LABEL = {
   0: '待付定金',
@@ -30,6 +30,7 @@ function formatPresale(p) {
     price: Number(p.price),
     depositAmount: Number(p.depositAmount),
     finalAmount: Number(p.finalAmount),
+    coverImage: toFullUrl(p.coverImage),
     startTime: formatDateTime(p.startTime),
     endTime: formatDateTime(p.endTime)
   }

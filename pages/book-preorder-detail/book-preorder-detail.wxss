@@ -37,6 +37,24 @@
   padding: 28rpx 24rpx;
 }
 
+.book-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 24rpx;
+}
+
+.book-cover {
+  width: 180rpx;
+  height: 240rpx;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+}
+
+.book-info {
+  flex: 1;
+  min-width: 0;
+}
+
 .book-name {
   font-size: var(--font-xl);
   font-weight: 700;
