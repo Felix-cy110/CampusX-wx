@@ -191,7 +191,7 @@ Page({
       stats: { likes: 0, comments: 0 },
       time: this.formatTime(vo.createdAt),
       price: vo.price != null ? Number(vo.price) : 0,
-      condition: vo.category || conditionText,
+      condition: conditionText,
       deliveryType: deliveryMap[vo.deliveryType] || '自取',
       hasNotes: '',
       isOwn: this._checkIsOwn(vo.sellerId),

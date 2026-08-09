@@ -377,49 +377,69 @@
   color: var(--color-text-secondary);
   margin-left: 6rpx;
 }
-/* 底部操作按钮组：收藏在左，按钮靠右 */
-.bottom-main-actions {
-  display: flex;
-  align-items: center;
-  margin-left: auto;
+/* 底部操作按钮组：收藏在左，占位撑开，按钮靠右 */
+.bottom-spacer {
+  flex: 1;
 }
 .favorite-action {
   margin-left: 12rpx;
-}
-.bottom-btn {
   display: flex;
   align-items: center;
-  justify-content: center;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+.bottom-action-icon {
+  font-size: 36rpx;
+  line-height: 1;
+}
+.bottom-action-count {
+  font-size: 20rpx;
+  margin-top: 2rpx;
+}
+.bottom-btn {
+  display: inline-block;
   height: 68rpx;
+  line-height: 68rpx;
   border-radius: 34rpx;
   margin-left: 16rpx;
   padding: 0 30rpx;
   font-weight: 500;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  text-align: center;
+  white-space: nowrap;
 }
 .bottom-btn text {
   font-size: var(--font-sm);
   font-weight: 500;
+  line-height: 68rpx;
+  vertical-align: middle;
 }
-/* 联系卖家：次要按钮（白底描边） */
+/* 联系卖家：次要按钮 */
 .bottom-bar .btn-contact {
   width: auto;
   height: 68rpx;
   border-radius: 34rpx;
-  background: var(--color-bg-white);
-  border: 2rpx solid var(--color-text-dark);
-  padding: 0 28rpx;
+  background: var(--color-bg);
+  padding: 0 48rpx;
+  line-height: 68rpx;
 }
 .bottom-bar .btn-contact text {
   color: var(--color-text-dark);
   font-size: var(--font-sm);
+  line-height: 68rpx;
 }
 /* 立即购买：主按钮 */
 .btn-buy {
+  height: 68rpx;
+  border-radius: 34rpx;
   background: var(--color-primary);
-  padding: 0 52rpx;
+  padding: 0 48rpx;
+  line-height: 68rpx;
 }
 .btn-buy text {
   color: #FFFFFF;
+  line-height: 68rpx;
 }
 /* 下架商品：红底 */
 .btn-off-shelf {
