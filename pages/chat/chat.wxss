@@ -261,6 +261,18 @@
   box-shadow: var(--shadow-sm);
 }
 
+.link-card-me {
+  border-top-left-radius: 16rpx;
+  border-top-right-radius: 4rpx;
+}
+
+.link-cover {
+  width: 100%;
+  height: 240rpx;
+  border-radius: 16rpx 16rpx 0 0;
+  display: block;
+}
+
 .link-title {
   font-size: var(--font-base);
   font-weight: 600;

@@ -499,6 +499,13 @@ Page({
     })
   },
 
+  openSharedPost: function (e) {
+    var postId = e.currentTarget.dataset.postId
+    if (!postId) return
+    var safeNavigate = require('../../utils/safeNavigate').safeNavigate
+    safeNavigate({ url: '/pages/post-detail/post-detail?id=' + postId })
+  },
+
   goBack: function () {
     wx.navigateBack()
   }
@@ -506,6 +513,42 @@ Page({
 
 function mapMessage(vo, myUid) {
   var isMe = String(vo.senderId) === String(myUid)
+
+  // msgType=4 帖子分享 → 解析 JSON 渲染为链接卡片
+  if (vo.msgType === 4) {
+    var linkData = parseShareJson(vo.content)
+    if (linkData) {
+      return {
+        _id: vo.id,
+        id: vo.id,
+        from: isMe ? 'me' : 'other',
+        type: 'link',
+        content: linkData.title || '帖子分享',
+        linkTitle: linkData.title || '',
+        linkDesc: linkData.desc || '',
+        linkCoverImage: linkData.coverImage || '',
+        linkPostId: linkData.postId,
+        linkSharerName: linkData.sharerName || '',
+        senderId: String(vo.senderId),
+        senderNickname: vo.senderNickname || '',
+        time: formatChatTime(vo.createdAt),
+        timestamp: vo.createdAt ? new Date(vo.createdAt.replace(' ', 'T')).getTime() : 0
+      }
+    }
+    // JSON 解析失败，降级为文本
+    return {
+      _id: vo.id,
+      id: vo.id,
+      from: isMe ? 'me' : 'other',
+      type: 'text',
+      content: '[帖子分享]',
+      senderId: String(vo.senderId),
+      senderNickname: vo.senderNickname || '',
+      time: formatChatTime(vo.createdAt),
+      timestamp: vo.createdAt ? new Date(vo.createdAt.replace(' ', 'T')).getTime() : 0
+    }
+  }
+
   return {
     _id: vo.id,
     id: vo.id,
@@ -516,6 +559,18 @@ function mapMessage(vo, myUid) {
     senderNickname: vo.senderNickname || '',
     time: formatChatTime(vo.createdAt),
     timestamp: vo.createdAt ? new Date(vo.createdAt.replace(' ', 'T')).getTime() : 0
+  }
+}
+
+/** 解析帖子分享 JSON，失败返回 null */
+function parseShareJson(content) {
+  if (!content) return null
+  try {
+    var data = JSON.parse(content)
+    if (data.postId) return data
+    return null
+  } catch (e) {
+    return null
   }
 }
 
