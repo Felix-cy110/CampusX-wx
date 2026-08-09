@@ -431,7 +431,7 @@ Page({
         name: vo.nickname || '',
         avatar: toFullUrl(vo.avatarUrl) || ''
       },
-      time: _formatRelativeTime(vo.favoritedAt),
+      time: _formatRelativeTime(vo.publishedAt || vo.favoritedAt),
       content: vo.title || '',
       images: vo.coverImage ? [toFullUrl(vo.coverImage)] : [],
       stats: { likes: vo.likeCount || 0, comments: vo.commentCount || 0 },
@@ -439,7 +439,7 @@ Page({
       _backendId: vo.targetId,    // 跳转详情用原始对象 ID
       _backendType: type === 'posts' ? 'post' : 'idle',
       _favoriteId: vo.favoriteId,
-      _createdAt: _parseTime(vo.favoritedAt)
+      _createdAt: _parseTime(vo.publishedAt || vo.favoritedAt)
     }
   },
 
