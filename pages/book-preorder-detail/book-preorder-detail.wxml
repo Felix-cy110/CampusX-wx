@@ -9,6 +9,7 @@
   <scroll-view class="content" scroll-y enhanced show-scrollbar="{{false}}">
     <!-- 书籍信息 -->
     <view class="book-card">
+      <image wx:if="{{presale.coverImage}}" class="book-cover" src="{{presale.coverImage}}" mode="aspectFill"></image>
       <view class="book-info">
         <text class="book-name">{{presale.bookName}}</text>
         <text class="book-meta text-secondary">{{presale.author}} · {{presale.publisher}}</text>
