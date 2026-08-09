@@ -87,26 +87,28 @@
   <!-- 底部操作栏 -->
   <view class="bottom-bar">
     <view class="bottom-action favorite-action" bindtap="toggleFavorite">
-      <text class="bottom-action-icon" style="color: {{isFavorited ? 'var(--color-star)' : 'var(--color-text-secondary)'}};">⭐</text>
-      <text class="bottom-action-count">{{isFavorited ? '已收藏' : '收藏'}}</text>
+      <text class="bottom-action-icon">{{isFavorited ? '⭐' : '☆'}}</text>
+      <text class="bottom-action-count" style="color: {{isFavorited ? 'var(--color-star)' : 'var(--color-text-secondary)'}};">{{isFavorited ? '已收藏' : '收藏'}}</text>
     </view>
-    <view class="bottom-main-actions" wx:if="{{!item.isOwn}}">
+    <!-- 占位：将右侧按钮推到末端 -->
+    <view class="bottom-spacer"></view>
+    <block wx:if="{{!item.isOwn}}">
       <view class="bottom-btn btn-contact" bindtap="contactSeller">
         <text>联系卖家</text>
       </view>
       <view class="bottom-btn btn-buy" bindtap="createOrder">
         <text>立即购买</text>
       </view>
-    </view>
-    <view class="bottom-main-actions" wx:if="{{item.isOwn && !isOwnerClosing}}">
+    </block>
+    <block wx:if="{{item.isOwn && !isOwnerClosing}}">
       <view class="bottom-btn btn-off-shelf" bindtap="closeDeal">
         <text>下架商品</text>
       </view>
-    </view>
-    <view class="bottom-main-actions" wx:if="{{item.isOwn && isOwnerClosing}}">
+    </block>
+    <block wx:if="{{item.isOwn && isOwnerClosing}}">
       <view class="bottom-btn btn-off-shelf disabled">
         <text>已下架</text>
       </view>
-    </view>
+    </block>
   </view>
 </view>

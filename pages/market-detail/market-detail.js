@@ -77,17 +77,30 @@ Page({
     })
   },
 
-  /** 降级加载：通过列表接口查找商品 */
+  /** 降级加载：通过列表接口查找商品（同时查书籍和物品列表） */
   fallbackLoadItem(id) {
-    request({
-      url: '/api/v1/idle/product/item',
-      method: 'GET',
-      data: { pageNum: 1, pageSize: 50 }
-    }).then(data => {
-      const list = data.list || []
-      const vo = list.find(v => String(v.productId) === String(id))
+    // 同时查询书籍列表和物品列表
+    Promise.all([
+      request({
+        url: '/api/v1/idle/product/book',
+        method: 'GET',
+        data: { pageNum: 1, pageSize: 50 }
+      }).catch(() => ({ list: [] })),
+      request({
+        url: '/api/v1/idle/product/item',
+        method: 'GET',
+        data: { pageNum: 1, pageSize: 50 }
+      }).catch(() => ({ list: [] }))
+    ]).then(([bookData, itemData]) => {
+      const bookList = (bookData && bookData.list) || []
+      const itemList = (itemData && itemData.list) || []
+      const allList = [...bookList, ...itemList]
+      const vo = allList.find(v => String(v.productId) === String(id))
       if (vo) {
-        const item = this.mapItemDetail(vo)
+        // 根据是否有 author 字段判断是书籍还是物品
+        const item = vo.author !== undefined
+          ? this.mapBookDetail(vo)
+          : this.mapItemDetail(vo)
         this.setData({ item, loading: false })
       } else {
         wx.showToast({ title: '商品不存在', icon: 'none' })
@@ -178,7 +191,7 @@ Page({
       stats: { likes: 0, comments: 0 },
       time: this.formatTime(vo.createdAt),
       price: vo.price != null ? Number(vo.price) : 0,
-      condition: vo.category || conditionText,
+      condition: conditionText,
       deliveryType: deliveryMap[vo.deliveryType] || '自取',
       hasNotes: '',
       isOwn: this._checkIsOwn(vo.sellerId),

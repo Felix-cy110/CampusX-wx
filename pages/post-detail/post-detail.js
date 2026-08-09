@@ -49,35 +49,43 @@ Page({
     const numericId = Number(rawId)
     const cachedPost = wx.getStorageSync('selectedPostDetail')
     const postSource = this.findMockPost(rawId, numericId) ||
-      (cachedPost && String(cachedPost.id) === String(rawId) ? cachedPost : null) ||
-      mock.posts[0]
-    const post = this.normalizePost(postSource)
+      (cachedPost && String(cachedPost.id) === String(rawId) ? cachedPost : null)
 
     // 当前用户发布的帖子，头像昵称跟随全局数据
     const userInfo = app.globalData.userInfo || {}
-    if (post.user && post.user.uid === userInfo.uid) {
-      post.user = {
-        ...post.user,
-        name: userInfo.nickname || post.user.name,
-        avatar: userInfo.avatar || post.user.avatar
-      }
-    }
-    post.isOwn = post.isOwn || (post.user && post.user.uid === userInfo.uid)
-
-    // 保留缓存/来源中的点赞收藏关注状态，避免覆盖浏览页的乐观更新
-    post.liked = post.liked ?? false
-    post.isFollowed = post.isFollowed ?? false
-    post.favorited = post.favorited ?? false
-    post.school = post.school || '南京信息工程大学'
-    post.displayContent = post.fullContent || post.content
     const currentUserAvatar = userInfo.avatar || '/images/avatars/default.png'
-    this.setData({
-      post,
-      postId: rawId,
-      currentUserAvatar,
-      statusBarHeight,
-      navBarHeight
-    })
+
+    if (postSource) {
+      const post = this.normalizePost(postSource)
+      if (post.user && post.user.uid === userInfo.uid) {
+        post.user = {
+          ...post.user,
+          name: userInfo.nickname || post.user.name,
+          avatar: userInfo.avatar || post.user.avatar
+        }
+      }
+      post.isOwn = post.isOwn || (post.user && post.user.uid === userInfo.uid)
+      post.liked = post.liked ?? false
+      post.isFollowed = post.isFollowed ?? false
+      post.favorited = post.favorited ?? false
+      post.school = post.school || '南京信息工程大学'
+      post.displayContent = post.fullContent || post.content
+      this.setData({
+        post,
+        postId: rawId,
+        currentUserAvatar,
+        statusBarHeight,
+        navBarHeight
+      })
+    } else {
+      this.setData({
+        post: { id: rawId, user: {}, stats: {}, images: [] },
+        postId: rawId,
+        currentUserAvatar,
+        statusBarHeight,
+        navBarHeight
+      })
+    }
     this.loadPostDetail(rawId)
     this.loadComments(rawId)
   },
@@ -103,7 +111,12 @@ Page({
         time: vo.createdAt ? vo.createdAt.replace('T', ' ').slice(0, 16) : ''
       }
       this.setData({ post })
-    }).catch(() => {})
+    }).catch(() => {
+      console.warn('加载帖子详情失败, postId:', id)
+      if (!this.data.post || !this.data.post.title) {
+        wx.showToast({ title: '加载失败，请重试', icon: 'none' })
+      }
+    })
   },
   /* 二手商品关联帖：跳转商品详情购买 */
   goBuy() {
