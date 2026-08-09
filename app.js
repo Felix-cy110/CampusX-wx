@@ -1,14 +1,53 @@
 App({
   onLaunch() {
     const token = wx.getStorageSync('token')
+    const tokenExpireTime = Number(wx.getStorageSync('tokenExpireTime') || 0)
     const userInfo = wx.getStorageSync('userInfo')
+    if (token && tokenExpireTime && tokenExpireTime <= Date.now()) {
+      const { clearSession } = require('./utils/auth')
+      clearSession()
+      return
+    }
     if (token) {
       this.globalData.isLoggedIn = true
       if (userInfo) {
         this.globalData.userInfo = userInfo
         this.globalData.isJoinedSchool = !!(userInfo.campusId || userInfo.school)
       }
+      this.validateStoredSession(token)
+    } else if (userInfo) {
+      // 清理旧版本可能遗留的孤立用户缓存
+      wx.removeStorageSync('userInfo')
     }
+  },
+
+  validateStoredSession(tokenSnapshot) {
+    const { request, toFullUrl } = require('./utils/request')
+    request({ url: '/api/v1/user/me', method: 'GET' }).then(vo => {
+      // 校验期间若用户已退出或重新登录，不用旧请求覆盖新会话
+      if (wx.getStorageSync('token') !== tokenSnapshot) return
+      const cached = wx.getStorageSync('userInfo') || {}
+      const userInfo = Object.assign({}, cached, {
+        uid: String(vo.userId),
+        nickname: vo.nickname || '',
+        avatar: toFullUrl(vo.avatarUrl) || '',
+        phone: vo.phone || '',
+        campusId: vo.campusId || null,
+        school: vo.campusName || '',
+        departmentId: vo.departmentId || null,
+        department: vo.departmentName || '',
+        majorId: vo.majorId || null,
+        major: vo.majorName || '',
+        enrollYear: vo.enrollmentYear || ''
+      })
+      this.globalData.isLoggedIn = true
+      this.globalData.isJoinedSchool = !!vo.campusId
+      this.globalData.userInfo = userInfo
+      wx.setStorageSync('userInfo', userInfo)
+    }).catch(err => {
+      // 认证类错误由 request 统一清理并跳转；网络错误保留本地会话，待下次请求重试
+      console.warn('启动会话校验失败:', err)
+    })
   },
 
   globalData: {

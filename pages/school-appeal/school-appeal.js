@@ -1,6 +1,7 @@
 const app = getApp()
 const { safeNavigate } = require('../../utils/safeNavigate')
 const { request, toFullUrl, BASE_URL } = require('../../utils/request')
+const { handleAuthFailure } = require('../../utils/auth')
 
 Page({
   data: {
@@ -151,7 +152,8 @@ Page({
             if (result.code === 200 && result.data && result.data.url) {
               resolve(result.data.url)
             } else {
-              reject(new Error(result.message || '上传失败'))
+              handleAuthFailure(result, token)
+              reject(result)
             }
           } catch (e) {
             reject(new Error('解析上传结果失败'))

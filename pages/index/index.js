@@ -2,11 +2,12 @@ const mock = require('../../utils/mock.js')
 const app = getApp()
 const { safeNavigate, safeSwitch } = require('../../utils/safeNavigate')
 const { request, toFullUrl } = require('../../utils/request')
+const { canAccessCampusFeatures } = require('../../utils/auth')
 
 Page({
   data: {
-    isLoggedIn: true,
-    isJoinedSchool: true,
+    isLoggedIn: false,
+    isJoinedSchool: false,
     feedType: 'recommend',
     currentTab: 'feed',
     feedSwiperIndex: 0,
@@ -169,9 +170,17 @@ Page({
       bookServerHasMore: true
     })
     this.loadFeed()
-    this.loadErrands()
-    this.loadIdleBooks()
-    this.loadIdleItems()
+    if (canAccessCampusFeatures()) this.loadCampusData()
+  },
+
+  /** 仅在用户已完成校园资料后加载按学校隔离的数据。 */
+  loadCampusData() {
+    if (!canAccessCampusFeatures()) return Promise.resolve()
+    return Promise.all([
+      this.loadErrands(),
+      this.loadIdleBooks(),
+      this.loadIdleItems()
+    ])
   },
 
   loadFeed() {
@@ -215,9 +224,15 @@ Page({
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
       this.getTabBar().setData({ selected: 0 })
     }
+    const previouslyJoined = this.data.isJoinedSchool
+    const isJoinedSchool = canAccessCampusFeatures()
     this.setData({
-      isLoggedIn: app.globalData.isLoggedIn
+      isLoggedIn: app.globalData.isLoggedIn,
+      isJoinedSchool
     })
+
+    // 完善资料后 switchTab 回到已存在的首页实例，onLoad 不会重跑，需在这里补加载校园数据。
+    if (!previouslyJoined && isJoinedSchool) this.loadCampusData()
 
     /* 检查是否从选校页面返回了新学校 */
     const selectedSchool = wx.getStorageSync('selectedSchool')
@@ -236,6 +251,10 @@ Page({
 
   /* 加载教师评分（真实 API） */
   loadTeacherRatings() {
+    if (!canAccessCampusFeatures()) {
+      this.setData({ teacherLoading: false })
+      return Promise.resolve()
+    }
     this.setData({ teacherLoading: true })
     return request({
       url: '/api/v1/teacher/search',
@@ -403,6 +422,10 @@ Page({
       safeNavigate({ url: '/pages/login/login' })
       return false
     }
+    if (!canAccessCampusFeatures()) {
+      safeNavigate({ url: '/pages/complete-info/complete-info' })
+      return false
+    }
     return true
   },
 
@@ -420,6 +443,7 @@ Page({
 
   /* 跳转发布 */
   goToPublish() {
+    if (!this.requireLogin()) return
     safeNavigate({ url: '/pages/publish-post/publish-post' })
   },
 
@@ -540,6 +564,10 @@ Page({
 
   /* 加载跑腿（代课需求）列表 */
   loadErrands(pageNum = 1) {
+    if (!canAccessCampusFeatures()) {
+      this.setData({ errandLoading: false })
+      return Promise.resolve()
+    }
     if (this.data.errandLoading) return Promise.resolve()
     this.setData({ errandLoading: true })
     return request({
@@ -696,6 +724,10 @@ Page({
 
   /* 加载代课供给列表 */
   loadSupplies(pageNum = 1) {
+    if (!canAccessCampusFeatures()) {
+      this.setData({ supplyLoading: false })
+      return Promise.resolve()
+    }
     if (this.data.supplyLoading) return Promise.resolve()
     this.setData({ supplyLoading: true })
     return request({
@@ -888,6 +920,7 @@ Page({
 
   /** 加载关注用户列表（来自 /api/v1/follow/following） */
   loadFollowingUsers() {
+    if (!canAccessCampusFeatures()) return Promise.resolve()
     return request({
       url: '/api/v1/follow/following',
       data: { size: 20 }
@@ -908,6 +941,10 @@ Page({
 
   /** 加载关注动态（只显示关注用户发布的帖子） */
   loadFollowingPosts(cursor) {
+    if (!canAccessCampusFeatures()) {
+      this.setData({ _followRefreshing: false })
+      return Promise.resolve()
+    }
     this.setData({ _followRefreshing: true })
     const data = { pageSize: 20 }
     if (cursor) data.cursor = cursor
@@ -1100,6 +1137,10 @@ Page({
    * @param {boolean} reset - 是否重置已有数据
    */
   loadIdleBooks(pageNum = 1, reset = false) {
+    if (!canAccessCampusFeatures()) {
+      this.setData({ bookLoading: false })
+      return Promise.resolve()
+    }
     if (this.data.bookLoading) return Promise.resolve()
     this.setData({ bookLoading: true })
 
@@ -1143,6 +1184,10 @@ Page({
    * @param {boolean} reset - 是否重置已有数据
    */
   loadIdleItems(pageNum = 1, reset = false) {
+    if (!canAccessCampusFeatures()) {
+      this.setData({ otherLoading: false })
+      return Promise.resolve()
+    }
     if (this.data.otherLoading) return Promise.resolve()
     this.setData({ otherLoading: true })
 

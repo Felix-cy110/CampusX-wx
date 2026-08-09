@@ -1,5 +1,6 @@
 const { request, BASE_URL, toFullUrl } = require('../../utils/request')
 const { safeSwitch } = require('../../utils/safeNavigate')
+const { storeToken, resetAuthNavigation, handleAuthFailure } = require('../../utils/auth')
 
 Page({
   data: {
@@ -22,6 +23,7 @@ Page({
   },
 
   onLoad() {
+    resetAuthNavigation()
     const systemInfo = wx.getSystemInfoSync()
     const menuButton = wx.getMenuButtonBoundingClientRect()
     const statusBarHeight = systemInfo.statusBarHeight
@@ -34,7 +36,18 @@ Page({
       enrollmentYears.push(y + '年')
     }
 
-    this.setData({ statusBarHeight, navBarHeight, enrollmentYears })
+    // 模拟手机号授权页选择的号码会随登录缓存带入；已有头像/昵称也一并复用。
+    const cachedUserInfo = wx.getStorageSync('userInfo') || {}
+    const cachedAvatar = cachedUserInfo.avatar || ''
+    this.setData({
+      statusBarHeight,
+      navBarHeight,
+      enrollmentYears,
+      nickname: cachedUserInfo.nickname || '',
+      avatar: cachedAvatar,
+      avatarUrl: cachedAvatar,
+      phone: cachedUserInfo.phone || ''
+    }, () => this.checkCanSubmit())
   },
 
   onShow() {
@@ -43,7 +56,17 @@ Page({
     if (selectedSchool) {
       try {
         const school = JSON.parse(selectedSchool)
-        this.setData({ schoolId: school.id, schoolName: school.name })
+        const schoolChanged = this.data.schoolId && String(this.data.schoolId) !== String(school.id)
+        this.setData({
+          schoolId: school.id,
+          schoolName: school.name,
+          ...(schoolChanged ? {
+            departmentId: null,
+            departmentName: '',
+            majorId: null,
+            majorName: ''
+          } : {})
+        })
         wx.removeStorageSync('selectedSchool')
       } catch (e) {
         console.error('解析学校数据失败:', e)
@@ -72,8 +95,8 @@ Page({
 
   // 检查是否可以提交
   checkCanSubmit() {
-    const { schoolId, majorId } = this.data
-    const canSubmit = !!(schoolId && majorId)
+    const { avatarUrl, phone, schoolId, majorId } = this.data
+    const canSubmit = !!(avatarUrl && /^1\d{10}$/.test(phone) && schoolId && majorId)
     this.setData({ canSubmit })
   },
 
@@ -91,6 +114,7 @@ Page({
       sourceType: ['album', 'camera'],
       success: (res) => {
         const tempFilePath = res.tempFilePaths[0]
+        const tokenSnapshot = wx.getStorageSync('token') || ''
         that.setData({ avatar: tempFilePath })
 
         // 上传到服务器
@@ -100,7 +124,7 @@ Page({
           filePath: tempFilePath,
           name: 'file',
           header: {
-            Authorization: 'Bearer ' + (wx.getStorageSync('token') || '')
+            Authorization: 'Bearer ' + tokenSnapshot
           },
           success: (uploadRes) => {
             wx.hideLoading()
@@ -108,8 +132,11 @@ Page({
               const result = JSON.parse(uploadRes.data)
               if (result.code === 200 && result.data && result.data.url) {
                 that.setData({ avatarUrl: result.data.url })
+                that.checkCanSubmit()
               } else {
-                wx.showToast({ title: (result && result.message) || '上传失败', icon: 'none' })
+                if (!handleAuthFailure(result, tokenSnapshot)) {
+                  wx.showToast({ title: (result && result.message) || '上传失败', icon: 'none' })
+                }
               }
             } catch (e) {
               wx.showToast({ title: '上传失败', icon: 'none' })
@@ -159,10 +186,20 @@ Page({
   // 手机号输入
   onPhoneInput(e) {
     this.setData({ phone: e.detail.value })
+    this.checkCanSubmit()
   },
 
   // 提交
   submit() {
+    if (this._submitting) return
+    if (!this.data.avatarUrl) {
+      wx.showToast({ title: '请先上传头像', icon: 'none' })
+      return
+    }
+    if (!/^1\d{10}$/.test(this.data.phone)) {
+      wx.showToast({ title: '请输入正确的手机号', icon: 'none' })
+      return
+    }
     if (!this.data.canSubmit) {
       wx.showToast({ title: '请先选择高校和专业', icon: 'none' })
       return
@@ -170,6 +207,7 @@ Page({
 
     const { avatarUrl, nickname, phone, schoolId, schoolName, departmentId, departmentName, majorId, majorName, enrollmentYear } = this.data
 
+    this._submitting = true
     wx.showLoading({ title: '提交中...' })
     request({
       url: '/api/v1/user/complete-info',
@@ -185,17 +223,39 @@ Page({
       }
     }).then(vo => {
       wx.hideLoading()
-      wx.showToast({ title: '完善成功', icon: 'success' })
+      this._submitting = false
 
       // 更新 JWT token（包含最新的 campusId）
       if (vo && vo.token) {
-        wx.setStorageSync('token', vo.token)
+        storeToken(vo.token, vo.tokenExpireTime)
       }
 
-      // 更新全局用户信息
       const app = getApp()
+      const existing = app.globalData.userInfo || {}
+      const userInfo = {
+        uid: existing.uid || '',
+        nickname: nickname || '微信用户',
+        avatar: toFullUrl(avatarUrl) || '',
+        phone,
+        campusId: schoolId,
+        school: schoolName,
+        departmentId,
+        department: departmentName,
+        majorId,
+        major: majorName,
+        enrollYear: enrollmentYear || new Date().getFullYear(),
+        inviteCode: existing.inviteCode || '',
+        invitedByUserId: existing.invitedByUserId || null,
+        invitedBy: existing.invitedBy || null,
+        nextModifyDays: existing.nextModifyDays,
+        stats: existing.stats || { following: 0, followers: 0, likes: 0 }
+      }
+      app.globalData.isLoggedIn = true
       app.globalData.isJoinedSchool = true
-      // 刷新用户信息
+      app.globalData.userInfo = userInfo
+      wx.setStorageSync('userInfo', userInfo)
+
+      // 后台刷新服务端完整资料；失败不回滚已经成功的完善操作
       request({
         url: '/api/v1/user/me',
         method: 'GET'
@@ -203,44 +263,37 @@ Page({
         const userInfo = mapUserInfo(userVO)
         app.globalData.userInfo = userInfo
         wx.setStorageSync('userInfo', userInfo)
-      }).catch(() => {})
+      }).catch(err => console.warn('完善后刷新用户信息失败:', err))
 
-      // 跳转到主页
+      wx.showToast({ title: '完善成功', icon: 'success' })
       setTimeout(() => {
         safeSwitch({ url: '/pages/index/index' })
       }, 1000)
     }).catch(err => {
-      // mock 阶段：后端未就绪时模拟成功，保证流程可通
-      console.log('完善信息 API 失败（mock 阶段）:', err)
       wx.hideLoading()
-      wx.showToast({ title: '完善成功', icon: 'success' })
-
-      const app = getApp()
-      app.globalData.isJoinedSchool = true
-      const userInfo = {
-        uid: 'mock_user_' + Date.now(),
-        nickname: nickname || '微信用户',
-        avatar: avatarUrl || '/images/avatars/default.png',
-        phone: phone || '',
-        campusId: schoolId,
-        school: schoolName,
-        departmentId: departmentId,
-        department: departmentName,
-        majorId: majorId,
-        major: majorName,
-        enrollYear: enrollmentYear || new Date().getFullYear(),
-        inviteCode: '',
-        invitedByUserId: null,
-        invitedBy: null,
-        nextModifyDays: 30,
-        stats: { following: 0, followers: 0, likes: 0 }
+      this._submitting = false
+      if (err && err.code === 1011) {
+        this.reconcileCompletedUser()
+        return
       }
+      console.error('完善信息失败:', err)
+      wx.showToast({ title: (err && err.message) || '完善失败，请重试', icon: 'none' })
+    })
+  },
+
+  reconcileCompletedUser() {
+    request({ url: '/api/v1/user/me', method: 'GET' }).then(userVO => {
+      const app = getApp()
+      const userInfo = mapUserInfo(userVO)
+      app.globalData.isLoggedIn = true
+      app.globalData.isJoinedSchool = !!userVO.campusId
       app.globalData.userInfo = userInfo
       wx.setStorageSync('userInfo', userInfo)
-
-      setTimeout(() => {
-        safeSwitch({ url: '/pages/index/index' })
-      }, 1000)
+      wx.showToast({ title: '资料已完善', icon: 'success' })
+      setTimeout(() => safeSwitch({ url: '/pages/index/index' }), 600)
+    }).catch(err => {
+      console.error('同步已完善资料失败:', err)
+      wx.showToast({ title: (err && err.message) || '同步资料失败，请重试', icon: 'none' })
     })
   }
 })

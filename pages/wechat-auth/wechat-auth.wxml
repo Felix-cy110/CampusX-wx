@@ -19,7 +19,7 @@
     <!-- 手机号信息 -->
     <view class="auth-phone-section">
       <text class="auth-phone-label">使用你的手机号码</text>
-      <text class="auth-phone-number">18682000000</text>
+      <text class="auth-phone-number">{{phoneNumber}}</text>
     </view>
 
     <!-- 微信绑定说明 -->

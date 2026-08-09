@@ -1,10 +1,11 @@
 const app = getApp()
 const { request, toFullUrl } = require('../../utils/request')
 const { safeNavigate, safeSwitch } = require('../../utils/safeNavigate')
+const { canAccessCampusFeatures } = require('../../utils/auth')
 
 Page({
   data: {
-    isLoggedIn: true,
+    isLoggedIn: false,
     userInfo: {
       stats: { following: 0, followers: 0, likes: 0 }
     },
@@ -41,36 +42,59 @@ Page({
     const statusBarHeight = systemInfo.statusBarHeight
     const navBarHeight = (menuButton.top - statusBarHeight) * 2 + menuButton.height
 
+    const isLoggedIn = !!wx.getStorageSync('token')
     this.setData({
       statusBarHeight: statusBarHeight,
       navBarHeight: navBarHeight,
-      isLoggedIn: app.globalData.isLoggedIn
+      isLoggedIn
     })
 
     // 先从缓存加载，再请求最新数据
     if (app.globalData.userInfo && app.globalData.userInfo.uid) {
       this.setData({ userInfo: app.globalData.userInfo })
     }
-    this.fetchUserProfile()
-    this.loadContentData()
+    if (isLoggedIn) {
+      this.fetchUserProfile()
+      if (canAccessCampusFeatures()) this.loadContentData()
+      else this.resetLoggedOutContent()
+    } else {
+      this.resetLoggedOutContent()
+    }
   },
 
   onShow() {
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
       this.getTabBar().setData({ selected: 3 })
     }
+    const isLoggedIn = !!wx.getStorageSync('token')
     this.setData({
-      isLoggedIn: app.globalData.isLoggedIn,
+      isLoggedIn,
       userInfo: app.globalData.userInfo
     })
     // 每次显示页面时刷新用户信息和内容
-    this.fetchUserProfile()
-    this.loadContentData()
+    if (isLoggedIn) {
+      this.fetchUserProfile()
+      if (canAccessCampusFeatures()) this.loadContentData()
+      else this.resetLoggedOutContent()
+    } else {
+      this.resetLoggedOutContent()
+    }
+  },
+
+  resetLoggedOutContent() {
+    this.setData({
+      filteredContentList: [],
+      contentHasMore: false,
+      contentLoading: false,
+      loadingMore: false,
+      refreshing: false
+    })
   },
 
   /* 从后端获取用户信息 */
   fetchUserProfile() {
-    request({
+    if (!wx.getStorageSync('token')) return Promise.resolve()
+    return request({
       url: '/api/v1/user/me',
       method: 'GET'
     }).then(vo => {
@@ -86,7 +110,7 @@ Page({
       wx.setStorageSync('userInfo', userInfo)
 
       // 获取关注/粉丝数
-      this.fetchFollowCounts(vo.userId)
+      if (canAccessCampusFeatures()) this.fetchFollowCounts(vo.userId)
     }).catch(err => {
       console.error('获取用户信息失败:', err)
       // 静默失败，保持缓存数据
@@ -95,6 +119,7 @@ Page({
 
   /* 获取关注/粉丝数 */
   fetchFollowCounts(userId) {
+    if (!canAccessCampusFeatures()) return Promise.resolve()
     request({
       url: '/api/v1/follow/count/' + userId,
       method: 'GET'
@@ -114,6 +139,10 @@ Page({
 
   /* 加载内容数据（根据当前 subTab + contentTab 调用对应 API） */
   loadContentData() {
+    if (!canAccessCampusFeatures()) {
+      this.resetLoggedOutContent()
+      return Promise.resolve()
+    }
     this.setData({
       contentPage: 1,
       contentCursor: null,
