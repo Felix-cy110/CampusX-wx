@@ -81,7 +81,7 @@
                 <view class="content-list">
                   <view class="feed-card" wx:for="{{feedList}}" wx:key="id" bindtap="goToPostDetail" data-id="{{item.id}}">
                     <view class="feed-card-header">
-                      <image class="feed-card-avatar" src="{{item.user.avatar}}" mode="aspectFill" catchtap="goToUserProfile" data-name="{{item.user.name}}" data-avatar="{{item.user.avatar}}"></image>
+                      <image class="feed-card-avatar" src="{{item.user.avatar}}" mode="aspectFill" catchtap="goToUserProfile" data-uid="{{item.user.uid}}" data-name="{{item.user.name}}" data-avatar="{{item.user.avatar}}"></image>
                       <text class="feed-card-username">{{item.user.name}}</text>
                     </view>
                     <text class="feed-card-title">{{item.title}}</text>
@@ -171,7 +171,7 @@
                           </view>
                           <text class="book-card-extra">{{item.extraInfo}}</text>
                           <view class="book-card-seller">
-                            <image class="book-seller-avatar" src="{{item.seller.avatar}}" mode="aspectFill" catchtap="goToUserProfile" data-name="{{item.seller.name}}" data-avatar="{{item.seller.avatar}}"></image>
+                            <image class="book-seller-avatar" src="{{item.seller.avatar}}" mode="aspectFill" catchtap="goToUserProfile" data-uid="{{item.seller.uid}}" data-name="{{item.seller.name}}" data-avatar="{{item.seller.avatar}}"></image>
                             <text class="book-seller-name">{{item.seller.name}}</text>
                             <text class="book-seller-school" wx:if="{{item.distance}}">· {{item.distance}}</text>
                           </view>
@@ -213,7 +213,7 @@
                           </view>
                           <text class="book-card-extra">{{item.extraInfo}}</text>
                           <view class="book-card-seller">
-                            <image class="book-seller-avatar" src="{{item.seller.avatar}}" mode="aspectFill" catchtap="goToUserProfile" data-name="{{item.seller.name}}" data-avatar="{{item.seller.avatar}}"></image>
+                            <image class="book-seller-avatar" src="{{item.seller.avatar}}" mode="aspectFill" catchtap="goToUserProfile" data-uid="{{item.seller.uid}}" data-name="{{item.seller.name}}" data-avatar="{{item.seller.avatar}}"></image>
                             <text class="book-seller-name">{{item.seller.name}}</text>
                             <text class="book-seller-school" wx:if="{{item.distance}}">· {{item.distance}}</text>
                           </view>

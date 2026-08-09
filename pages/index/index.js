@@ -1270,7 +1270,7 @@ Page({
       certTags: vo.isTextbookMatched ? ['书库收录'] : [],
       extraInfo: [vo.author, vo.publisher, vo.edition].filter(Boolean).join(' / ') || '',
       category: '教材教辅', // 默认分类，后续可根据实际分类字段调整
-      seller: { name: vo.sellerNickname || '南信大同学', avatar: toFullUrl(vo.sellerAvatar) || '/images/avatars/default.png' },
+      seller: { uid: String(vo.sellerId || ''), name: vo.sellerNickname || '南信大同学', avatar: toFullUrl(vo.sellerAvatar) || '/images/avatars/default.png' },
       distance: undefined,
       isFavorite: !!vo.isFavorite,
       isRent: false,
@@ -1296,7 +1296,7 @@ Page({
       certTags: [],
       extraInfo: (vo.category || '') + (vo.deliveryType === 1 ? ' · 自取' : ' · 快递'),
       category: vo.category || '其他闲置',
-      seller: { name: vo.sellerNickname || '南信大同学', avatar: toFullUrl(vo.sellerAvatar) || '/images/avatars/default.png' },
+      seller: { uid: String(vo.sellerId || ''), name: vo.sellerNickname || '南信大同学', avatar: toFullUrl(vo.sellerAvatar) || '/images/avatars/default.png' },
       distance: undefined,
       isFavorite: !!vo.isFavorite,
       isRent: false,

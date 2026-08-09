@@ -286,6 +286,30 @@
   color: var(--color-text-secondary);
 }
 
+.feed-stat-item {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+}
+
+.feed-stat-icon {
+  width: 28rpx;
+  height: 28rpx;
+}
+
+.feed-stat-num {
+  font-size: var(--font-xs);
+  color: var(--color-text-secondary);
+}
+
+/* 列表点赞按钮：加大点击区域 */
+.feed-like-btn {
+  padding: 8rpx 4rpx;
+  margin: -8rpx -4rpx;
+  position: relative;
+  z-index: 1;
+}
+
 /* ===== 空状态 ===== */
 .empty-state {
   display: flex;
