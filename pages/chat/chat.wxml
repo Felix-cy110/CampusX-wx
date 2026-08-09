@@ -72,11 +72,12 @@
           <image class="msg-avatar-img" src="{{otherAvatar}}" mode="aspectFill"></image>
         </view>
         <view class="msg-body">
-          <view class="link-card">
-            <text class="link-title">{{item.content}}</text>
-            <text class="link-desc">{{item.desc}}</text>
+          <view class="link-card" bindtap="openSharedPost" data-post-id="{{item.linkPostId}}">
+            <image wx:if="{{item.linkCoverImage}}" class="link-cover" src="{{item.linkCoverImage}}" mode="aspectFill"></image>
+            <text class="link-title">{{item.linkTitle}}</text>
+            <text class="link-desc">{{item.linkDesc}}</text>
             <view class="link-footer">
-              <text class="link-source">来自分享</text>
+              <text class="link-source">{{item.linkSharerName}} 分享的帖子</text>
             </view>
           </view>
         </view>
@@ -105,6 +106,23 @@
             <text class="bubble-text">{{item.content}}</text>
           </view>
           <text class="msg-time-tag" wx:if="{{item.time}}">{{item.time}}</text>
+        </view>
+      </view>
+
+      <!-- 我的消息：链接卡片 -->
+      <view wx:elif="{{item.from === 'me' && item.type === 'link'}}" class="msg-row msg-right">
+        <view class="msg-body msg-body-right">
+          <view class="link-card link-card-me" bindtap="openSharedPost" data-post-id="{{item.linkPostId}}">
+            <image wx:if="{{item.linkCoverImage}}" class="link-cover" src="{{item.linkCoverImage}}" mode="aspectFill"></image>
+            <text class="link-title">{{item.linkTitle}}</text>
+            <text class="link-desc">{{item.linkDesc}}</text>
+            <view class="link-footer">
+              <text class="link-source">你分享的帖子</text>
+            </view>
+          </view>
+        </view>
+        <view class="msg-avatar-wrap">
+          <image class="msg-avatar-img" src="{{myAvatar}}" mode="aspectFill"></image>
         </view>
       </view>
 

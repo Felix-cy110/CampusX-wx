@@ -74,10 +74,25 @@ Page({
     })
   },
 
-  /** 分享到其他平台（暂未实现） */
+  /** 分享到其他平台 */
   onShareAction(e) {
     var name = e.currentTarget.dataset.name
-    wx.showToast({ title: name + '功能开发中', icon: 'none' })
+    var postId = this.data.postId
+
+    if (name === '复制链接') {
+      var path = '/pages/post-detail/post-detail?id=' + postId
+      wx.setClipboardData({
+        data: path,
+        success: function () {
+          wx.showToast({ title: '链接已复制', icon: 'success' })
+        },
+        fail: function () {
+          wx.showToast({ title: '复制失败', icon: 'none' })
+        }
+      })
+    } else {
+      wx.showToast({ title: name + '功能开发中', icon: 'none' })
+    }
   },
 
   onCancel() {

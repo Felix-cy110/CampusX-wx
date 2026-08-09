@@ -858,7 +858,12 @@ Page({
   /* 分享给互关好友 */
   shareToFriends() {
     this.setData({ showActionSheet: false })
-    wx.showToast({ title: '分享给互关好友', icon: 'none' })
+    var postId = this.data.postId || (this.data.post && this.data.post.id)
+    if (!postId) {
+      wx.showToast({ title: '暂无帖子信息', icon: 'none' })
+      return
+    }
+    wx.navigateTo({ url: '/pages/share/share?postId=' + postId })
   },
 
   /* 分享给微信好友 */
@@ -901,7 +906,12 @@ Page({
 
   sharePostToFriends() {
     this.setData({ showShareModal: false })
-    wx.showToast({ title: '分享给互关好友', icon: 'none' })
+    var postId = this.data.postId || (this.data.post && this.data.post.id)
+    if (!postId) {
+      wx.showToast({ title: '暂无帖子信息', icon: 'none' })
+      return
+    }
+    wx.navigateTo({ url: '/pages/share/share?postId=' + postId })
   },
 
   reportPost() {
