@@ -80,6 +80,10 @@
 
         <view class="appeal-time">提交时间：{{item.createdAtText}}</view>
 
+        <view class="appeal-reason" wx:if="{{item.reason}}">
+          申诉原因：{{item.reason}}
+        </view>
+
         <view class="appeal-reject" wx:if="{{item.status === 2 && item.rejectReason}}">
           驳回原因：{{item.rejectReason}}
         </view>

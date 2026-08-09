@@ -1,4 +1,4 @@
-const { request, BASE_URL, toFullUrl } = require('../../utils/request')
+const { request, getBaseUrl, toFullUrl } = require('../../utils/request')
 const { safeSwitch } = require('../../utils/safeNavigate')
 const { storeToken, resetAuthNavigation, handleAuthFailure } = require('../../utils/auth')
 
@@ -145,7 +145,7 @@ Page({
         // 上传到服务器
         wx.showLoading({ title: '上传中...' })
         wx.uploadFile({
-          url: BASE_URL + '/api/v1/upload/image',
+          url: getBaseUrl() + '/api/v1/upload/image',
           filePath: tempFilePath,
           name: 'file',
           header: {

@@ -236,6 +236,15 @@
   margin-bottom: 12rpx;
 }
 
+.appeal-reason {
+  font-size: 26rpx;
+  color: #555555;
+  line-height: 1.5;
+  margin-bottom: 12rpx;
+  word-break: break-all;
+  white-space: pre-wrap;
+}
+
 .appeal-reject {
   font-size: 26rpx;
   color: var(--color-red);

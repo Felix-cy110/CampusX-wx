@@ -1,5 +1,5 @@
 const app = getApp()
-const { request, BASE_URL, toFullUrl } = require('../../utils/request')
+const { request, getBaseUrl, toFullUrl } = require('../../utils/request')
 const { storeToken, handleAuthFailure } = require('../../utils/auth')
 
 Page({
@@ -289,7 +289,7 @@ Page({
     if (avatarChanged && avatarTempPath) {
       const tokenSnapshot = wx.getStorageSync('token') || ''
       wx.uploadFile({
-        url: BASE_URL + '/api/v1/upload/image',
+        url: getBaseUrl() + '/api/v1/upload/image',
         filePath: avatarTempPath,
         name: 'file',
         header: {

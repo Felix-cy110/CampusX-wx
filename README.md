@@ -104,7 +104,7 @@ CampusX-wx/
 │   ├── published/          # 已发布内容
 │   └── more-options/       # 更多选项
 ├── utils/                  # 工具模块
-│   ├── config.js           # 全局配置（BASE_URL）
+│   ├── config.js           # 分环境后端地址配置（getBaseUrl）
 │   ├── request.js          # 网络请求封装（自动 token 注入）
 │   ├── mock.js             # Mock 数据（500+ 行，含各类模拟数据）
 │   ├── stomp.js            # STOMP WebSocket 客户端
@@ -122,7 +122,7 @@ CampusX-wx/
 ### 环境要求
 
 - [微信开发者工具](https://developers.weixin.qq.com/miniprogram/dev/devtools/download.html)（稳定版）
-- 后端服务运行在 `http://localhost:5659`（Spring Boot 项目，需单独启动）
+- 后端服务默认运行在 `http://localhost:5659`（Spring Boot 项目，需单独启动）
 
 ### 启动步骤
 
@@ -132,11 +132,18 @@ CampusX-wx/
    ```
 
 2. **配置后端地址**
-   
-   编辑 `utils/config.js`，修改 `BASE_URL` 为你的后端地址：
+
+   开发者工具默认使用 `http://localhost:5659`。真机调试时，`localhost` 指向手机自身，需在真机调试控制台设置电脑的局域网地址：
    ```js
-   const BASE_URL = 'http://localhost:5659'
+   wx.setStorageSync('campusxApiBaseUrl', 'http://192.168.x.x:5659')
    ```
+
+   地址会被每次请求动态读取，无需重新编译。清除覆盖配置可执行：
+   ```js
+   wx.removeStorageSync('campusxApiBaseUrl')
+   ```
+
+   发布体验版或正式版前，请在 `utils/config.js` 的 `ENV_BASE_URLS.trial/release` 中填写已加入微信后台合法域名的 HTTPS 地址。代码会拒绝体验版/正式版使用 HTTP，未配置时也会直接提示错误，避免误连本机或不安全地址。
 
 3. **打开微信开发者工具**
    

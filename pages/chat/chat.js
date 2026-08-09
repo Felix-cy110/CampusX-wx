@@ -1,6 +1,6 @@
 var requestModule = require('../../utils/request')
 var request = requestModule.request
-var BASE_URL = requestModule.BASE_URL
+var getBaseUrl = requestModule.getBaseUrl
 var handleAuthFailure = require('../../utils/auth').handleAuthFailure
 
 var createStompClient = null
@@ -268,7 +268,14 @@ Page({
       return
     }
     var that = this
-    var wsUrl = BASE_URL.replace(/^http/, 'ws') + '/ws'
+    var wsUrl
+    try {
+      wsUrl = getBaseUrl().replace(/^http/, 'ws') + '/ws'
+    } catch (err) {
+      console.error('[Chat] 后端地址未配置:', err)
+      wx.showToast({ title: err.message || '后端地址未配置', icon: 'none' })
+      return
+    }
 
     this._stompClient = createStompClient({
       url: wsUrl,
@@ -420,7 +427,7 @@ Page({
     wx.showLoading({ title: '发送中...' })
 
     wx.uploadFile({
-      url: BASE_URL + '/api/v1/upload/image',
+      url: getBaseUrl() + '/api/v1/upload/image',
       filePath: filePath,
       name: 'file',
       header: {

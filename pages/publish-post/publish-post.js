@@ -1,5 +1,5 @@
 const { safeNavigate } = require('../../utils/safeNavigate')
-const { request, BASE_URL } = require('../../utils/request')
+const { request, getBaseUrl } = require('../../utils/request')
 const { handleAuthFailure } = require('../../utils/auth')
 const app = getApp()
 
@@ -57,7 +57,7 @@ Page({
         content: vo.content || '',
         images: (vo.imageUrls || []).map(u => {
           if (u.startsWith('http')) return u
-          return (BASE_URL || '') + u
+          return getBaseUrl() + u
         }),
         targetCampusId: vo.targetCampusId || vo.campusId || null,
         targetSchool: vo.campusName || vo.school || ''
@@ -302,7 +302,7 @@ Page({
     const token = wx.getStorageSync('token') || ''
     return new Promise((resolve, reject) => {
       wx.uploadFile({
-        url: BASE_URL + '/api/v1/upload/image',
+        url: getBaseUrl() + '/api/v1/upload/image',
         filePath: filePath,
         name: 'file',
         header: {

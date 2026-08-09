@@ -1,6 +1,6 @@
 const app = getApp()
 const { safeNavigate } = require('../../utils/safeNavigate')
-const { request, toFullUrl, BASE_URL } = require('../../utils/request')
+const { request, toFullUrl, getBaseUrl } = require('../../utils/request')
 const { handleAuthFailure } = require('../../utils/auth')
 
 Page({
@@ -47,6 +47,15 @@ Page({
       wx.removeStorageSync('selectedMajor')
     }
     this.loadAppealList()
+    this.refreshCurrentUser()
+  },
+
+  /* 管理员可能在用户停留期间通过申诉，每次进入页面都刷新全局用户缓存。 */
+  refreshCurrentUser() {
+    const token = wx.getStorageSync('token')
+    if (token && typeof app.validateStoredSession === 'function') {
+      app.validateStoredSession(token)
+    }
   },
 
   onReasonInput(e) {
@@ -140,7 +149,7 @@ Page({
     const token = wx.getStorageSync('token') || ''
     return new Promise((resolve, reject) => {
       wx.uploadFile({
-        url: BASE_URL + '/api/v1/upload/image',
+        url: getBaseUrl() + '/api/v1/upload/image',
         filePath: filePath,
         name: 'file',
         header: {

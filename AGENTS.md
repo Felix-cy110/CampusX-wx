@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 CampusX 是一个校园社交微信小程序。数据来源混合：已对接后端的页面使用 `utils/request.js`（封装 `wx.request`）调用后端 API，未对接的页面仍使用 `utils/mock.js` mock 数据。
 
-后端为 Spring Boot 项目，端口 **5659**，API 前缀 `/api/v1`。小程序通过 `utils/config.js` 中的 `BASE_URL` 连接后端（开发环境默认 `http://localhost:5659`）。**注意：后端代码不在本仓库中**，本仓库仅包含微信小程序前端。
+后端为 Spring Boot 项目，端口 **5659**，API 前缀 `/api/v1`。小程序通过 `utils/config.js` 中的 `getBaseUrl()` 获取后端地址：开发者工具默认 `http://localhost:5659`，真机开发使用 `campusxApiBaseUrl` 本地覆盖，体验版/正式版使用环境配置。**注意：后端代码不在本仓库中**，本仓库仅包含微信小程序前端。
 
 ### 请求工具 (`utils/request.js`)
 

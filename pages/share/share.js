@@ -1,6 +1,5 @@
 var requestModule = require('../../utils/request')
 var request = requestModule.request
-var BASE_URL = requestModule.BASE_URL
 
 Page({
   data: {

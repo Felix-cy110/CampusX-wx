@@ -1,11 +1,11 @@
-const { BASE_URL } = require('./config')
+const { getBaseUrl } = require('./config')
 const { handleAuthFailure } = require('./auth')
 
 function request(options) {
   const token = wx.getStorageSync('token')
   return new Promise((resolve, reject) => {
     wx.request({
-      url: BASE_URL + options.url,
+      url: getBaseUrl() + options.url,
       method: options.method || 'GET',
       data: options.data,
       header: {
@@ -34,15 +34,15 @@ function request(options) {
 /**
  * 将后端返回的相对路径转为完整 URL
  * @param {string} path - 相对路径，如 /images/xxx.png
- * @returns {string} 完整 URL，如 http://localhost:5659/images/xxx.png
+ * @returns {string} 完整 URL
  */
 function toFullUrl(path) {
   if (!path) return ''
   // 已经是完整 URL，直接返回
   if (path.startsWith('http://') || path.startsWith('https://')) return path
-  // 相对路径，拼接 BASE_URL
-  if (path.startsWith('/')) return BASE_URL + path
+  // 相对路径，拼接当前环境的后端地址
+  if (path.startsWith('/')) return getBaseUrl() + path
   return path
 }
 
-module.exports = { request, BASE_URL, toFullUrl }
+module.exports = { request, getBaseUrl, toFullUrl }
