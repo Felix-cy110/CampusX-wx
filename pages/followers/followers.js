@@ -1,4 +1,5 @@
 const { request, toFullUrl } = require('../../utils/request')
+const { safeNavigate, safeSwitch } = require('../../utils/safeNavigate')
 
 Page({
   data: {
@@ -156,6 +157,18 @@ Page({
         wx.showToast({ title: '操作失败', icon: 'none' })
       })
     }
+  },
+
+  goToUserProfile(e) {
+    const { uid, name, avatar } = e.currentTarget.dataset
+    const currentUid = (getApp().globalData.userInfo || {}).uid
+    if (uid && String(uid) === String(currentUid)) {
+      safeSwitch({ url: '/pages/profile/profile' })
+      return
+    }
+    safeNavigate({
+      url: `/pages/user-home/user-home?userId=${uid || ''}&name=${encodeURIComponent(name || '')}&avatar=${encodeURIComponent(avatar || '')}`
+    })
   },
 
   navigateBack() {

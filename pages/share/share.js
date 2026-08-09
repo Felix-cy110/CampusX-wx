@@ -11,16 +11,25 @@ Page({
       { id: 3, name: '生成海报', icon: '🖼' },
       { id: 4, name: '复制链接', icon: '🔗' }
     ],
-    postId: null,
+    targetId: null,
+    targetType: 'post',  // 'post' | 'idle'
     loading: true,
     loadFailed: false
   },
 
   onLoad(options) {
+    // 兼容旧版 postId 参数和新的 targetId + targetType 参数
+    var targetId = (options && options.targetId) ? Number(options.targetId) : null
     var postId = (options && options.postId) ? Number(options.postId) : null
-    this.setData({ postId: postId })
+    var targetType = (options && options.targetType) ? options.targetType : 'post'
 
-    if (postId) {
+    var finalTargetId = targetId || postId
+    this.setData({
+      targetId: finalTargetId,
+      targetType: targetType
+    })
+
+    if (finalTargetId) {
       this.loadMutualFriends()
     } else {
       this.setData({ loading: false, loadFailed: true })
@@ -52,17 +61,26 @@ Page({
     })
   },
 
-  /** 分享帖子给指定好友 */
+  /** 分享内容给指定好友 */
   shareToUser(e) {
     var userId = e.currentTarget.dataset.userId
-    var postId = this.data.postId
-    if (!userId || !postId) return
+    var targetId = this.data.targetId
+    var targetType = this.data.targetType
+    if (!userId || !targetId) return
 
     var that = this
     wx.showLoading({ title: '分享中...' })
 
+    // 根据类型使用不同的 API
+    var url
+    if (targetType === 'idle') {
+      url = '/api/v1/idle/product/' + targetId + '/share/' + userId
+    } else {
+      url = '/api/post/' + targetId + '/share/' + userId
+    }
+
     request({
-      url: '/api/post/' + postId + '/share/' + userId,
+      url: url,
       method: 'POST'
     }).then(function () {
       wx.hideLoading()
@@ -77,10 +95,16 @@ Page({
   /** 分享到其他平台 */
   onShareAction(e) {
     var name = e.currentTarget.dataset.name
-    var postId = this.data.postId
+    var targetId = this.data.targetId
+    var targetType = this.data.targetType
 
     if (name === '复制链接') {
-      var path = '/pages/post-detail/post-detail?id=' + postId
+      var path
+      if (targetType === 'idle') {
+        path = '/pages/market-detail/market-detail?id=' + targetId
+      } else {
+        path = '/pages/post-detail/post-detail?id=' + targetId
+      }
       wx.setClipboardData({
         data: path,
         success: function () {
