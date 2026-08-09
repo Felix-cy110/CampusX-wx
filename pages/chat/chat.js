@@ -1,6 +1,7 @@
 var requestModule = require('../../utils/request')
 var request = requestModule.request
 var BASE_URL = requestModule.BASE_URL
+var handleAuthFailure = require('../../utils/auth').handleAuthFailure
 
 var createStompClient = null
 try {
@@ -433,7 +434,9 @@ Page({
             var imageUrl = typeof data.data === 'string' ? data.data : data.data.url
             that.sendImageMessage(imageUrl)
           } else {
-            wx.showToast({ title: data.message || '上传失败', icon: 'none' })
+            if (!handleAuthFailure(data, token)) {
+              wx.showToast({ title: data.message || '上传失败', icon: 'none' })
+            }
           }
         } catch (e) {
           wx.showToast({ title: '上传失败', icon: 'none' })

@@ -1,5 +1,7 @@
 const mock = require('../../utils/mock.js')
 const { safeNavigate } = require('../../utils/safeNavigate')
+const { request } = require('../../utils/request')
+const { redirectToLogin } = require('../../utils/auth')
 
 Page({
   data: {
@@ -42,9 +44,15 @@ Page({
         content: '确定要退出登录吗？',
         success: (res) => {
           if (res.confirm) {
-            const app = getApp()
-            app.globalData.userInfo = null
-            wx.reLaunch({ url: '/pages/login/login' })
+            wx.showLoading({ title: '退出中...' })
+            request({ url: '/api/v1/user/logout', method: 'POST' }).then(() => {
+              wx.hideLoading()
+              redirectToLogin('已退出登录')
+            }).catch(err => {
+              wx.hideLoading()
+              console.warn('服务端会话撤销失败，已清理本地登录状态:', err)
+              redirectToLogin('已退出本地登录')
+            })
           }
         }
       })

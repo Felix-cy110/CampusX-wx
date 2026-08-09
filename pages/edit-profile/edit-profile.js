@@ -1,5 +1,6 @@
 const app = getApp()
 const { request, BASE_URL, toFullUrl } = require('../../utils/request')
+const { storeToken, handleAuthFailure } = require('../../utils/auth')
 
 Page({
   data: {
@@ -68,11 +69,21 @@ Page({
     if (selectedSchool) {
       try {
         const school = JSON.parse(selectedSchool)
-        this.setData({
-          schoolId: school.id,
-          school: school.name,
-          schoolChanged: true
-        })
+        if (school.source !== 'edit-profile-major') {
+          const schoolChanged = this.data.schoolId &&
+            String(this.data.schoolId) !== String(school.id)
+          this.setData({
+            schoolId: school.id,
+            school: school.name,
+            schoolChanged: this.data.schoolChanged || !!schoolChanged,
+            ...(schoolChanged ? {
+              departmentId: null,
+              department: '',
+              majorId: null,
+              major: ''
+            } : {})
+          })
+        }
         wx.removeStorageSync('selectedSchool')
       } catch (e) {
         console.error('解析学校数据失败:', e)
@@ -84,12 +95,14 @@ Page({
     if (selectedMajor) {
       try {
         const major = JSON.parse(selectedMajor)
+        const majorChanged = String(this.data.departmentId || '') !== String(major.departmentId || '') ||
+          String(this.data.majorId || '') !== String(major.majorId || '')
         this.setData({
           departmentId: major.departmentId,
           department: major.departmentName,
           majorId: major.majorId,
           major: major.majorName,
-          schoolChanged: true
+          schoolChanged: this.data.schoolChanged || majorChanged
         })
         wx.removeStorageSync('selectedMajor')
       } catch (e) {
@@ -168,6 +181,11 @@ Page({
       wx.showToast({ title: '请先选择高校', icon: 'none' })
       return
     }
+    wx.setStorageSync('selectedSchool', JSON.stringify({
+      id: this.data.schoolId,
+      name: this.data.school,
+      source: 'edit-profile-major'
+    }))
     wx.navigateTo({ url: '/pages/select-major/select-major' })
   },
 
@@ -176,10 +194,16 @@ Page({
   },
 
   onSave() {
-    const that = this
+    if (this._saving) return
     const { avatarChanged, avatarTempPath, avatar, nickname, enrollmentYear,
             schoolId, departmentId, majorId, schoolChanged, phone } = this.data
 
+    if (schoolChanged && (!schoolId || !departmentId || !majorId)) {
+      wx.showToast({ title: '请选择新高校对应的院系和专业', icon: 'none' })
+      return
+    }
+
+    this._saving = true
     wx.showLoading({ title: '保存中...' })
 
     // 头像上传或直接保存
@@ -200,9 +224,9 @@ Page({
     }
 
     const saveAll = (avatarUrl) => {
-      doSave(avatarUrl).then(() => {
+      return doSave(avatarUrl).then(() => {
         // 如果学校/专业变更了，调用自助修改接口
-        if (schoolChanged && schoolId && departmentId && majorId) {
+        if (schoolChanged) {
           return request({
             url: '/api/v1/user/self-modify-school',
             method: 'PUT',
@@ -214,9 +238,18 @@ Page({
           })
         }
       }).then((selfModifyResult) => {
+        if (selfModifyResult && selfModifyResult.success === false) {
+          const error = new Error(selfModifyResult.message || '学校修改冷却中')
+          error.remainingDays = selfModifyResult.remainingDays
+          error.basicInfoSaved = true
+          throw error
+        }
+        if (schoolChanged && (!selfModifyResult || !selfModifyResult.token)) {
+          throw new Error('学校修改结果异常，请刷新后重试')
+        }
         // 如果学校变更了，更新 JWT token（包含最新的 campusId）
         if (selfModifyResult && selfModifyResult.token) {
-          wx.setStorageSync('token', selfModifyResult.token)
+          storeToken(selfModifyResult.token, selfModifyResult.tokenExpireTime)
         }
         // 刷新用户信息
         return request({
@@ -225,6 +258,7 @@ Page({
         })
       }).then(vo => {
         wx.hideLoading()
+        this._saving = false
         // 更新全局数据
         const userInfo = mapUserInfo(vo)
         app.globalData.userInfo = userInfo
@@ -234,10 +268,17 @@ Page({
         setTimeout(() => { wx.navigateBack() }, 1500)
       }).catch(err => {
         wx.hideLoading()
+        this._saving = false
         console.error('保存失败:', err)
-        // 如果是自助修改学校失败，显示冷却期提示
-        if (err && err.data && err.data.daysUntilNextModify !== undefined) {
-          wx.showToast({ title: '学校修改冷却中，还剩' + err.data.daysUntilNextModify + '天', icon: 'none' })
+        if (err && err.remainingDays !== undefined) {
+          this.setData({ schoolChanged: false })
+          this.fetchUserInfo()
+          wx.showModal({
+            title: '学校修改未完成',
+            content: (err.basicInfoSaved ? '基本资料已保存；' : '') +
+              (err.message || ('学校修改冷却中，还剩' + err.remainingDays + '天')),
+            showCancel: false
+          })
         } else {
           wx.showToast({ title: (err && err.message) || '保存失败', icon: 'none' })
         }
@@ -246,12 +287,13 @@ Page({
 
     // 如果头像变更了，先上传
     if (avatarChanged && avatarTempPath) {
+      const tokenSnapshot = wx.getStorageSync('token') || ''
       wx.uploadFile({
         url: BASE_URL + '/api/v1/upload/image',
         filePath: avatarTempPath,
         name: 'file',
         header: {
-          Authorization: 'Bearer ' + (wx.getStorageSync('token') || '')
+          Authorization: 'Bearer ' + tokenSnapshot
         },
         success: (uploadRes) => {
           try {
@@ -260,15 +302,20 @@ Page({
               saveAll(result.data.url)
             } else {
               wx.hideLoading()
-              wx.showToast({ title: '头像上传失败', icon: 'none' })
+              this._saving = false
+              if (!handleAuthFailure(result, tokenSnapshot)) {
+                wx.showToast({ title: result.message || '头像上传失败', icon: 'none' })
+              }
             }
           } catch (e) {
             wx.hideLoading()
+            this._saving = false
             wx.showToast({ title: '头像上传失败', icon: 'none' })
           }
         },
         fail: () => {
           wx.hideLoading()
+          this._saving = false
           wx.showToast({ title: '头像上传失败', icon: 'none' })
         }
       })

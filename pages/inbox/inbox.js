@@ -1,6 +1,7 @@
 const app = getApp()
 const { safeNavigate } = require('../../utils/safeNavigate')
 const { request, toFullUrl } = require('../../utils/request')
+const { canAccessCampusFeatures } = require('../../utils/auth')
 
 const SWIPE_THRESHOLD = 80
 const REFRESH_THRESHOLD = 80
@@ -61,6 +62,11 @@ Page({
     if (this._initialized) {
       this.syncNotificationsFromCache()
     }
+    if (!canAccessCampusFeatures()) {
+      this.setData({ conversations: [], filteredConversations: [], loading: false })
+      this._initialized = true
+      return
+    }
     // 再异步刷新（后台静默更新，保护本地已清零数据不被过期 API 覆盖）
     this.loadNotificationCounts()
     // 首次显示由 onLoad → loadData 处理，后续显示（如从聊天页返回）刷新会话列表
@@ -72,6 +78,10 @@ Page({
 
   /** 加载所有数据 */
   loadData() {
+    if (!canAccessCampusFeatures()) {
+      this.setData({ conversations: [], filteredConversations: [], loading: false })
+      return Promise.resolve()
+    }
     this.setData({ loading: true })
     this.loadNotificationCounts()
     this.loadConversations()
@@ -79,8 +89,9 @@ Page({
 
   /** 获取收件箱通知数量，并同步到全局缓存（尊重乐观更新，防止过期 API 数据覆盖本地已清零计数） */
   loadNotificationCounts() {
+    if (!canAccessCampusFeatures()) return Promise.resolve()
     const that = this
-    request({ url: '/api/v1/notification/count' }).then(data => {
+    return request({ url: '/api/v1/notification/count' }).then(data => {
       // 使用实时 globalData（非快照），防止并发请求中较旧回调覆盖子页面刚做的乐观更新
       const app = getApp()
       const localCounts = app.globalData.notificationCounts
@@ -140,8 +151,12 @@ Page({
 
   /** 获取会话列表（调用后端 API） */
   loadConversations() {
+    if (!canAccessCampusFeatures()) {
+      this.setData({ conversations: [], filteredConversations: [], loading: false })
+      return Promise.resolve()
+    }
     const that = this
-    request({
+    return request({
       url: '/api/v1/chat/conversations',
       method: 'GET',
       data: { page: 1, size: 50 }

@@ -1,4 +1,5 @@
 const { BASE_URL } = require('./config')
+const { handleAuthFailure } = require('./auth')
 
 function request(options) {
   const token = wx.getStorageSync('token')
@@ -15,7 +16,14 @@ function request(options) {
         if (res.data && res.data.code === 200) {
           resolve(res.data.data)
         } else {
-          reject(res.data)
+          const error = res.data || {
+            code: res.statusCode,
+            statusCode: res.statusCode,
+            message: '请求失败'
+          }
+          // 只允许当前请求所属的会话清理登录态，避免旧请求迟到后误删新 Token
+          handleAuthFailure(error, token)
+          reject(error)
         }
       },
       fail: reject

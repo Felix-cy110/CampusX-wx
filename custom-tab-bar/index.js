@@ -1,5 +1,6 @@
 const { safeNavigate, safeSwitch } = require('../utils/safeNavigate')
 const { request } = require('../utils/request')
+const { canAccessCampusFeatures } = require('../utils/auth')
 
 Component({
   data: {
@@ -71,7 +72,12 @@ Component({
     /** 从后端获取收件箱未读数量并同步到 globalData（尊重乐观更新） */
     loadInboxBadge() {
       const that = this
-      request({ url: '/api/v1/notification/count' }).then(data => {
+      // 未登录或资料未完善时不请求校园功能接口，避免 401/1012 干扰 onboarding 导航。
+      if (!canAccessCampusFeatures()) {
+        that.setData({ 'list[2].badge': 0 })
+        return Promise.resolve()
+      }
+      return request({ url: '/api/v1/notification/count' }).then(data => {
         // 使用实时 globalData（非快照），防止并发请求中较旧回调覆盖子页面刚做的乐观更新
         const app = getApp()
         const localCounts = app.globalData.notificationCounts || {}

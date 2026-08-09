@@ -1,5 +1,6 @@
 const { safeNavigate } = require('../../utils/safeNavigate')
 const { request, toFullUrl } = require('../../utils/request')
+const { storeToken, resetAuthNavigation } = require('../../utils/auth')
 
 Page({
   data: {
@@ -9,16 +10,20 @@ Page({
   },
 
   onLoad() {
+    resetAuthNavigation()
     const systemInfo = wx.getSystemInfoSync()
     this.setData({ statusBarHeight: systemInfo.statusBarHeight })
   },
 
   // 允许授权
   allow() {
+    if (this._authorizing) return
+    this._authorizing = true
     wx.showLoading({ title: '授权中...' })
     wx.login({
       success: (loginRes) => {
         if (!loginRes.code) {
+          this._authorizing = false
           wx.hideLoading()
           wx.showToast({ title: '获取登录凭证失败', icon: 'none' })
           return
@@ -28,9 +33,10 @@ Page({
           method: 'POST',
           data: { code: loginRes.code }
         }).then(vo => {
+          this._authorizing = false
           wx.hideLoading()
-          // 存储 token
-          wx.setStorageSync('token', vo.token)
+          // 存储 token 及服务端返回的真实过期时间
+          storeToken(vo.token, vo.tokenExpireTime)
 
           // 构造与前端模板兼容的用户信息对象
           const userInfo = {
@@ -42,7 +48,7 @@ Page({
             department: '',
             major: '',
             enrollYear: '',
-            phone: '',
+            phone: this.data.phoneNumber,
             inviteCode: '',
             invitedBy: null,
             nextModifyDays: null,
@@ -65,12 +71,14 @@ Page({
             }
           }, 800)
         }).catch(err => {
+          this._authorizing = false
           wx.hideLoading()
           console.error('登录失败:', err)
           wx.showToast({ title: (err && err.message) || '登录失败', icon: 'none' })
         })
       },
       fail: () => {
+        this._authorizing = false
         wx.hideLoading()
         wx.showToast({ title: '微信登录失败', icon: 'none' })
       }

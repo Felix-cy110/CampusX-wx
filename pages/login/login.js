@@ -1,5 +1,6 @@
 const app = getApp()
 const { safeNavigate } = require('../../utils/safeNavigate')
+const { resetAuthNavigation } = require('../../utils/auth')
 
 Page({
   data: {
@@ -7,6 +8,7 @@ Page({
     navBarHeight: 0
   },
   onLoad() {
+    resetAuthNavigation()
     const systemInfo = wx.getSystemInfoSync()
     const menuButton = wx.getMenuButtonBoundingClientRect()
     const statusBarHeight = systemInfo.statusBarHeight
