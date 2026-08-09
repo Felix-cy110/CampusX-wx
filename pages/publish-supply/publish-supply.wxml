@@ -1,0 +1,60 @@
+<view class="page">
+  <!-- 导航栏 -->
+  <view class="fixed-header">
+    <view class="status-bar-placeholder" style="height: {{statusBarHeight}}px;"></view>
+    <view class="nav-bar" style="height: {{navBarHeight}}px;">
+      <view class="nav-back" bindtap="goBack">
+        <image class="nav-back-icon" src="/images/SVG/返回.svg" mode="aspectFit"></image>
+      </view>
+      <text class="nav-title">发布代课供给</text>
+      <view class="nav-placeholder"></view>
+    </view>
+  </view>
+
+  <scroll-view class="form-scroll" scroll-y enhanced show-scrollbar="{{false}}">
+    <view class="form-card">
+      <!-- 可代课程范围 -->
+      <view class="input-wrap">
+        <input
+          class="form-input"
+          placeholder="* 可代课程范围（如：计算机/数学/英语）"
+          placeholder-class="input-placeholder"
+          value="{{subjectRange}}"
+          bindinput="onSubjectRangeInput"
+          maxlength="100"
+        />
+      </view>
+
+      <!-- 可用时间段 -->
+      <view class="textarea-wrap">
+        <textarea
+          class="form-textarea"
+          placeholder="* 可用时间段（如：周一到周五下午、周末全天）"
+          placeholder-class="input-placeholder"
+          value="{{availableTime}}"
+          bindinput="onAvailableTimeInput"
+          maxlength="200"
+          auto-height
+        />
+      </view>
+      <view class="char-count">{{availableTime.length}}/200</view>
+
+      <!-- 期望报酬 -->
+      <view class="input-wrap">
+        <input
+          class="form-input"
+          type="digit"
+          placeholder="* 期望报酬（元/次）"
+          placeholder-class="input-placeholder"
+          value="{{expectedFee}}"
+          bindinput="onExpectedFeeInput"
+        />
+      </view>
+
+      <!-- 提交按钮 -->
+      <view class="submit-btn {{publishing ? 'disabled' : ''}}" bindtap="onSubmit">
+        <text>{{publishing ? '发布中...' : '发布供给'}}</text>
+      </view>
+    </view>
+  </scroll-view>
+</view>

@@ -10,12 +10,6 @@
 
 /* ===== 固定头部 ===== */
 .fixed-header {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 100;
-  background-color: #FFFFFF;
   flex-shrink: 0;
 }
 .status-bar-placeholder {

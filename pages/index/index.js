@@ -37,6 +37,11 @@ Page({
     errandPage: 1,
     errandHasMore: true,
     errandLoading: false,
+    errandSubTab: 'demand',
+    supplyList: [],
+    supplyPage: 1,
+    supplyHasMore: true,
+    supplyLoading: false,
 
     /* 二手二级分类 */
     marketSubTabs: [
@@ -51,9 +56,6 @@ Page({
 
     /* 帖子 / 跑腿 刷新状态 */
     feedRefreshing: false,
-    feedPage: 1,
-    feedHasMore: true,
-    feedLoading: false,
     errandRefreshing: false,
 
     /* 当前列表引用（用于空状态判断） */
@@ -79,10 +81,7 @@ Page({
     filteredBookList: [],
     bookDisplayList: [],
     bookSearchKeyword: '',
-    bookActiveKeyword: '',
-    bookTotalPages: 1,
     bookRefreshing: false,
-    bookLoading: false,
     bookHasMore: true,
     bookPage: 1,
     bookPageSize: 10,
@@ -98,7 +97,6 @@ Page({
     ],
     otherCurrentCategory: 'all',
     otherRefreshing: false,
-    otherLoading: false,
     otherHasMore: true,
     otherPage: 1,
     otherPageSize: 10,
@@ -156,146 +154,30 @@ Page({
       marketList: [],
       errandList: [],
       currentList: replaceUserInfo([]),
+      marketBookList: [],
+      marketOtherList: [],
+      otherList: [],
       followingUsers: [],
       followingPosts: [],
-      followingUsersLoaded: false
+      followingUsersLoaded: false,
+      bookList: [],
+      filteredBookList: [],
+      bookDisplayList: [],
+      bookHasMore: true,
+      bookLoading: false,
+      bookServerPage: 1,
+      bookServerHasMore: true
     })
     this.loadFeed()
     this.loadErrands()
-    this.loadMarketBooks()
-    this.loadMarketItems()
+    this.loadIdleBooks()
+    this.loadIdleItems()
   },
 
-  /* ========== 二手市场：数据映射辅助方法 ========== */
-
-  /** 新旧程度数字 → 中文标签 */
-  _conditionLabel(level) {
-    const labels = { 1: '全新', 2: '九成新', 3: '八成新', 4: '有使用痕迹', 5: '较旧' }
-    return labels[level] || ''
-  },
-
-  /** 将 IdleBookListVO 映射为前端书卡格式 */
-  _mapBookVO(vo) {
-    return {
-      id: 'book_' + vo.productId,
-      title: vo.title || '',
-      price: vo.price || 0,
-      originalPrice: 0,
-      isFree: (vo.price || 0) === 0,
-      images: vo.coverImage ? [toFullUrl(vo.coverImage)] : [],
-      condition: this._conditionLabel(vo.conditionLevel),
-      isFavorite: false,
-      certTags: [],
-      extraInfo: (vo.author ? '作者：' + vo.author : '') + (vo.publisher ? ' | ' + vo.publisher : ''),
-      seller: {
-        uid: String(vo.sellerId || ''),
-        name: vo.sellerNickname || '',
-        avatar: toFullUrl(vo.sellerAvatar) || ''
-      },
-      distance: undefined,
-      _backendId: vo.productId
-    }
-  },
-
-  /** 将 IdleItemListVO 映射为前端瀑布流卡片格式 */
-  _mapItemVO(vo) {
-    return {
-      id: 'item_' + vo.productId,
-      title: vo.title || '',
-      price: vo.price || 0,
-      originalPrice: 0,
-      isFree: (vo.price || 0) === 0,
-      images: vo.coverImage ? [toFullUrl(vo.coverImage)] : [],
-      condition: vo.category || '闲置',
-      isFavorite: false,
-      certTags: [],
-      extraInfo: '',
-      seller: {
-        uid: String(vo.sellerId || ''),
-        name: vo.sellerNickname || '',
-        avatar: toFullUrl(vo.sellerAvatar) || ''
-      },
-      distance: undefined,
-      isRent: false,
-      type: 'secondhand',
-      _backendId: vo.productId
-    }
-  },
-
-  /* ========== 二手书：从 API 加载 ========== */
-
-  /** 加载二手书列表 GET /api/v1/idle/product/book */
-  loadMarketBooks(pageNum, keyword) {
-    if (this.data.bookLoading) return Promise.resolve()
-    const pn = pageNum || 1
-    const kw = keyword !== undefined ? keyword : this.data.bookActiveKeyword || ''
-    this.setData({ bookLoading: true })
-    const params = { pageNum: pn, pageSize: this.data.bookPageSize }
-    if (kw) params.keyword = kw
-    return request({ url: '/api/v1/idle/product/book', data: params }).then(result => {
-      const list = (result.list || result.records || []).map(vo => this._mapBookVO(vo))
-      const displayList = pn === 1 ? list : [...this.data.bookDisplayList, ...list]
-      const totalPages = result.pages || 1
-      this.setData({
-        bookDisplayList: displayList,
-        bookPage: pn,
-        bookTotalPages: totalPages,
-        bookHasMore: pn < totalPages,
-        bookLoading: false,
-        bookRefreshing: false
-      })
-    }).catch(err => {
-      console.error('加载二手书列表失败:', err)
-      this.setData({ bookLoading: false, bookRefreshing: false })
-      if (pn === 1) {
-        wx.showToast({ title: '加载二手书失败，请下拉刷新', icon: 'none', duration: 2000 })
-      }
-    })
-  },
-
-  /* ========== 二手-其他：从 API 加载 ========== */
-
-  /** 加载其他闲置列表 GET /api/v1/idle/product/item */
-  loadMarketItems(pageNum, keyword, category) {
-    if (this.data.otherLoading) return Promise.resolve()
-    const pn = pageNum || 1
-    const kw = keyword !== undefined ? keyword : this.data.otherSearchKeyword || ''
-    const cat = category !== undefined ? category : this.data.otherCurrentCategory
-    this.setData({ otherLoading: true })
-    const params = { pageNum: pn, pageSize: this.data.otherPageSize }
-    if (kw) params.keyword = kw
-    if (cat && cat !== 'all') params.category = cat
-    return request({ url: '/api/v1/idle/product/item', data: params }).then(result => {
-      const list = (result.list || result.records || []).map(vo => this._mapItemVO(vo))
-      const displayList = pn === 1 ? list : [...this.data.otherDisplayList, ...list]
-      const totalPages = result.pages || 1
-      this.setData({
-        otherDisplayList: displayList,
-        otherPage: pn,
-        otherTotalPages: totalPages,
-        otherHasMore: pn < totalPages,
-        otherLoading: false,
-        otherRefreshing: false
-      })
-    }).catch(err => {
-      console.error('加载其他闲置列表失败:', err)
-      this.setData({ otherLoading: false, otherRefreshing: false })
-      if (pn === 1) {
-        wx.showToast({ title: '加载闲置物品失败，请下拉刷新', icon: 'none', duration: 2000 })
-      }
-    })
-  },
-
-  loadFeed(pageNum = 1) {
-    if (this.data.feedLoading) {
-      console.log('[loadFeed] 跳过：feedLoading 为 true，可能上一次请求未完成')
-      return Promise.resolve()
-    }
-    this.setData({ feedLoading: true })
+  loadFeed() {
     // 读取本地点赞记录，合并到 feed 数据中（feed API 不返回 liked 字段）
     const likedIds = wx.getStorageSync('likedPostIds') || {}
-    console.log('[loadFeed] 已缓存的点赞 ID:', JSON.stringify(likedIds))
-    return request({ url: '/api/post/feed', method: 'GET', data: { page: pageNum, pageSize: 20 } }).then(data => {
+    return request({ url: '/api/post/feed', method: 'GET', data: { pageSize: 20 } }).then(data => {
       console.log('feed API 返回:', JSON.stringify(data))
       const list = (data.list || []).map(vo => {
         // 兼容多种日期格式：字符串 或 数组 [year,month,day,hour,min,sec]
@@ -308,39 +190,24 @@ Page({
             timeStr = vo.createdAt.replace('T', ' ').slice(0, 16)
           }
         }
-        // 统一使用字符串 ID 作为 key，避免 dataset 类型不一致
-        const postId = String(vo.id)
-        const isLiked = !!(vo.liked || likedIds[postId])
         return {
-          id: postId,
+          id: vo.id,
           user: { uid: String(vo.userId || ''), name: vo.nickname || '', avatar: toFullUrl(vo.avatarUrl) || '' },
           title: vo.title || '',
           content: vo.content || '',
           images: vo.coverImage ? [toFullUrl(vo.coverImage)] : [],
           stats: { likes: vo.likeCount || 0, comments: vo.commentCount || 0 },
-          liked: isLiked,
+          liked: vo.liked || !!likedIds[vo.id],
           time: timeStr,
           school: vo.schoolName || '',
-          sourceType: vo.sourceType || null,
-          sourceId: vo.sourceId || null
+          sourceType: vo.sourceType || '',
+          sourceId: vo.sourceId || ''
         }
       })
-      const feedList = pageNum === 1 ? list : [...this.data.feedList, ...list]
-      const likedCount = list.filter(item => item.liked).length
-      console.log('[loadFeed] 渲染列表，已点赞帖子数:', likedCount)
-      this.setData({
-        feedList,
-        currentList: feedList,
-        feedPage: pageNum,
-        feedHasMore: list.length >= 20,
-        feedLoading: false
-      })
+      this.setData({ feedList: list, currentList: list })
     }).catch(err => {
       console.error('loadFeed 失败:', JSON.stringify(err))
-      this.setData({ feedLoading: false })
-      if (pageNum === 1) {
-        wx.showToast({ title: '加载帖子失败，请下拉刷新', icon: 'none', duration: 2000 })
-      }
+      wx.showToast({ title: '加载帖子失败，请下拉刷新', icon: 'none', duration: 2000 })
     })
   },
 
@@ -405,13 +272,13 @@ Page({
     }
   },
 
-  /* 获取二手列表（按二级分类返回对应数据） */
+  /* 获取二手列表（按二级分类过滤） */
   getMarketList() {
-    const { marketSubTab, bookDisplayList, otherDisplayList } = this.data
+    const { marketList, marketSubTab } = this.data
     if (marketSubTab === 'book') {
-      return bookDisplayList
+      return marketList.filter(item => item.tag === '二手书')
     }
-    return otherDisplayList
+    return marketList.filter(item => item.tag !== '二手书')
   },
 
 
@@ -563,13 +430,6 @@ Page({
     // 将当前帖子状态（含乐观更新的点赞）传递给详情页
     const post = this.data.feedList.find(item => String(item.id) === String(id))
       || this.data.followingPosts.find(item => String(item.id) === String(id))
-
-    // 二手闲置帖子直接跳转到商品详情页
-    if (post && post.sourceType === 'IDLE_PRODUCT' && post.sourceId) {
-      safeNavigate({ url: `/pages/market-detail/market-detail?id=${post.sourceId}` })
-      return
-    }
-
     if (post) {
       wx.setStorageSync('selectedPostDetail', post)
     }
@@ -600,14 +460,12 @@ Page({
     request({ url: apiUrl, method: 'POST' }).then(() => {
       // 持久化点赞状态到本地，解决 feed API 不返回 liked 字段的问题
       const likedIds = wx.getStorageSync('likedPostIds') || {}
-      const postId = String(id)
       if (newLiked) {
-        likedIds[postId] = true
+        likedIds[id] = true
       } else {
-        delete likedIds[postId]
+        delete likedIds[id]
       }
       wx.setStorageSync('likedPostIds', likedIds)
-      console.log('[toggleFeedLike] 点赞状态已保存, likedIds:', JSON.stringify(likedIds))
     }).catch(err => {
       console.error('[toggleFeedLike] 请求失败:', JSON.stringify(err))
       // 回滚
@@ -627,6 +485,17 @@ Page({
     if (item) {
       wx.setStorageSync('currentErrand', item)
       safeNavigate({ url: `/pages/errand-detail/errand-detail?id=${id}` })
+    }
+  },
+
+  /* 跳转供给详情（复用跑腿详情页） */
+  goToSupplyDetail(e) {
+    if (!this.requireLogin()) return
+    const id = e.currentTarget.dataset.id
+    const item = this.data.supplyList.find(i => i.id === id)
+    if (item) {
+      wx.setStorageSync('currentErrand', item)
+      safeNavigate({ url: `/pages/errand-detail/errand-detail?id=${id}&type=supply` })
     }
   },
 
@@ -651,9 +520,7 @@ Page({
   goToMarketDetail(e) {
     if (!this.requireLogin()) return
     const id = e.currentTarget.dataset.id
-    const item = this.data.otherDisplayList.find(i => String(i.id) === String(id))
-    const navId = item && item._backendId ? item._backendId : id
-    safeNavigate({ url: `/pages/market-detail/market-detail?id=${navId}` })
+    safeNavigate({ url: `/pages/market-detail/market-detail?id=${id}` })
   },
 
   /* 双击 tab 回到顶部 */
@@ -664,17 +531,11 @@ Page({
   /* ========== 下拉刷新方法 ========== */
 
   refreshFeed() {
-    console.log('[refreshFeed] 触发下拉刷新')
-    this.setData({ feedRefreshing: true, feedLoading: false, feedPage: 1, feedHasMore: true })
-    this.loadFeed(1).finally(() => {
+    this.setData({ feedRefreshing: true })
+    this.loadFeed().finally(() => {
       this.setData({ feedRefreshing: false })
       wx.showToast({ title: '刷新成功', icon: 'none' })
     })
-  },
-
-  loadMoreFeed() {
-    if (!this.data.feedHasMore || this.data.feedLoading) return
-    this.loadFeed(this.data.feedPage + 1)
   },
 
   /* 加载跑腿（代课需求）列表 */
@@ -801,15 +662,96 @@ Page({
 
   /* 加载更多跑腿 */
   loadMoreErrands() {
-    if (!this.data.errandHasMore || this.data.errandLoading) return
-    this.loadErrands(this.data.errandPage + 1)
+    if (this.data.errandSubTab === 'demand') {
+      if (!this.data.errandHasMore || this.data.errandLoading) return
+      this.loadErrands(this.data.errandPage + 1)
+    } else {
+      if (!this.data.supplyHasMore || this.data.supplyLoading) return
+      this.loadSupplies(this.data.supplyPage + 1)
+    }
   },
 
   refreshErrands() {
     this.setData({ errandRefreshing: true })
-    this.loadErrands(1).finally(() => {
-      this.setData({ errandRefreshing: false })
+    if (this.data.errandSubTab === 'demand') {
+      this.loadErrands(1).finally(() => {
+        this.setData({ errandRefreshing: false })
+      })
+    } else {
+      this.loadSupplies(1).finally(() => {
+        this.setData({ errandRefreshing: false })
+      })
+    }
+  },
+
+  /* 切换跑腿子 tab：需求 / 供给 */
+  switchErrandSubTab(e) {
+    const tab = e.currentTarget.dataset.tab
+    if (tab === this.data.errandSubTab) return
+    this.setData({ errandSubTab: tab })
+    if (tab === 'supply' && this.data.supplyList.length === 0) {
+      this.loadSupplies(1)
+    }
+  },
+
+  /* 加载代课供给列表 */
+  loadSupplies(pageNum = 1) {
+    if (this.data.supplyLoading) return Promise.resolve()
+    this.setData({ supplyLoading: true })
+    return request({
+      url: '/api/v1/proxy-class-supply/list',
+      method: 'GET',
+      data: { pageNum, pageSize: 10 }
+    }).then(data => {
+      const list = (data.list || []).map(vo => this.mapSupplyItem(vo))
+      const supplyList = pageNum === 1 ? list : [...this.data.supplyList, ...list]
+      this.setData({
+        supplyList,
+        supplyPage: pageNum,
+        supplyHasMore: data.list && data.list.length >= 10,
+        supplyLoading: false
+      })
+    }).catch(err => {
+      console.error('加载代课供给列表失败:', err)
+      this.setData({ supplyLoading: false })
+      if (pageNum === 1) {
+        wx.showToast({ title: '加载代课供给失败，请下拉刷新', icon: 'none', duration: 2000 })
+      }
     })
+  },
+
+  /* 将代课供给 VO 映射为卡片格式 */
+  mapSupplyItem(vo) {
+    let timeStr = ''
+    if (vo.createdAt) {
+      if (Array.isArray(vo.createdAt)) {
+        const [y, m, d, h, mi] = vo.createdAt
+        timeStr = `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')} ${String(h || 0).padStart(2, '0')}:${String(mi || 0).padStart(2, '0')}`
+      } else if (typeof vo.createdAt === 'string') {
+        timeStr = vo.createdAt.replace('T', ' ').slice(0, 16)
+      }
+    }
+
+    return {
+      id: vo.id,
+      type: 'supply',
+      user: {
+        uid: String(vo.userId || ''),
+        name: vo.nickname || '',
+        avatar: toFullUrl(vo.avatarUrl) || ''
+      },
+      title: vo.subjectRange || '',
+      content: vo.availableTime || '',
+      location: '',
+      classTime: vo.availableTime || '',
+      remark: '',
+      reward: vo.expectedFee != null ? Number(vo.expectedFee) : 0,
+      time: timeStr,
+      status: 'available',
+      school: '',
+      countdown: '',
+      _raw: {}
+    }
   },
 
   refreshTeacherRatings() {
@@ -849,20 +791,37 @@ Page({
 
   /* ========== 二手书市场方法 ========== */
 
-  /* 筛选由 loadMarketBooks 服务端筛选替代 */
+  filterBookList() {
+    const { bookList, currentBookCategory, bookSearchKeyword, bookPage, bookPageSize } = this.data
+    let result = [...bookList]
+    if (currentBookCategory !== 'all') {
+      result = result.filter(item => item.category === currentBookCategory)
+    }
+    if (bookSearchKeyword.trim()) {
+      const kw = bookSearchKeyword.trim().toLowerCase()
+      result = result.filter(item =>
+        (item.title || '').toLowerCase().includes(kw) ||
+        ((item.seller && item.seller.school) || '').toLowerCase().includes(kw) ||
+        ((item.seller && item.seller.major) || '').toLowerCase().includes(kw)
+      )
+    }
+    const displayList = result.slice(0, bookPage * bookPageSize)
+    this.setData({
+      filteredBookList: result,
+      bookDisplayList: displayList,
+      bookHasMore: result.length > displayList.length
+    })
+  },
 
   switchBookCategory(e) {
     const key = e.currentTarget.dataset.key
     if (key === this.data.currentBookCategory) return
-    const keyword = key === 'all' ? '' : key
     this.setData({
       currentBookCategory: key,
-      bookActiveKeyword: keyword,
       bookPage: 1,
-      bookDisplayList: [],
-      bookHasMore: true
+      bookList: []
     })
-    this.loadMarketBooks(1, keyword)
+    this.loadIdleBooks(1, true)
   },
 
   onBookSearchInput(e) {
@@ -870,20 +829,20 @@ Page({
   },
 
   onBookSearchConfirm() {
-    const keyword = this.data.bookSearchKeyword.trim()
-    this.setData({ bookActiveKeyword: keyword, bookPage: 1, bookDisplayList: [], bookHasMore: true, currentBookCategory: 'all' })
-    this.loadMarketBooks(1, keyword)
+    this.setData({ bookPage: 1, bookList: [] })
+    this.loadIdleBooks(1, true)
   },
 
   onBookSearchClear() {
-    this.setData({ bookSearchKeyword: '', bookActiveKeyword: '', bookPage: 1, bookDisplayList: [], bookHasMore: true, currentBookCategory: 'all' })
-    this.loadMarketBooks(1, '')
+    this.setData({ bookSearchKeyword: '', bookPage: 1, bookList: [] })
+    this.loadIdleBooks(1, true)
   },
 
   toggleBookFavorite(e) {
     if (!this.requireLogin()) return
     const id = e.currentTarget.dataset.id
-    const list = this.data.bookDisplayList.map(item => {
+    const { filteredBookList, bookPage, bookPageSize } = this.data
+    const list = filteredBookList.map(item => {
       if (item.id === id) {
         const newFav = !item.isFavorite
         // 调用收藏 API
@@ -893,13 +852,14 @@ Page({
         request({
           url,
           method: 'POST',
-          data: { itemId: id, itemType: 'IDLE_PRODUCT' }
+          data: { targetId: id, targetType: 2 }
         }).catch(() => {})
         return { ...item, isFavorite: newFav }
       }
       return item
     })
-    this.setData({ bookDisplayList: list })
+    const displayList = list.slice(0, bookPage * bookPageSize)
+    this.setData({ filteredBookList: list, bookDisplayList: displayList })
     wx.showToast({
       title: list.find(i => i.id === id).isFavorite ? '已收藏' : '已取消收藏',
       icon: 'none'
@@ -907,24 +867,21 @@ Page({
   },
 
   refreshBookList() {
-    if (this.data.bookLoading) return
-    this.setData({ bookRefreshing: true, bookPage: 1, bookDisplayList: [], bookHasMore: true })
-    this.loadMarketBooks(1, this.data.bookActiveKeyword || '').then(() => {
-      wx.showToast({ title: '刷新成功，已更新最新书籍', icon: 'none' })
+    this.setData({ bookRefreshing: true })
+    this.loadIdleBooks(1, true).finally(() => {
+      this.setData({ bookRefreshing: false })
     })
   },
 
   loadMoreBooks() {
-    if (!this.data.bookHasMore || this.data.bookLoading) return
-    this.loadMarketBooks(this.data.bookPage + 1, this.data.bookActiveKeyword || '')
+    if (!this.data.bookServerHasMore || this.data.bookLoading) return
+    this.loadIdleBooks(this.data.bookServerPage + 1, false)
   },
 
   goToBookDetail(e) {
     if (!this.requireLogin()) return
     const id = e.currentTarget.dataset.id
-    const item = this.data.bookDisplayList.find(i => String(i.id) === String(id))
-    const navId = item && item._backendId ? item._backendId : id
-    safeNavigate({ url: `/pages/market-detail/market-detail?id=${navId}` })
+    safeNavigate({ url: `/pages/market-detail/market-detail?id=${id}` })
   },
 
   /* ========== 关注视图方法 ========== */
@@ -951,6 +908,7 @@ Page({
 
   /** 加载关注动态（只显示关注用户发布的帖子） */
   loadFollowingPosts(cursor) {
+    this.setData({ _followRefreshing: true })
     const data = { pageSize: 20 }
     if (cursor) data.cursor = cursor
     return request({ url: '/api/post/following-feed', data }).then(result => {
@@ -961,10 +919,12 @@ Page({
       this.setData({
         followingPosts: posts,
         _followCursor: result.nextCursor || null,
-        _followHasMore: result.hasMore || false
+        _followHasMore: result.hasMore || false,
+        _followRefreshing: false
       })
     }).catch(err => {
       console.error('加载关注动态失败:', err)
+      this.setData({ _followRefreshing: false })
     })
   },
 
@@ -980,29 +940,26 @@ Page({
         timeStr = vo.createdAt.replace('T', ' ').slice(0, 16)
       }
     }
-    const postId = String(vo.id)
     return {
-      id: postId,
+      id: vo.id,
       user: { uid: String(vo.userId || ''), name: vo.nickname || '', avatar: toFullUrl(vo.avatarUrl) || '' },
       title: vo.title || '',
       content: vo.content || '',
       images: vo.coverImage ? [toFullUrl(vo.coverImage)] : [],
       stats: { likes: vo.likeCount || 0, comments: vo.commentCount || 0 },
-      liked: !!(vo.liked || likedIds[postId]),
+      liked: vo.liked || !!likedIds[vo.id],
       time: timeStr,
       school: vo.schoolName || '',
-      sourceType: vo.sourceType || null,
-      sourceId: vo.sourceId || null
+      sourceType: vo.sourceType || '',
+      sourceId: vo.sourceId || ''
     }
   },
 
   refreshFollowing() {
-    this.setData({ _followRefreshing: true })
     Promise.all([
       this.loadFollowingPosts(),
       this.loadFollowingUsers()
     ]).finally(() => {
-      this.setData({ _followRefreshing: false })
       wx.showToast({ title: '刷新成功', icon: 'none' })
     })
   },
@@ -1053,47 +1010,227 @@ Page({
 
   /* ========== 二手-其他瀑布流方法 ========== */
 
-  /* transformToOtherCard 和 filterOtherList 已被 loadMarketItems 服务端筛选替代 */
+  transformToOtherCard(list) {
+    return list.map(item => ({
+      id: item.id,
+      title: item.title,
+      price: item.price,
+      originalPrice: item.originalPrice,
+      images: item.images || [],
+      condition: item.tag || '闲置',
+      isFree: false,
+      certTags: [],
+      extraInfo: item.content || '',
+      seller: { name: item.user.name, avatar: item.user.avatar },
+      distance: undefined,
+      isFavorite: false,
+      isRent: item.isRent,
+      type: item.type
+    }))
+  },
+
+  filterOtherList() {
+    const { otherList, otherCurrentCategory, otherSearchKeyword, otherPage, otherPageSize } = this.data
+    let result = [...otherList]
+    if (otherCurrentCategory !== 'all') {
+      result = result.filter(item => item.condition === otherCurrentCategory)
+    }
+    if (otherSearchKeyword.trim()) {
+      const kw = otherSearchKeyword.trim().toLowerCase()
+      result = result.filter(item =>
+        item.title.toLowerCase().includes(kw) ||
+        item.extraInfo.toLowerCase().includes(kw)
+      )
+    }
+    const displayList = result.slice(0, otherPage * otherPageSize)
+    this.setData({
+      otherDisplayList: displayList,
+      otherHasMore: result.length > displayList.length
+    })
+  },
 
   onOtherSearchInput(e) {
     this.setData({ otherSearchKeyword: e.detail.value })
   },
 
   onOtherSearchConfirm() {
-    const keyword = this.data.otherSearchKeyword.trim()
-    this.setData({ otherPage: 1, otherDisplayList: [], otherHasMore: true, otherCurrentCategory: 'all' })
-    this.loadMarketItems(1, keyword, 'all')
+    this.setData({ otherPage: 1, otherList: [] })
+    this.loadIdleItems(1, true)
   },
 
   onOtherSearchClear() {
-    this.setData({ otherSearchKeyword: '', otherPage: 1, otherDisplayList: [], otherHasMore: true, otherCurrentCategory: 'all' })
-    this.loadMarketItems(1, '', 'all')
+    this.setData({ otherSearchKeyword: '', otherPage: 1, otherList: [] })
+    this.loadIdleItems(1, true)
   },
 
   switchOtherCategory(e) {
     const key = e.currentTarget.dataset.key
     if (key === this.data.otherCurrentCategory) return
-    this.setData({ otherCurrentCategory: key, otherPage: 1, otherDisplayList: [], otherHasMore: true })
-    this.loadMarketItems(1, this.data.otherSearchKeyword || '', key)
+    this.setData({ otherCurrentCategory: key, otherPage: 1, otherList: [] })
+    this.loadIdleItems(1, true)
   },
 
   refreshOtherList() {
-    if (this.data.otherLoading) return
-    this.setData({ otherRefreshing: true, otherPage: 1, otherDisplayList: [], otherHasMore: true })
-    this.loadMarketItems(1, this.data.otherSearchKeyword || '', this.data.otherCurrentCategory)
+    this.setData({ otherRefreshing: true })
+    this.loadIdleItems(1, true).finally(() => {
+      this.setData({ otherRefreshing: false })
+    })
   },
 
   loadMoreOther() {
-    if (!this.data.otherHasMore || this.data.otherLoading) return
-    this.loadMarketItems(this.data.otherPage + 1, this.data.otherSearchKeyword || '', this.data.otherCurrentCategory)
+    if (!this.data.otherServerHasMore || this.data.otherLoading) return
+    this.loadIdleItems(this.data.otherServerPage + 1, false)
   },
 
   toggleOtherFavorite(e) {
     const id = e.currentTarget.dataset.id
-    const list = this.data.otherDisplayList.map(item => {
+    const { otherList } = this.data
+    const list = otherList.map(item => {
       if (item.id === id) return { ...item, isFavorite: !item.isFavorite }
       return item
     })
-    this.setData({ otherDisplayList: list })
+    this.setData({ otherList: list }, () => this.filterOtherList())
+  },
+
+  /* ========== 二手闲置 API 加载方法 ========== */
+
+  /**
+   * 从后端加载二手书列表
+   * @param {number} pageNum - 页码（1-based）
+   * @param {boolean} reset - 是否重置已有数据
+   */
+  loadIdleBooks(pageNum = 1, reset = false) {
+    if (this.data.bookLoading) return Promise.resolve()
+    this.setData({ bookLoading: true })
+
+    const params = { pageNum, pageSize: 20 }
+    // 传递搜索关键词和分类筛选到后端
+    if (this.data.bookSearchKeyword && this.data.bookSearchKeyword.trim()) {
+      params.keyword = this.data.bookSearchKeyword.trim()
+    }
+
+    return request({
+      url: '/api/v1/idle/product/book',
+      method: 'GET',
+      data: params
+    }).then(data => {
+      const newList = (data.list || []).map(vo => this._mapIdleBookVO(vo))
+      const bookList = reset ? newList : [...this.data.bookList, ...newList]
+      const hasMore = (data.list && data.list.length >= 20)
+
+      this.setData({
+        bookList,
+        bookServerPage: pageNum,
+        bookServerHasMore: hasMore,
+        bookLoading: false
+      })
+
+      // 使用本地过滤再做展示（分类等客户端筛选）
+      this.setData({ bookPage: reset ? 1 : this.data.bookPage })
+      this.filterBookList()
+    }).catch(err => {
+      console.error('加载二手书列表失败:', err)
+      this.setData({ bookLoading: false })
+      if (reset && this.data.bookList.length === 0) {
+        wx.showToast({ title: '加载失败，请下拉刷新', icon: 'none' })
+      }
+    })
+  },
+
+  /**
+   * 从后端加载其他闲置列表
+   * @param {number} pageNum - 页码（1-based）
+   * @param {boolean} reset - 是否重置已有数据
+   */
+  loadIdleItems(pageNum = 1, reset = false) {
+    if (this.data.otherLoading) return Promise.resolve()
+    this.setData({ otherLoading: true })
+
+    const params = { pageNum, pageSize: 20 }
+    if (this.data.otherSearchKeyword && this.data.otherSearchKeyword.trim()) {
+      params.keyword = this.data.otherSearchKeyword.trim()
+    }
+    if (this.data.otherCurrentCategory !== 'all') {
+      params.category = this.data.otherCurrentCategory
+    }
+
+    return request({
+      url: '/api/v1/idle/product/item',
+      method: 'GET',
+      data: params
+    }).then(data => {
+      const newList = (data.list || []).map(vo => this._mapIdleItemVO(vo))
+      const otherList = reset ? newList : [...this.data.otherList, ...newList]
+      const hasMore = (data.list && data.list.length >= 20)
+
+      this.setData({
+        otherList,
+        otherServerPage: pageNum,
+        otherServerHasMore: hasMore,
+        otherLoading: false
+      })
+
+      // 客户端筛选 + 分页展示
+      this.setData({ otherPage: reset ? 1 : this.data.otherPage })
+      this.filterOtherList()
+    }).catch(err => {
+      console.error('加载其他闲置列表失败:', err)
+      this.setData({ otherLoading: false })
+      if (reset && this.data.otherList.length === 0) {
+        wx.showToast({ title: '加载失败，请下拉刷新', icon: 'none' })
+      }
+    })
+  },
+
+  /**
+   * 将 IdleBookListVO 映射为页面展示格式
+   */
+  _mapIdleBookVO(vo) {
+    const conditionMap = { 1: '全新', 2: '九成新', 3: '八成新', 4: '有使用痕迹', 5: '较旧' }
+    const condition = conditionMap[vo.conditionLevel] || '二手'
+
+    return {
+      id: vo.productId,
+      title: vo.title || '',
+      price: vo.price != null ? Number(vo.price) : 0,
+      originalPrice: undefined,
+      images: vo.coverImage ? [toFullUrl(vo.coverImage)] : [],
+      condition,
+      isFree: vo.price != null && Number(vo.price) === 0,
+      certTags: vo.isTextbookMatched ? ['书库收录'] : [],
+      extraInfo: [vo.author, vo.publisher, vo.edition].filter(Boolean).join(' / ') || '',
+      category: '教材教辅', // 默认分类，后续可根据实际分类字段调整
+      seller: { name: vo.sellerNickname || '南信大同学', avatar: toFullUrl(vo.sellerAvatar) || '/images/avatars/default.png' },
+      distance: undefined,
+      isFavorite: false,
+      isRent: false,
+      type: 'secondhand'
+    }
+  },
+
+  /**
+   * 将 IdleItemListVO 映射为页面展示格式
+   */
+  _mapIdleItemVO(vo) {
+    const conditionMap = { 1: '全新', 2: '九成新', 3: '八成新', 4: '有使用痕迹', 5: '较旧' }
+    const condition = conditionMap[vo.conditionLevel] || '闲置'
+
+    return {
+      id: vo.productId,
+      title: vo.title || '',
+      price: vo.price != null ? Number(vo.price) : 0,
+      originalPrice: undefined,
+      images: vo.coverImage ? [toFullUrl(vo.coverImage)] : [],
+      condition: vo.category || condition,
+      isFree: vo.price != null && Number(vo.price) === 0,
+      certTags: [],
+      extraInfo: (vo.category || '') + (vo.deliveryType === 1 ? ' · 自取' : ' · 快递'),
+      category: vo.category || '其他闲置',
+      seller: { name: vo.sellerNickname || '南信大同学', avatar: toFullUrl(vo.sellerAvatar) || '/images/avatars/default.png' },
+      distance: undefined,
+      isFavorite: false,
+      isRent: false,
+      type: 'secondhand'
+    }
   }
 })

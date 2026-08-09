@@ -46,9 +46,8 @@
       class="order-card"
       wx:for="{{filteredOrders}}"
       wx:key="id"
-      data-id="{{item.id}}"
-      data-type="{{item.type}}"
-      data-side="{{item.side}}"
+      data-targetid="{{item.targetId}}"
+      data-targettype="{{item.targetType}}"
       bindtap="onOrderTap"
     >
       <!-- 用户信息 -->
@@ -84,9 +83,15 @@
         </view>
       </view>
 
-      <!-- 确认收货按钮 -->
-      <view class="confirm-btn-wrap" wx:if="{{item.showConfirmBtn}}" catchtap="onConfirmReceipt" data-id="{{item.id}}" data-type="{{item.type}}" data-side="{{item.side}}">
-        <view class="confirm-btn">确认收货</view>
+      <!-- 操作按钮组 -->
+      <view class="action-btn-group" wx:if="{{item.showConfirmBtn || item.showCancelBtn || item.showPayBtn || item.showRefundBtn || item.showRefundAgreeBtn || item.showRefundRejectBtn || item.showDepositBtn}}">
+        <view class="action-btn action-btn-secondary" wx:if="{{item.showCancelBtn}}" catchtap="onCancelOrder" data-id="{{item.id}}" data-type="{{item.type}}">取消订单</view>
+        <view class="action-btn action-btn-primary" wx:if="{{item.showPayBtn}}" catchtap="onPayOrder" data-id="{{item.id}}" data-type="{{item.type}}">去支付</view>
+        <view class="action-btn action-btn-primary" wx:if="{{item.showDepositBtn}}" catchtap="onPayDeposit" data-id="{{item.id}}" data-type="{{item.type}}">缴押金</view>
+        <view class="action-btn action-btn-secondary" wx:if="{{item.showRefundBtn}}" catchtap="onApplyRefund" data-id="{{item.id}}" data-type="{{item.type}}">申请退款</view>
+        <view class="action-btn action-btn-primary" wx:if="{{item.showRefundAgreeBtn}}" catchtap="onRefundAgree" data-id="{{item.id}}" data-type="{{item.type}}">同意退款</view>
+        <view class="action-btn action-btn-danger" wx:if="{{item.showRefundRejectBtn}}" catchtap="onRefundReject" data-id="{{item.id}}" data-type="{{item.type}}">拒绝退款</view>
+        <view class="action-btn action-btn-primary" wx:if="{{item.showConfirmBtn}}" catchtap="onConfirmReceipt" data-id="{{item.id}}" data-type="{{item.type}}" data-side="{{item.side}}">确认收货</view>
       </view>
     </view>
 

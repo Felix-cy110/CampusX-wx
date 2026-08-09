@@ -77,11 +77,11 @@
           <swiper class="inner-swiper" current="{{innerSwiperIndex}}" bindchange="onInnerSwiperChange" easing-function="easeInOutCubic">
             <!-- 帖子 -->
             <swiper-item>
-              <scroll-view class="panel-scroll" scroll-y enhanced show-scrollbar="{{false}}" enable-back-to-top refresher-enabled refresher-triggered="{{feedRefreshing}}" bindrefresherrefresh="refreshFeed" bindscrolltolower="loadMoreFeed" lower-threshold="200">
+              <scroll-view class="panel-scroll" scroll-y enhanced show-scrollbar="{{false}}" enable-back-to-top refresher-enabled refresher-triggered="{{feedRefreshing}}" bindrefresherrefresh="refreshFeed">
                 <view class="content-list">
                   <view class="feed-card" wx:for="{{feedList}}" wx:key="id" bindtap="goToPostDetail" data-id="{{item.id}}">
                     <view class="feed-card-header">
-                      <image class="feed-card-avatar" src="{{item.user.avatar}}" mode="aspectFill" catchtap="goToUserProfile" data-uid="{{item.user.uid}}" data-name="{{item.user.name}}" data-avatar="{{item.user.avatar}}"></image>
+                      <image class="feed-card-avatar" src="{{item.user.avatar}}" mode="aspectFill" catchtap="goToUserProfile" data-name="{{item.user.name}}" data-avatar="{{item.user.avatar}}"></image>
                       <text class="feed-card-username">{{item.user.name}}</text>
                     </view>
                     <text class="feed-card-title">{{item.title}}</text>
@@ -97,9 +97,6 @@
                       ></image>
                     </view>
                     <view class="feed-card-footer">
-                      <view class="feed-card-tag" wx:if="{{item.sourceType === 'IDLE_PRODUCT'}}" style="background-color: #FF9500;">
-                        <text class="feed-tag-text">二手</text>
-                      </view>
                       <view class="feed-card-tag">
                         <text class="feed-tag-text">{{item.school || ''}}</text>
                       </view>
@@ -114,9 +111,6 @@
                         </view>
                       </view>
                     </view>
-                  </view>
-                  <view class="load-more-tip" wx:if="{{feedHasMore && feedList.length > 0}}">
-                    <text>上拉加载更多</text>
                   </view>
                   <view class="empty-state" wx:if="{{feedList.length === 0}}">
                     <text>暂无内容</text>
@@ -177,7 +171,7 @@
                           </view>
                           <text class="book-card-extra">{{item.extraInfo}}</text>
                           <view class="book-card-seller">
-                            <image class="book-seller-avatar" src="{{item.seller.avatar}}" mode="aspectFill" catchtap="goToUserProfile" data-uid="{{item.seller.uid}}" data-name="{{item.seller.name}}" data-avatar="{{item.seller.avatar}}"></image>
+                            <image class="book-seller-avatar" src="{{item.seller.avatar}}" mode="aspectFill" catchtap="goToUserProfile" data-name="{{item.seller.name}}" data-avatar="{{item.seller.avatar}}"></image>
                             <text class="book-seller-name">{{item.seller.name}}</text>
                             <text class="book-seller-school" wx:if="{{item.distance}}">· {{item.distance}}</text>
                           </view>
@@ -219,7 +213,7 @@
                           </view>
                           <text class="book-card-extra">{{item.extraInfo}}</text>
                           <view class="book-card-seller">
-                            <image class="book-seller-avatar" src="{{item.seller.avatar}}" mode="aspectFill" catchtap="goToUserProfile" data-uid="{{item.seller.uid}}" data-name="{{item.seller.name}}" data-avatar="{{item.seller.avatar}}"></image>
+                            <image class="book-seller-avatar" src="{{item.seller.avatar}}" mode="aspectFill" catchtap="goToUserProfile" data-name="{{item.seller.name}}" data-avatar="{{item.seller.avatar}}"></image>
                             <text class="book-seller-name">{{item.seller.name}}</text>
                             <text class="book-seller-school" wx:if="{{item.distance}}">· {{item.distance}}</text>
                           </view>
@@ -384,57 +378,107 @@
 
             <!-- 跑腿 -->
             <swiper-item>
+              <!-- 跑腿子 tab：需求 / 供给 -->
+              <view class="errand-sub-tabs">
+                <view class="errand-sub-tab {{errandSubTab === 'demand' ? 'active' : ''}}" bindtap="switchErrandSubTab" data-tab="demand">
+                  <text>需求</text>
+                </view>
+                <view class="errand-sub-tab {{errandSubTab === 'supply' ? 'active' : ''}}" bindtap="switchErrandSubTab" data-tab="supply">
+                  <text>供给</text>
+                </view>
+              </view>
               <scroll-view class="panel-scroll" scroll-y enhanced show-scrollbar="{{false}}" enable-back-to-top refresher-enabled refresher-triggered="{{errandRefreshing}}" bindrefresherrefresh="refreshErrands" bindscrolltolower="loadMoreErrands" lower-threshold="200">
                 <view class="content-list">
-                  <view class="product-card errand-card" wx:for="{{errandList}}" wx:key="id" bindtap="goToErrandDetail" data-id="{{item.id}}">
-                    <!-- 顶部紧急栏：倒计时 + 报酬 -->
-                    <view class="errand-urgent-bar">
-                      <view class="errand-countdown-tag" wx:if="{{item.countdown}}">
-                        <text class="errand-countdown-tag-text">{{item.countdown}}</text>
-                      </view>
-                      <view class="errand-reward" wx:if="{{item.reward}}">
-                        <text class="errand-reward-symbol">¥</text>
-                        <text class="errand-reward-num">{{item.reward}}</text>
-                      </view>
-                    </view>
-
-                    <!-- 课程核心信息 -->
-                    <view class="errand-body">
-                      <text class="errand-course-name" wx:if="{{item.title}}">{{item.title}}</text>
-                      <view class="errand-dest-row" wx:if="{{item.location}}">
-                        <image class="errand-dest-icon" src="/images/SVG/地址.svg" mode="aspectFit"></image>
-                        <text class="errand-dest-text">{{item.location}}</text>
-                      </view>
-                      <view class="errand-info-row" wx:if="{{item.classTime}}">
-                        <image class="errand-info-icon" src="/images/SVG/时间.svg" mode="aspectFit"></image>
-                        <text class="errand-info-text">{{item.classTime}}</text>
-                      </view>
-                      <text class="errand-remark" wx:if="{{item.remark}}">{{item.remark}}</text>
-                    </view>
-
-                    <!-- 底部：发布者 + 行动按钮 -->
-                    <view class="errand-action-bar">
-                      <view class="errand-publisher">
-                        <image class="errand-publisher-avatar" src="{{item.user.avatar}}" mode="aspectFill" catchtap="goToUserProfile" data-uid="{{item.user.uid}}" data-name="{{item.user.name}}" data-avatar="{{item.user.avatar}}"></image>
-                        <text class="errand-publisher-name">{{item.user.name}}</text>
-                        <text class="errand-publisher-time">{{item.time}}</text>
-                      </view>
-                      <view class="errand-btn-group">
-                        <view class="errand-btn errand-btn-left" catchtap="contactErrandUser" data-user-id="{{item.user.uid || ''}}" data-name="{{item.user.name}}" data-avatar="{{item.user.avatar}}">
-                          <text>联系</text>
+                  <!-- 需求列表 -->
+                  <block wx:if="{{errandSubTab === 'demand'}}">
+                    <view class="product-card errand-card" wx:for="{{errandList}}" wx:key="id" bindtap="goToErrandDetail" data-id="{{item.id}}">
+                      <!-- 顶部紧急栏：倒计时 + 报酬 -->
+                      <view class="errand-urgent-bar">
+                        <view class="errand-countdown-tag" wx:if="{{item.countdown}}">
+                          <text class="errand-countdown-tag-text">{{item.countdown}}</text>
                         </view>
-                        <view class="errand-btn errand-btn-right" catchtap="grabErrand" data-id="{{item.id}}">
-                          <text>抢单</text>
+                        <view class="errand-reward" wx:if="{{item.reward}}">
+                          <text class="errand-reward-symbol">¥</text>
+                          <text class="errand-reward-num">{{item.reward}}</text>
                         </view>
                       </view>
+
+                      <!-- 课程核心信息 -->
+                      <view class="errand-body">
+                        <text class="errand-course-name" wx:if="{{item.title}}">{{item.title}}</text>
+                        <view class="errand-dest-row" wx:if="{{item.location}}">
+                          <image class="errand-dest-icon" src="/images/SVG/地址.svg" mode="aspectFit"></image>
+                          <text class="errand-dest-text">{{item.location}}</text>
+                        </view>
+                        <view class="errand-info-row" wx:if="{{item.classTime}}">
+                          <image class="errand-info-icon" src="/images/SVG/时间.svg" mode="aspectFit"></image>
+                          <text class="errand-info-text">{{item.classTime}}</text>
+                        </view>
+                        <text class="errand-remark" wx:if="{{item.remark}}">{{item.remark}}</text>
+                      </view>
+
+                      <!-- 底部：发布者 + 行动按钮 -->
+                      <view class="errand-action-bar">
+                        <view class="errand-publisher">
+                          <image class="errand-publisher-avatar" src="{{item.user.avatar}}" mode="aspectFill" catchtap="goToUserProfile" data-uid="{{item.user.uid}}" data-name="{{item.user.name}}" data-avatar="{{item.user.avatar}}"></image>
+                          <text class="errand-publisher-name">{{item.user.name}}</text>
+                          <text class="errand-publisher-time">{{item.time}}</text>
+                        </view>
+                        <view class="errand-btn-group">
+                          <view class="errand-btn errand-btn-left" catchtap="contactErrandUser" data-user-id="{{item.user.uid || ''}}" data-name="{{item.user.name}}" data-avatar="{{item.user.avatar}}">
+                            <text>联系</text>
+                          </view>
+                          <view class="errand-btn errand-btn-right" catchtap="grabErrand" data-id="{{item.id}}">
+                            <text>抢单</text>
+                          </view>
+                        </view>
+                      </view>
                     </view>
-                  </view>
-                  <view class="load-more-tip" wx:if="{{errandHasMore && errandList.length > 0}}">
-                    <text>上拉加载更多</text>
-                  </view>
-                  <view class="empty-state" wx:if="{{errandList.length === 0}}">
-                    <text>暂无跑腿任务</text>
-                  </view>
+                    <view class="load-more-tip" wx:if="{{errandHasMore && errandList.length > 0}}">
+                      <text>上拉加载更多</text>
+                    </view>
+                    <view class="empty-state" wx:if="{{errandList.length === 0}}">
+                      <text>暂无跑腿任务</text>
+                    </view>
+                  </block>
+
+                  <!-- 供给列表 -->
+                  <block wx:if="{{errandSubTab === 'supply'}}">
+                    <view class="product-card errand-card" wx:for="{{supplyList}}" wx:key="id" bindtap="goToSupplyDetail" data-id="{{item.id}}">
+                      <view class="errand-urgent-bar">
+                        <view class="errand-reward" wx:if="{{item.reward}}">
+                          <text class="errand-reward-symbol">¥</text>
+                          <text class="errand-reward-num">{{item.reward}}</text>
+                          <text class="errand-reward-unit">/次</text>
+                        </view>
+                      </view>
+                      <view class="errand-body">
+                        <text class="errand-course-name" wx:if="{{item.title}}">{{item.title}}</text>
+                        <view class="errand-info-row" wx:if="{{item.classTime}}">
+                          <image class="errand-info-icon" src="/images/SVG/时间.svg" mode="aspectFit"></image>
+                          <text class="errand-info-text">{{item.classTime}}</text>
+                        </view>
+                      </view>
+                      <view class="errand-action-bar">
+                        <view class="errand-publisher">
+                          <image class="errand-publisher-avatar" src="{{item.user.avatar}}" mode="aspectFill" catchtap="goToUserProfile" data-uid="{{item.user.uid}}" data-name="{{item.user.name}}" data-avatar="{{item.user.avatar}}"></image>
+                          <text class="errand-publisher-name">{{item.user.name}}</text>
+                          <text class="errand-publisher-time">{{item.time}}</text>
+                        </view>
+                        <view class="errand-btn-group">
+                          <view class="errand-btn errand-btn-left" catchtap="contactErrandUser" data-user-id="{{item.user.uid || ''}}" data-name="{{item.user.name}}" data-avatar="{{item.user.avatar}}">
+                            <text>联系</text>
+                          </view>
+                        </view>
+                      </view>
+                    </view>
+                    <view class="load-more-tip" wx:if="{{supplyHasMore && supplyList.length > 0}}">
+                      <text>上拉加载更多</text>
+                    </view>
+                    <view class="empty-state" wx:if="{{supplyList.length === 0}}">
+                      <text>暂无代课供给</text>
+                    </view>
+                  </block>
                 </view>
               </scroll-view>
             </swiper-item>

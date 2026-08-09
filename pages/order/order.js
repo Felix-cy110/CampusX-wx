@@ -154,7 +154,12 @@ Page({
       status: statusDesc,
       statusBg: statusBgMap[statusDesc] || '#999999',
       remark: '',
-      showConfirmBtn: vo.status === 2 && side === 'buy',
+      showConfirmBtn: vo.status === 3 && side === 'buy',
+      showCancelBtn: vo.status === 1,
+      showPayBtn: vo.status === 1 && side === 'buy',
+      showRefundBtn: vo.status === 3 && side === 'buy',
+      showRefundAgreeBtn: vo.status === 6 && side === 'sell',
+      showRefundRejectBtn: vo.status === 6 && side === 'sell',
       targetId: vo.productId,
       targetType: 'market'
     }
@@ -197,6 +202,11 @@ Page({
       statusBg: statusBgMap[statusDesc] || '#999999',
       remark: remark,
       showConfirmBtn: false,
+      showCancelBtn: vo.status === 1,
+      showPayBtn: vo.status === 1 && side === 'buy',
+      showRefundBtn: false,
+      showRefundAgreeBtn: false,
+      showRefundRejectBtn: false,
       targetId: vo.productId,
       targetType: 'market'
     }
@@ -237,16 +247,30 @@ Page({
       status: statusDesc,
       statusBg: statusBgMap[statusDesc] || '#999999',
       remark: remark,
-      showConfirmBtn: vo.status === 3 && side === 'buy',
+      showConfirmBtn: vo.status === 5 && side === 'buy',
+      showCancelBtn: vo.status === 1 && side === 'buy',
+      showPayBtn: vo.status === 2 && side === 'buy',
+      showDepositBtn: vo.status === 3 && side === 'sell',
+      showRefundBtn: false,
+      showRefundAgreeBtn: false,
+      showRefundRejectBtn: false,
       targetId: vo.demandId,
       targetType: 'post'
     }
   },
 
   onOrderTap(e) {
-    const { id, type, side } = e.currentTarget.dataset
-    if (!id) return
-    safeNavigate({ url: `/pages/order-detail/order-detail?id=${id}&type=${type}&side=${side}` })
+    const { targetid, targettype } = e.currentTarget.dataset
+    if (!targetid || !targettype) return
+
+    const urlMap = {
+      market: `/pages/market-detail/market-detail?id=${targetid}`,
+      post: `/pages/post-detail/post-detail?id=${targetid}`
+    }
+    const url = urlMap[targettype]
+    if (url) {
+      safeNavigate({ url })
+    }
   },
 
   onConfirmReceipt(e) {
@@ -286,6 +310,127 @@ Page({
             this.loadOrders()
           } catch (err) {
             console.error('确认收货失败:', err)
+            wx.showToast({ title: (err && err.message) || '操作失败', icon: 'none' })
+          }
+        }
+      }
+    })
+  },
+
+  /* 取消订单 */
+  onCancelOrder(e) {
+    const { id, type } = e.currentTarget.dataset
+    wx.showModal({
+      title: '取消订单',
+      content: '确定要取消该订单吗？',
+      confirmText: '确定',
+      cancelText: '再想想',
+      success: async (res) => {
+        if (res.confirm) {
+          try {
+            if (type === 'secondhand') {
+              await request({ url: `/api/v1/idle/order/${id}/cancel`, method: 'PUT' })
+            } else if (type === 'rental') {
+              await request({ url: `/api/v1/rental/order/${id}/cancel`, method: 'PUT' })
+            } else if (type === 'errand') {
+              await request({ url: `/api/v1/proxy-class-order/${id}/cancel`, method: 'POST' })
+            }
+            wx.showToast({ title: '已取消', icon: 'success' })
+            this.loadOrders()
+          } catch (err) {
+            console.error('取消订单失败:', err)
+            wx.showToast({ title: (err && err.message) || '取消失败', icon: 'none' })
+          }
+        }
+      }
+    })
+  },
+
+  /* 去支付 */
+  onPayOrder(e) {
+    const { id, type } = e.currentTarget.dataset
+    wx.showToast({ title: '支付功能开发中', icon: 'none' })
+    // TODO: 接入后端支付接口
+    // 闲置: POST /api/v1/idle/order/{id}/pay
+    // 租赁: POST /api/v1/rental/order/{id}/pay
+    // 代课: POST /api/v1/proxy-class-order/pay
+  },
+
+  /* 缴纳押金（代课卖方） */
+  onPayDeposit(e) {
+    const { id } = e.currentTarget.dataset
+    wx.showToast({ title: '押金支付开发中', icon: 'none' })
+    // TODO: POST /api/v1/proxy-class-order/deposit-pay
+  },
+
+  /* 申请退款 */
+  onApplyRefund(e) {
+    const { id, type } = e.currentTarget.dataset
+    wx.showModal({
+      title: '申请退款',
+      content: '确定要申请退款吗？退款金额将原路返回',
+      confirmText: '确定',
+      cancelText: '再想想',
+      success: async (res) => {
+        if (res.confirm) {
+          try {
+            if (type === 'secondhand') {
+              await request({ url: `/api/v1/idle/order/${id}/refund-apply`, method: 'POST' })
+            }
+            wx.showToast({ title: '退款申请已提交', icon: 'success' })
+            this.loadOrders()
+          } catch (err) {
+            console.error('申请退款失败:', err)
+            wx.showToast({ title: (err && err.message) || '申请失败', icon: 'none' })
+          }
+        }
+      }
+    })
+  },
+
+  /* 同意退款 */
+  onRefundAgree(e) {
+    const { id, type } = e.currentTarget.dataset
+    wx.showModal({
+      title: '同意退款',
+      content: '确定要同意买家的退款申请吗？',
+      confirmText: '确定',
+      cancelText: '再想想',
+      success: async (res) => {
+        if (res.confirm) {
+          try {
+            if (type === 'secondhand') {
+              await request({ url: `/api/v1/idle/order/${id}/refund-agree`, method: 'PUT' })
+            }
+            wx.showToast({ title: '已同意退款', icon: 'success' })
+            this.loadOrders()
+          } catch (err) {
+            console.error('同意退款失败:', err)
+            wx.showToast({ title: (err && err.message) || '操作失败', icon: 'none' })
+          }
+        }
+      }
+    })
+  },
+
+  /* 拒绝退款 */
+  onRefundReject(e) {
+    const { id, type } = e.currentTarget.dataset
+    wx.showModal({
+      title: '拒绝退款',
+      content: '确定要拒绝买家的退款申请吗？拒绝后将由管理员介入处理',
+      confirmText: '确定拒绝',
+      cancelText: '再想想',
+      success: async (res) => {
+        if (res.confirm) {
+          try {
+            if (type === 'secondhand') {
+              await request({ url: `/api/v1/idle/order/${id}/refund-reject`, method: 'PUT' })
+            }
+            wx.showToast({ title: '已拒绝退款', icon: 'success' })
+            this.loadOrders()
+          } catch (err) {
+            console.error('拒绝退款失败:', err)
             wx.showToast({ title: (err && err.message) || '操作失败', icon: 'none' })
           }
         }

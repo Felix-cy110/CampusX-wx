@@ -21,11 +21,11 @@
           <text>×</text>
         </view>
       </view>
-      <view class="upload-add" bindtap="addImage" wx:if="{{idImages.length < 3}}">
+      <view class="upload-add" bindtap="addImage" wx:if="{{idImages.length < 2}}">
         <text class="add-icon">+</text>
       </view>
     </view>
-    <text class="upload-tip">请上传你的<text class="upload-tip-highlight">学生证和二代身份证正反照片</text></text>
+    <text class="upload-tip">请上传你的<text class="upload-tip-highlight">学生证和身份证照片</text></text>
   </view>
 
   <!-- 选择高校 -->
@@ -51,5 +51,46 @@
     <view class="submit-btn" bindtap="onSubmit">
       <text>提交</text>
     </view>
+  </view>
+
+  <!-- 我的申诉记录 -->
+  <view class="appeal-section">
+    <view class="appeal-section-title">我的申诉记录</view>
+
+    <view class="appeal-loading" wx:if="{{loadingAppeals}}">加载中...</view>
+
+    <block wx:elif="{{appealList.length > 0}}">
+      <view class="appeal-card" wx:for="{{appealList}}" wx:key="appealId">
+        <view class="appeal-card-header">
+          <view class="appeal-direction">
+            <view class="appeal-school-group">
+              <text class="appeal-campus">{{item.currentCampusName}}</text>
+              <text class="appeal-major">{{item.currentMajorName}}</text>
+            </view>
+            <text class="appeal-arrow">→</text>
+            <view class="appeal-school-group">
+              <text class="appeal-campus">{{item.targetCampusName}}</text>
+              <text class="appeal-major">{{item.targetMajorName}}</text>
+            </view>
+          </view>
+          <view class="tag {{item.statusClass}}">
+            <text>{{item.statusDesc}}</text>
+          </view>
+        </view>
+
+        <view class="appeal-time">提交时间：{{item.createdAtText}}</view>
+
+        <view class="appeal-reject" wx:if="{{item.status === 2 && item.rejectReason}}">
+          驳回原因：{{item.rejectReason}}
+        </view>
+
+        <view class="appeal-images" wx:if="{{item.studentCardFullUrl || item.idCardFullUrl}}">
+          <image class="appeal-img" src="{{item.studentCardFullUrl}}" mode="aspectFill" wx:if="{{item.studentCardFullUrl}}"></image>
+          <image class="appeal-img" src="{{item.idCardFullUrl}}" mode="aspectFill" wx:if="{{item.idCardFullUrl}}"></image>
+        </view>
+      </view>
+    </block>
+
+    <view class="appeal-empty" wx:else>暂无申诉记录</view>
   </view>
 </view>

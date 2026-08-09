@@ -1,3 +1,12 @@
 # 微信开发者工具项目配置（含 appid，本地个人配置，不提交）
 project.config.json
 project.private.config.json
+
+# Hermes 本地附件缓存
+.hermes/
+
+# 联调审计产物 + 临时对外文档
+spring_endpoints.json
+文书部门-协议撰写指南.md
+文书部门-协议撰写指南.pdf
+docs/

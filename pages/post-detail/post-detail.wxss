@@ -268,21 +268,23 @@
   margin-top: 28rpx;
 }
 
-/* ===== 来源商品跳转按钮 ===== */
-.source-link-bar {
-  margin: 20rpx 30rpx 0;
-  padding: 20rpx 24rpx;
-  background: linear-gradient(135deg, #FFF8F0, #FFF3E0);
-  border-radius: var(--radius-md);
-  border: 2rpx solid #FFB74D;
+/* ===== 二手商品关联帖：购买入口 ===== */
+.buy-entry {
   display: flex;
   align-items: center;
   justify-content: center;
+  margin: 24rpx 30rpx 0;
+  height: 68rpx;
+  border-radius: 34rpx;
+  background: var(--color-primary);
 }
-.source-link-text {
+.buy-entry text {
   font-size: var(--font-sm);
-  color: #E65100;
   font-weight: 500;
+  color: #FFFFFF;
+}
+.buy-entry:active {
+  opacity: 0.85;
 }
 
 /* ===== 学校标签 + 时间行 ===== */

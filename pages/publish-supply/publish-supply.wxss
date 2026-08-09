@@ -1,0 +1,125 @@
+.page {
+  min-height: 100vh;
+  background: var(--color-bg);
+  display: flex;
+  flex-direction: column;
+}
+
+.fixed-header {
+  background: var(--color-bg-white);
+  flex-shrink: 0;
+}
+
+.status-bar-placeholder {
+  width: 100%;
+  background: var(--color-bg-white);
+}
+
+/* 导航栏 */
+.nav-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20rpx;
+  background: var(--color-bg-white);
+  border-bottom: 1rpx solid var(--color-border-light);
+  box-sizing: border-box;
+}
+
+.nav-back {
+  width: 80rpx;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-back-icon {
+  width: 40rpx;
+  height: 40rpx;
+}
+
+.nav-title {
+  font-size: var(--font-lg);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.nav-placeholder {
+  width: 80rpx;
+}
+
+.form-scroll {
+  flex: 1;
+  background: var(--color-bg-white);
+}
+
+.form-card {
+  padding: 20rpx 24rpx;
+  background: var(--color-bg-white);
+}
+
+/* 输入框容器 */
+.input-wrap {
+  background: var(--color-bg);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  margin-bottom: 16rpx;
+}
+
+.form-input {
+  width: 100%;
+  height: 76rpx;
+  padding: 0 20rpx;
+  font-size: var(--font-base);
+  color: var(--color-text);
+  box-sizing: border-box;
+}
+
+.input-placeholder {
+  color: var(--color-text-secondary);
+  font-size: var(--font-base);
+}
+
+/* 文本域 */
+.textarea-wrap {
+  background: var(--color-bg);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  margin-bottom: 8rpx;
+}
+
+.form-textarea {
+  width: 100%;
+  min-height: 120rpx;
+  padding: 16rpx 20rpx;
+  font-size: var(--font-base);
+  color: var(--color-text);
+  box-sizing: border-box;
+}
+
+.char-count {
+  text-align: right;
+  font-size: var(--font-sm);
+  color: var(--color-text-secondary);
+  margin-bottom: 16rpx;
+  padding-right: 8rpx;
+}
+
+/* 提交按钮 */
+.submit-btn {
+  margin-top: 32rpx;
+  height: 88rpx;
+  background: var(--color-primary);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: var(--font-lg);
+  font-weight: 600;
+}
+
+.submit-btn.disabled {
+  opacity: 0.6;
+}

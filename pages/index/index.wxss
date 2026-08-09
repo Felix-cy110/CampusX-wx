@@ -845,6 +845,46 @@
   border-bottom: 1rpx solid var(--color-border-light);
 }
 
+/* 跑腿子 tab */
+.errand-sub-tabs {
+  display: flex;
+  background: var(--color-bg-white);
+  border-bottom: 1rpx solid var(--color-border-light);
+  padding: 0 24rpx;
+}
+
+.errand-sub-tab {
+  flex: 1;
+  text-align: center;
+  padding: 20rpx 0;
+  font-size: var(--font-base);
+  color: var(--color-text-secondary);
+  position: relative;
+}
+
+.errand-sub-tab.active {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.errand-sub-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60rpx;
+  height: 4rpx;
+  background: var(--color-primary);
+  border-radius: 2rpx;
+}
+
+.errand-reward-unit {
+  font-size: var(--font-sm);
+  color: var(--color-text-secondary);
+  margin-left: 4rpx;
+}
+
 /* 顶部紧急栏：倒计时 + 报酬 */
 .errand-urgent-bar {
   display: flex;

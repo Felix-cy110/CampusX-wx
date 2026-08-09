@@ -428,7 +428,7 @@ image.func-icon {
   border-radius: var(--radius-sm);
 }
 
-/* 帖子标签（置顶） */
+/* 帖子标签（置顶 / 私密） */
 .post-badges {
   display: flex;
   align-items: center;
@@ -454,6 +454,14 @@ image.func-icon {
 }
 
 .badge-pinned .badge-text {
+  color: var(--color-red);
+}
+
+.badge-private {
+  background: rgba(255, 120, 120, 0.1);
+}
+
+.badge-private .badge-text {
   color: var(--color-red);
 }
 

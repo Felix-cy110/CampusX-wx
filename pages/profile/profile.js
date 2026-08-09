@@ -16,6 +16,7 @@ Page({
     filteredContentList: [],       // 根据Tab筛选后的列表
     showPostOptionsModal: false,   // 帖子选项弹窗
     selectedPostId: null,          // 当前选中的帖子ID
+    selectedPostIsPrivate: false,  // 当前选中帖子是否私密
     selectedPostIsPinned: false,   // 当前选中帖子是否置顶
     _scrollTop: 0,
 
@@ -292,6 +293,7 @@ Page({
       id: String(vo.id),
       type: 'posts',
       pinned: vo.isTop === 1,
+      isPrivate: vo.status !== 1,
       user: {
         uid: String(vo.userId || userInfo.uid),
         name: vo.nickname || userInfo.nickname || '',
@@ -311,11 +313,12 @@ Page({
   /* ===== 数据映射：IdleSellerProductVO → 前端卡片 ===== */
   _mapIdleToCard(vo) {
     const userInfo = this.data.userInfo || {}
-    const statusMap = { 0: 'pending', 1: 'available', 2: 'off_shelf', 3: 'sold', 4: 'rejected', 5: 'pending' }
+    const statusMap = { 0: 'available', 1: 'available', 2: 'taken', 3: 'taken' }
     return {
       id: 'idle_' + vo.productId,
       type: 'market',
       pinned: false,
+      isPrivate: false,
       user: {
         uid: userInfo.uid || '',
         name: userInfo.nickname || '',
@@ -328,7 +331,6 @@ Page({
       itemStatus: statusMap[vo.status] || '',
       _backendId: vo.productId,
       _backendType: 'idle',
-      _subType: vo.subType,
       _createdAt: _parseTime(vo.createdAt)
     }
   },
@@ -346,6 +348,7 @@ Page({
       id: 'demand_' + vo.id,
       type: 'errand',
       pinned: false,
+      isPrivate: false,
       user: {
         uid: userInfo.uid || '',
         name: userInfo.nickname || '',
@@ -369,6 +372,7 @@ Page({
       id: 'supply_' + vo.id,
       type: 'errand',
       pinned: false,
+      isPrivate: false,
       user: {
         uid: userInfo.uid || '',
         name: userInfo.nickname || '',
@@ -392,6 +396,7 @@ Page({
       id: 'fav_' + vo.favoriteId,
       type: type,
       pinned: false,
+      isPrivate: false,
       user: {
         uid: String(vo.userId || ''),
         name: vo.nickname || '',
@@ -448,28 +453,18 @@ Page({
   goToSchoolAppeal() { safeNavigate({ url: '/pages/school-appeal/school-appeal' }) },
   goToSettings() { safeNavigate({ url: '/pages/more-options/more-options' }) },
   goToLogin() { safeNavigate({ url: '/pages/login/login' }) },
-  /* 点击列表项：根据类型跳转到对应详情页 */
   goToPostDetail(e) {
     const id = e.currentTarget.dataset.id
-    const item = this.data.filteredContentList.find(item => String(item.id) === String(id))
-    if (!item) return
-
-    const navId = item._backendId || item.id
-    const itemType = item.type
-
-    if (itemType === 'market') {
-      // 二手商品 → market-detail
-      wx.setStorageSync('selectedMarketItem', item)
-      const subType = item._subType != null ? item._subType : 1
-      safeNavigate({ url: '/pages/market-detail/market-detail?id=' + navId + '&subType=' + subType })
-    } else if (itemType === 'errand') {
-      // 跑腿 → errand-detail
-      wx.setStorageSync('currentErrand', item)
-      safeNavigate({ url: '/pages/errand-detail/errand-detail?id=' + navId })
-    } else {
-      // 动态帖子 → post-detail
-      wx.setStorageSync('selectedPostDetail', item)
-      safeNavigate({ url: '/pages/post-detail/post-detail?id=' + navId })
+    const post = this.data.filteredContentList.find(item => String(item.id) === String(id))
+    if (post) {
+      // 收藏列表跳转时用 _backendId（原始对象 ID）
+      const navId = post._backendId || post.id
+      if (post._backendType === 'idle') {
+        safeNavigate({ url: '/pages/market-detail/market-detail?id=' + navId })
+      } else {
+        wx.setStorageSync('selectedPostDetail', post)
+        safeNavigate({ url: '/pages/post-detail/post-detail?id=' + navId })
+      }
     }
   },
 
@@ -501,7 +496,9 @@ Page({
     this.setData({
       showPostOptionsModal: true,
       selectedPostId: id,
-      selectedPostIsPinned: post ? post.pinned : false
+      selectedPostIsPrivate: post ? post.isPrivate : false,
+      selectedPostIsPinned: post ? post.pinned : false,
+      selectedPostBackendType: post ? post._backendType : ''
     })
   },
 
@@ -511,6 +508,7 @@ Page({
     this.setData({
       showPostOptionsModal: false,
       selectedPostId: null,
+      selectedPostIsPrivate: false,
       selectedPostIsPinned: false
     })
   },
@@ -538,100 +536,41 @@ Page({
     safeNavigate({ url: '/pages/publish-post/publish-post?editId=' + id })
   },
 
-  /* 切换置顶状态 */
+  /* 切换私密状态（暂为本地状态，后端无对应 API） */
+  onSetPrivate() {
+    const id = this.data.selectedPostId
+    this.hidePostOptions()
+    const list = this.data.filteredContentList.map(item => {
+      if (String(item.id) === String(id)) {
+        return { ...item, isPrivate: !item.isPrivate }
+      }
+      return item
+    })
+    this.setData({ filteredContentList: list })
+    const post = list.find(item => String(item.id) === String(id))
+    wx.showToast({ title: post && post.isPrivate ? '已设置为私密' : '已取消私密', icon: 'success' })
+  },
+
+  /* 切换置顶状态（仅为管理员提供，暂为本地状态） */
   onSetPinned() {
     const id = this.data.selectedPostId
-    const that = this
     this.hidePostOptions()
-
-    const item = this.data.filteredContentList.find(item => String(item.id) === String(id))
-    if (!item || item._backendType !== 'post') {
-      wx.showToast({ title: '仅支持帖子置顶', icon: 'none' })
-      return
-    }
-
-    const backendId = item._backendId
-    const newPinned = !item.pinned
-
-    wx.showLoading({ title: newPinned ? '置顶中...' : '取消置顶...' })
-    request({ url: '/api/post/' + backendId + '/top', method: 'POST' })
-      .then(() => {
-        wx.hideLoading()
-        const list = that.data.filteredContentList.map(i => {
-          if (String(i.id) === String(id)) {
-            return { ...i, pinned: newPinned }
-          }
-          return i
-        })
-        that.setData({ filteredContentList: list })
-        wx.showToast({ title: newPinned ? '已置顶' : '已取消置顶', icon: 'success' })
-      })
-      .catch(err => {
-        wx.hideLoading()
-        console.error('置顶操作失败:', err)
-        wx.showToast({ title: (err && err.message) || '操作失败', icon: 'none' })
-      })
+    const list = this.data.filteredContentList.map(item => {
+      if (String(item.id) === String(id)) {
+        return { ...item, pinned: !item.pinned }
+      }
+      return item
+    })
+    this.setData({ filteredContentList: list })
+    const post = list.find(item => String(item.id) === String(id))
+    wx.showToast({ title: post && post.pinned ? '已置顶' : '已取消置顶', icon: 'success' })
   },
 
   /* 分享给互关好友 */
   onShareToFriends() {
     const id = this.data.selectedPostId
-    const that = this
     this.hidePostOptions()
-
-    const item = this.data.filteredContentList.find(item => String(item.id) === String(id))
-    if (!item || item._backendType !== 'post') {
-      wx.showToast({ title: '仅支持分享帖子', icon: 'none' })
-      return
-    }
-
-    const backendId = item._backendId
-
-    // 先获取互关好友列表
-    wx.showLoading({ title: '加载好友...' })
-    request({ url: '/api/v1/follow/mutual', data: { limit: 50 } })
-      .then(friends => {
-        wx.hideLoading()
-        if (!friends || friends.length === 0) {
-          wx.showToast({ title: '暂无互关好友', icon: 'none' })
-          return
-        }
-
-        // 用 actionSheet 展示好友列表
-        const names = friends.slice(0, 6).map(f => f.nickname || '用户' + f.userId)
-        if (friends.length > 6) {
-          names.push('更多好友...')
-        }
-
-        wx.showActionSheet({
-          itemList: names,
-          success(res) {
-            const index = res.tapIndex
-            if (index >= friends.length) {
-              wx.showToast({ title: '请前往关注列表选择', icon: 'none' })
-              return
-            }
-            const friend = friends[index]
-            wx.showLoading({ title: '分享中...' })
-            request({
-              url: '/api/post/' + backendId + '/share/' + friend.userId,
-              method: 'POST'
-            }).then(() => {
-              wx.hideLoading()
-              wx.showToast({ title: '已分享给' + friend.nickname, icon: 'success' })
-            }).catch(err => {
-              wx.hideLoading()
-              console.error('分享失败:', err)
-              wx.showToast({ title: (err && err.message) || '分享失败', icon: 'none' })
-            })
-          }
-        })
-      })
-      .catch(err => {
-        wx.hideLoading()
-        console.error('获取互关好友失败:', err)
-        wx.showToast({ title: '获取好友列表失败', icon: 'none' })
-      })
+    wx.showToast({ title: '分享功能开发中', icon: 'none' })
   },
 
   /* 分享给微信好友 */
@@ -654,9 +593,10 @@ Page({
       return
     }
 
+    const isIdle = item._backendType === 'idle'
     wx.showModal({
-      title: '确认删除',
-      content: '删除后无法恢复，是否确认删除？',
+      title: isIdle ? '确认下架' : '确认删除',
+      content: isIdle ? '下架后其他同学将无法看到该商品，是否确认下架？' : '删除后无法恢复，是否确认删除？',
       confirmColor: '#FF7878',
       success(res) {
         if (res.confirm) {
@@ -675,6 +615,13 @@ Page({
     if (backendType === 'post') {
       deletePromise = request({ url: '/api/post/' + backendId, method: 'DELETE' })
     } else if (backendType === 'idle') {
+      // 已下架商品：后端 off-shelf 会报「当前状态不允许下架」，直接本地移除
+      if (item.itemStatus === 'taken') {
+        const list = this.data.filteredContentList.filter(i => String(i.id) !== String(cardId))
+        this.setData({ filteredContentList: list })
+        wx.showToast({ title: '已下架', icon: 'success' })
+        return
+      }
       deletePromise = request({ url: '/api/v1/idle/product/' + backendId + '/off-shelf', method: 'PUT' })
     } else if (backendType === 'proxy_demand') {
       deletePromise = request({ url: '/api/v1/proxy-class-demand/close', method: 'POST', data: { id: backendId } })
@@ -693,7 +640,7 @@ Page({
       wx.hideLoading()
       const list = this.data.filteredContentList.filter(i => String(i.id) !== String(cardId))
       this.setData({ filteredContentList: list })
-      wx.showToast({ title: '已删除', icon: 'success' })
+      wx.showToast({ title: backendType === 'idle' ? '已下架' : '已删除', icon: 'success' })
     }).catch(err => {
       wx.hideLoading()
       console.error('删除失败:', err)

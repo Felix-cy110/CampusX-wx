@@ -499,15 +499,6 @@ Page({
     })
   },
 
-  /** 点击帖子分享卡片，跳转到帖子详情页 */
-  onTapPostShare: function (e) {
-    var postId = e.currentTarget.dataset.postId
-    if (!postId) return
-    wx.navigateTo({
-      url: '/pages/post-detail/post-detail?id=' + postId
-    })
-  },
-
   goBack: function () {
     wx.navigateBack()
   }
@@ -515,44 +506,12 @@ Page({
 
 function mapMessage(vo, myUid) {
   var isMe = String(vo.senderId) === String(myUid)
-  var msgType = vo.msgType
-  var type, content, desc, postId
-
-  if (msgType === 2) {
-    // 图片
-    type = 'image'
-    content = vo.content || ''
-  } else if (msgType === 3) {
-    // 已撤回
-    type = 'system'
-    content = '消息已撤回'
-  } else if (msgType === 4) {
-    // 帖子分享
-    type = 'link'
-    try {
-      var data = JSON.parse(vo.content || '{}')
-      content = data.title || '分享了一条帖子'
-      desc = data.desc || ''
-      postId = data.postId || null
-    } catch (e) {
-      content = '分享了一条帖子'
-      desc = ''
-      postId = null
-    }
-  } else {
-    // 文字
-    type = 'text'
-    content = vo.content || ''
-  }
-
   return {
     _id: vo.id,
     id: vo.id,
     from: isMe ? 'me' : 'other',
-    type: type,
-    content: content,
-    desc: desc || '',
-    postId: postId || null,
+    type: vo.msgType === 2 ? 'image' : (vo.msgType === 3 ? 'system' : 'text'),
+    content: vo.msgType === 3 ? '消息已撤回' : (vo.content || ''),
     senderId: String(vo.senderId),
     senderNickname: vo.senderNickname || '',
     time: formatChatTime(vo.createdAt),

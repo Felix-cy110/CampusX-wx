@@ -258,7 +258,44 @@
   font-weight: 500;
 }
 
-/* 确认收货按钮 */
+/* 操作按钮组 */
+.action-btn-group {
+  margin-top: 16rpx;
+  display: flex;
+  gap: 16rpx;
+}
+
+.action-btn {
+  flex: 1;
+  height: 72rpx;
+  line-height: 72rpx;
+  text-align: center;
+  font-size: var(--font-base);
+  font-weight: 500;
+  border-radius: var(--radius-md);
+}
+
+.action-btn-primary {
+  background-color: var(--color-primary);
+  color: #FFFFFF;
+}
+
+.action-btn-secondary {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  border: 1rpx solid var(--color-border-light);
+}
+
+.action-btn-danger {
+  background-color: #FF4D4F;
+  color: #FFFFFF;
+}
+
+.action-btn:active {
+  opacity: 0.85;
+}
+
+/* 确认收货按钮（保留兼容） */
 .confirm-btn-wrap {
   margin-top: 16rpx;
 }

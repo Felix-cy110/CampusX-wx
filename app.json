@@ -17,6 +17,7 @@
 
     "pages/publish-post/publish-post",
     "pages/publish-errand/publish-errand",
+    "pages/publish-supply/publish-supply",
     "pages/errand-detail/errand-detail",
     "pages/publish-rating/publish-rating",
     "pages/teacher-ratings/teacher-ratings",
@@ -36,7 +37,6 @@
     "pages/followers/followers",
     "pages/liked/liked",
     "pages/purchased/purchased",
-    "pages/order-detail/order-detail",
     "pages/share/share",
     "pages/address/address",
     "pages/address-form/address-form",

@@ -84,6 +84,11 @@ Page({
     this.setData({ onlySameSchool: !this.data.onlySameSchool })
   },
 
+  /* 跳转发布代课供给 */
+  goPublishSupply() {
+    safeNavigate({ url: '/pages/publish-supply/publish-supply' })
+  },
+
   // ===== 提交 =====
 
   async onSubmit() {

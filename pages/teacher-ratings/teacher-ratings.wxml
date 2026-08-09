@@ -21,7 +21,6 @@
     bindrefresherrefresh="refreshRatings"
     bindscrolltolower="loadMore"
     lower-threshold="200"
-    style="margin-top: {{statusBarHeight + navBarHeight}}px;"
   >
     <!-- 教师 + 课程信息卡片 -->
     <view class="info-header">

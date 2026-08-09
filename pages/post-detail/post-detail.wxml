@@ -76,17 +76,9 @@
     <view class="post-title">{{post.title}}</view>
     <text class="post-body">{{post.displayContent}}</text>
 
-    <!-- 二手来源：跳转商品详情 -->
-    <view class="source-link-bar" wx:if="{{post.sourceType === 'IDLE_PRODUCT'}}" bindtap="goToMarketDetail">
-      <text class="source-link-text">查看商品详情与购买 →</text>
-    </view>
-    <!-- 租赁来源：跳转租赁详情 -->
-    <view class="source-link-bar" wx:if="{{post.sourceType === 'RENTAL_PRODUCT'}}" bindtap="goToRentalDetail">
-      <text class="source-link-text">查看租赁详情与下单 →</text>
-    </view>
-    <!-- 代课来源：跳转跑腿详情 -->
-    <view class="source-link-bar" wx:if="{{post.sourceType === 'PROXY_DEMAND' || post.sourceType === 'PROXY_SUPPLY'}}" bindtap="goToProxyDetail">
-      <text class="source-link-text">查看代课详情 →</text>
+    <!-- 二手商品关联帖：购买入口 -->
+    <view class="buy-entry" wx:if="{{post.sourceType === 'IDLE_PRODUCT'}}" bindtap="goBuy">
+      <text>去购买</text>
     </view>
 
     <view class="meta-row">

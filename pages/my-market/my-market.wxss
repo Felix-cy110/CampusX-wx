@@ -1,21 +1,12 @@
 /* 我的集市帖子 */
 .page {
-  height: 100vh;
+  min-height: 100vh;
   background-color: var(--color-bg);
+  padding-bottom: 40rpx;
 }
 
 .content-list {
   padding: 16rpx 30rpx;
-}
-
-.loading-state,
-.empty-state {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 120rpx 0;
-  font-size: var(--font-sm);
-  color: var(--color-text-secondary);
 }
 
 .post-card {

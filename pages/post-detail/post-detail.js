@@ -98,13 +98,23 @@ Page({
         isOwn: String(vo.userId) === String(userInfo.uid),
         isFollowed: vo.followedByMe || false,
         school: '',
-        time: vo.createdAt ? vo.createdAt.replace('T', ' ').slice(0, 16) : '',
-        sourceType: vo.sourceType || null,
-        sourceId: vo.sourceId || null
+        sourceType: vo.sourceType || '',
+        sourceId: vo.sourceId || '',
+        time: vo.createdAt ? vo.createdAt.replace('T', ' ').slice(0, 16) : ''
       }
       this.setData({ post })
     }).catch(() => {})
   },
+  /* 二手商品关联帖：跳转商品详情购买 */
+  goBuy() {
+    const sourceId = this.data.post.sourceId
+    if (!sourceId) {
+      wx.showToast({ title: '商品信息不可用', icon: 'none' })
+      return
+    }
+    safeNavigate({ url: '/pages/market-detail/market-detail?id=' + sourceId })
+  },
+
   /* 加载评论列表 */
   loadComments(postId) {
     if (!postId) return
@@ -502,31 +512,6 @@ Page({
     })
   },
 
-  /* 跳转到关联的二手商品详情页 */
-  goToMarketDetail() {
-    const { sourceId } = this.data.post
-    if (sourceId) {
-      safeNavigate({ url: `/pages/market-detail/market-detail?id=${sourceId}` })
-    }
-  },
-
-  /* 跳转到关联的租赁商品详情页 */
-  goToRentalDetail() {
-    const { sourceId } = this.data.post
-    if (sourceId) {
-      safeNavigate({ url: `/pages/market-detail/market-detail?id=${sourceId}&subType=rental` })
-    }
-  },
-
-  /* 跳转到关联的代课详情页 */
-  goToProxyDetail() {
-    const { sourceId } = this.data.post
-    if (sourceId) {
-      wx.setStorageSync('currentErrand', { id: sourceId, _fromPost: true })
-      safeNavigate({ url: `/pages/errand-detail/errand-detail?id=${sourceId}` })
-    }
-  },
-
   goToUserProfile(e) {
     const { uid, name, avatar } = e.currentTarget.dataset
     const currentUid = (app.globalData.userInfo || {}).uid
@@ -860,9 +845,7 @@ Page({
   /* 分享给互关好友 */
   shareToFriends() {
     this.setData({ showActionSheet: false })
-    wx.navigateTo({
-      url: '/pages/share/share?postId=' + this.data.postId
-    })
+    wx.showToast({ title: '分享给互关好友', icon: 'none' })
   },
 
   /* 分享给微信好友 */
@@ -905,9 +888,7 @@ Page({
 
   sharePostToFriends() {
     this.setData({ showShareModal: false })
-    wx.navigateTo({
-      url: '/pages/share/share?postId=' + this.data.postId
-    })
+    wx.showToast({ title: '分享给互关好友', icon: 'none' })
   },
 
   reportPost() {

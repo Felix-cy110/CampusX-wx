@@ -182,6 +182,17 @@
   left: 40rpx;
 }
 
+/* 切换发布供给 */
+.switch-supply {
+  margin: 16rpx 24rpx 0;
+  padding: 16rpx;
+  text-align: center;
+  font-size: var(--font-sm);
+  color: var(--color-primary);
+  background: rgba(37, 90, 197, 0.08);
+  border-radius: var(--radius-sm);
+}
+
 /* 提交按钮 */
 .submit-area {
   padding: 0 24rpx;

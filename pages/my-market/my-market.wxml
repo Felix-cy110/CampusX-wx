@@ -1,5 +1,5 @@
-<!-- 我的集市帖子 -->
-<scroll-view class="page" scroll-y enhanced show-scrollbar="{{false}}" refresher-enabled refresher-triggered="{{refreshing}}" bindrefresherrefresh="onRefresh" bindscrolltolower="loadMore" lower-threshold="150">
+<!-- 我的二手闲置 -->
+<view class="page">
   <view class="content-list" wx:if="{{marketItems.length > 0}}">
     <view class="post-card" wx:for="{{marketItems}}" wx:key="id" bindtap="goToDetail" data-id="{{item.id}}" data-type="{{item.type}}">
       <!-- 商品头部 -->
@@ -38,14 +38,6 @@
         </view>
       </view>
     </view>
-    <!-- 加载更多 -->
-    <view class="loading-state" wx:if="{{hasMore}}">
-      <text>上拉加载更多</text>
-    </view>
-  </view>
-
-  <view class="loading-state" wx:elif="{{loading}}">
-    <text>加载中...</text>
   </view>
 
   <view class="empty-state" wx:else>
@@ -53,4 +45,4 @@
   </view>
 
   <view class="bottom-safe"></view>
-</scroll-view>
+</view>

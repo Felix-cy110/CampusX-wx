@@ -158,3 +158,100 @@
   color: #FFFFFF;
   font-weight: 500;
 }
+
+/* 我的申诉记录 */
+.appeal-section {
+  margin-top: 60rpx;
+}
+
+.appeal-section-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #333333;
+  margin-bottom: 24rpx;
+}
+
+.appeal-loading {
+  text-align: center;
+  padding: 40rpx 0;
+  font-size: 28rpx;
+  color: #999999;
+}
+
+.appeal-empty {
+  text-align: center;
+  padding: 80rpx 0;
+  font-size: 28rpx;
+  color: #999999;
+}
+
+.appeal-card {
+  background: #F2F2F2;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  margin-bottom: 20rpx;
+}
+
+.appeal-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 16rpx;
+}
+
+.appeal-direction {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-right: 16rpx;
+}
+
+.appeal-school-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.appeal-campus {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #333333;
+}
+
+.appeal-major {
+  font-size: 26rpx;
+  color: #666666;
+  margin-top: 4rpx;
+}
+
+.appeal-arrow {
+  font-size: 32rpx;
+  color: #999999;
+  margin: 0 20rpx;
+}
+
+.appeal-time {
+  font-size: 24rpx;
+  color: #999999;
+  margin-bottom: 12rpx;
+}
+
+.appeal-reject {
+  font-size: 26rpx;
+  color: var(--color-red);
+  line-height: 1.5;
+  margin-bottom: 12rpx;
+}
+
+.appeal-images {
+  display: flex;
+  gap: 16rpx;
+  margin-top: 4rpx;
+}
+
+.appeal-img {
+  width: 140rpx;
+  height: 140rpx;
+  border-radius: 12rpx;
+  background: #E0E0E0;
+}

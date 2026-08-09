@@ -81,6 +81,11 @@
       </view>
     </view>
 
+    <!-- 切换发布供给 -->
+    <view class="switch-supply" bindtap="goPublishSupply">
+      <text>我要发布代课供给（我可以代课）</text>
+    </view>
+
     <!-- 提交按钮 -->
     <view class="submit-area">
       <view class="btn btn-primary submit-btn {{publishing ? 'disabled' : ''}}" bindtap="onSubmit">

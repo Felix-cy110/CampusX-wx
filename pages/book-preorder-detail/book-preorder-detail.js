@@ -1,7 +1,57 @@
-const mock = require('../../utils/mock')
+const { request } = require('../../utils/request')
 
-const STATUS_LABEL = ['待付定金', '已付定金·待尾款', '已完成', '已取消', '已退款']
+const STATUS_LABEL = {
+  0: '待付定金',
+  1: '已付定金待尾款',
+  2: '已付尾款完成',
+  3: '已取消定金不退',
+  4: '退款取消退总价15%'
+}
+
 const STATUS_COLOR = ['color-orange', 'color-orange', 'color-green', 'color-secondary', 'color-secondary']
+
+function formatDateTime(value) {
+  if (!value) return ''
+  let date
+  if (Array.isArray(value)) {
+    const [y, m, d, h, min, s] = value
+    date = new Date(y, m - 1, d, h || 0, min || 0, s || 0)
+  } else {
+    date = new Date(value)
+  }
+  if (isNaN(date.getTime())) return value
+  const pad = n => (n < 10 ? '0' + n : n)
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`
+}
+
+function formatPresale(p) {
+  return {
+    ...p,
+    price: Number(p.price),
+    depositAmount: Number(p.depositAmount),
+    finalAmount: Number(p.finalAmount),
+    startTime: formatDateTime(p.startTime),
+    endTime: formatDateTime(p.endTime)
+  }
+}
+
+function formatOrder(o) {
+  return {
+    ...o,
+    unitPrice: Number(o.unitPrice),
+    totalAmount: Number(o.totalAmount),
+    depositAmount: Number(o.depositAmount),
+    finalAmount: Number(o.finalAmount),
+    refundAmount: o.refundAmount != null ? Number(o.refundAmount) : o.refundAmount,
+    finalPayDeadline: formatDateTime(o.finalPayDeadline),
+    depositPayTime: formatDateTime(o.depositPayTime),
+    finalPayTime: formatDateTime(o.finalPayTime),
+    createdAt: formatDateTime(o.createdAt),
+    updatedAt: formatDateTime(o.updatedAt),
+    statusLabel: STATUS_LABEL[o.status] || '未知',
+    statusColor: STATUS_COLOR[o.status] || 'color-secondary'
+  }
+}
 
 Page({
   data: {
@@ -12,7 +62,8 @@ Page({
     depositPrice: '0.00',
     safeAreaBottom: 0,
     statusBarHeight: 0,
-    navBarHeight: 0
+    navBarHeight: 0,
+    submitting: false
   },
 
   onLoad(options) {
@@ -25,18 +76,35 @@ Page({
     })
 
     const id = parseInt(options.id)
-    const presale = mock.presales.find(p => p.id === id)
-    if (!presale) return
+    this._loadPresale(id)
+    this._loadMyOrder(id)
+  },
 
-    const myOrder = mock.presaleOrders.find(o => o.presaleId === id) || null
-    const formattedOrder = myOrder ? {
-      ...myOrder,
-      statusLabel: STATUS_LABEL[myOrder.status] || '未知',
-      statusColor: STATUS_COLOR[myOrder.status] || ''
-    } : null
+  _loadPresale(id) {
+    request({ url: `/api/v1/presale/${id}` })
+      .then(data => {
+        const presale = formatPresale(data)
+        this.setData({ presale })
+        this._updatePrice(this.data.quantity, presale.price)
+      })
+      .catch(err => {
+        console.error('获取预购详情失败', err)
+        wx.showToast({ title: err.message || '获取详情失败', icon: 'none' })
+      })
+  },
 
-    this.setData({ presale, myOrder: formattedOrder })
-    this._updatePrice(1, presale.price)
+  _loadMyOrder(id) {
+    request({ url: '/api/v1/presale/orders/my' })
+      .then(res => {
+        const list = (res && res.list) || []
+        const rawOrder = list.find(o => o.presaleId === id)
+        if (rawOrder) {
+          this.setData({ myOrder: formatOrder(rawOrder) })
+        }
+      })
+      .catch(err => {
+        console.error('获取我的预购订单失败', err)
+      })
   },
 
   _updatePrice(qty, unitPrice) {
@@ -47,61 +115,74 @@ Page({
 
   increaseQty() {
     const { quantity, presale } = this.data
+    if (!presale) return
     const max = presale.stock > 0 ? presale.stock - presale.orderedCount : 99
     if (quantity < max) this._updatePrice(quantity + 1, presale.price)
   },
 
   decreaseQty() {
+    if (!this.data.presale) return
     if (this.data.quantity > 1) this._updatePrice(this.data.quantity - 1, this.data.presale.price)
   },
 
   onSubmitOrder() {
-    const { presale, quantity, totalPrice, depositPrice } = this.data
-    const newOrder = {
-      id: Date.now(),
-      orderNo: 'BP' + Date.now(),
-      presaleId: presale.id,
-      quantity,
-      unitPrice: presale.price,
-      totalAmount: totalPrice,
-      depositAmount: depositPrice,
-      finalAmount: (totalPrice - depositPrice).toFixed(2),
-      status: 0,
-      statusLabel: STATUS_LABEL[0],
-      statusColor: STATUS_COLOR[0],
-      finalPayDeadline: '活动结束后7天内'
-    }
-    mock.presaleOrders.push(newOrder)
-    presale.orderedCount += quantity
-    this.setData({ myOrder: newOrder })
-    wx.showToast({ title: '预购成功', icon: 'success' })
+    if (this.data.submitting) return
+    const { presale, quantity } = this.data
+    if (!presale) return
+    this.setData({ submitting: true })
+    request({
+      url: '/api/v1/presale/orders',
+      method: 'POST',
+      data: { presaleId: presale.id, quantity }
+    })
+      .then(data => {
+        const myOrder = formatOrder(data)
+        this.setData({ myOrder, quantity: 1, submitting: false })
+        this._updatePrice(1, presale.price)
+        wx.showToast({ title: '预购成功', icon: 'success' })
+      })
+      .catch(err => {
+        console.error('预购下单失败', err)
+        this.setData({ submitting: false })
+        wx.showToast({ title: err.message || '预购失败', icon: 'none' })
+      })
   },
 
   onPayDeposit() {
-    wx.showToast({ title: '定金支付成功', icon: 'success' })
-    this.data.myOrder.status = 1
-    this.setData({
-      myOrder: { ...this.data.myOrder, status: 1, statusLabel: STATUS_LABEL[1], statusColor: STATUS_COLOR[1] }
-    })
+    wx.showToast({ title: '支付功能开发中', icon: 'none' })
   },
 
   onPayFinal() {
-    wx.showToast({ title: '尾款支付成功', icon: 'success' })
-    this.setData({
-      myOrder: { ...this.data.myOrder, status: 2, statusLabel: STATUS_LABEL[2], statusColor: STATUS_COLOR[2] }
-    })
+    wx.showToast({ title: '支付功能开发中', icon: 'none' })
   },
 
   onCancelOrder() {
+    const { myOrder } = this.data
+    if (!myOrder) return
     wx.showModal({
       title: '确认取消',
       content: '取消后定金不予退还，确认取消吗？',
       success: (res) => {
         if (!res.confirm) return
-        this.setData({
-          myOrder: { ...this.data.myOrder, status: 3, statusLabel: STATUS_LABEL[3], statusColor: STATUS_COLOR[3] }
+        request({
+          url: `/api/v1/presale/orders/${myOrder.id}/cancel`,
+          method: 'POST'
         })
-        wx.showToast({ title: '已取消', icon: 'none' })
+          .then(() => {
+            this.setData({
+              myOrder: {
+                ...myOrder,
+                status: 3,
+                statusLabel: STATUS_LABEL[3],
+                statusColor: STATUS_COLOR[3]
+              }
+            })
+            wx.showToast({ title: '已取消', icon: 'none' })
+          })
+          .catch(err => {
+            console.error('取消预购订单失败', err)
+            wx.showToast({ title: err.message || '取消失败', icon: 'none' })
+          })
       }
     })
   },

@@ -77,25 +77,6 @@
       <text class="info-value price-value">¥{{item.price}}</text>
     </view>
 
-    <!-- 操作按钮区 -->
-    <view class="action-buttons">
-      <!-- 自己发布的 → 下架按钮 -->
-      <view class="btn-close-deal" wx:if="{{item.isOwn && !isOwnerClosing}}" bindtap="closeDeal">
-        <text>下架商品</text>
-      </view>
-      <view class="btn-close-deal disabled" wx:if="{{isOwnerClosing}}">
-        <text>已下架</text>
-      </view>
-      <!-- 不是自己的 → 下单 + 联系按钮 -->
-      <block wx:if="{{!item.isOwn}}">
-        <view class="btn-contact" bindtap="createOrder">
-          <text>立即购买</text>
-        </view>
-        <view class="btn-contact secondary" bindtap="contactSeller" style="margin-top: 16rpx;">
-          <text>联系卖家</text>
-        </view>
-      </block>
-    </view>
   </scroll-view>
 
   <!-- 加载中 -->
@@ -105,9 +86,27 @@
 
   <!-- 底部操作栏 -->
   <view class="bottom-bar">
-    <view class="bottom-action" bindtap="toggleFavorite">
+    <view class="bottom-action favorite-action" bindtap="toggleFavorite">
       <text class="bottom-action-icon" style="color: {{isFavorited ? 'var(--color-star)' : 'var(--color-text-secondary)'}};">⭐</text>
       <text class="bottom-action-count">{{isFavorited ? '已收藏' : '收藏'}}</text>
+    </view>
+    <view class="bottom-main-actions" wx:if="{{!item.isOwn}}">
+      <view class="bottom-btn btn-contact" bindtap="contactSeller">
+        <text>联系卖家</text>
+      </view>
+      <view class="bottom-btn btn-buy" bindtap="createOrder">
+        <text>立即购买</text>
+      </view>
+    </view>
+    <view class="bottom-main-actions" wx:if="{{item.isOwn && !isOwnerClosing}}">
+      <view class="bottom-btn btn-off-shelf" bindtap="closeDeal">
+        <text>下架商品</text>
+      </view>
+    </view>
+    <view class="bottom-main-actions" wx:if="{{item.isOwn && isOwnerClosing}}">
+      <view class="bottom-btn btn-off-shelf disabled">
+        <text>已下架</text>
+      </view>
     </view>
   </view>
 </view>
