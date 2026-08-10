@@ -98,10 +98,11 @@ Page({
     request({ url: '/api/v1/presale/orders/my' })
       .then(res => {
         const list = (res && res.list) || []
-        const rawOrder = list.find(o => o.presaleId === id)
-        if (rawOrder) {
-          this.setData({ myOrder: formatOrder(rawOrder) })
-        }
+        const rawOrder = list.find(o => {
+          const status = Number(o.status)
+          return Number(o.presaleId) === id && status !== 3 && status !== 4
+        })
+        this.setData({ myOrder: rawOrder ? formatOrder(rawOrder) : null })
       })
       .catch(err => {
         console.error('获取我的预购订单失败', err)
@@ -170,15 +171,9 @@ Page({
           method: 'POST'
         })
           .then(() => {
-            this.setData({
-              myOrder: {
-                ...myOrder,
-                status: 3,
-                statusLabel: STATUS_LABEL[3],
-                statusColor: STATUS_COLOR[3]
-              }
-            })
-            wx.showToast({ title: '已取消', icon: 'none' })
+            this.setData({ myOrder: null, quantity: 1 })
+            this._loadPresale(myOrder.presaleId)
+            wx.showToast({ title: '已取消，可重新预购', icon: 'none' })
           })
           .catch(err => {
             console.error('取消预购订单失败', err)
