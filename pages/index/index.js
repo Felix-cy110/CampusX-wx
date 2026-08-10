@@ -32,6 +32,8 @@ Page({
     /* 数据 */
     userInfo: {},
     schoolInfo: {},
+    /* 当前浏览学校 id，空表示本校 */
+    browsingCampusId: '',
     feedList: [],
     marketList: [],
     errandList: [],
@@ -183,10 +185,20 @@ Page({
     ])
   },
 
+  /** 浏览其他学校时附加的查询参数（空=本校） */
+  getBrowseParams() {
+    const campusId = this.data.browsingCampusId
+    return campusId ? { campusId } : {}
+  },
+
   loadFeed() {
     // 读取本地点赞记录，合并到 feed 数据中（feed API 不返回 liked 字段）
     const likedIds = wx.getStorageSync('likedPostIds') || {}
-    return request({ url: '/api/post/feed', method: 'GET', data: { pageSize: 20 } }).then(data => {
+    const browsingCampusId = this.data.browsingCampusId
+    const reqOptions = browsingCampusId
+      ? { url: '/api/post/list', method: 'GET', data: { targetCampusId: browsingCampusId, pageSize: 20 } }
+      : { url: '/api/post/feed', method: 'GET', data: { pageSize: 20 } }
+    return request(reqOptions).then(data => {
       console.log('feed API 返回:', JSON.stringify(data))
       const list = (data.list || []).map(vo => {
         // 兼容多种日期格式：字符串 或 数组 [year,month,day,hour,min,sec]
@@ -236,12 +248,34 @@ Page({
 
     /* 检查是否从选校页面返回了新学校 */
     const selectedSchool = wx.getStorageSync('selectedSchool')
-    if (selectedSchool && selectedSchool !== this.data.schoolInfo.name) {
-      const school = mock.schools.find(s => s.name === selectedSchool)
-      if (school) {
-        this.setData({
-          schoolInfo: Object.assign({}, school, { icon: '/images/avatars/default.png' })
-        })
+    if (selectedSchool) {
+      // 兼容 JSON 字符串（{"id":2,"name":"上海大学"}）和纯名字字符串（老数据）
+      let schoolName = ''
+      let schoolId = ''
+      if (typeof selectedSchool === 'object') {
+        schoolName = selectedSchool.name || ''
+        schoolId = selectedSchool.id || ''
+      } else {
+        try {
+          const parsed = JSON.parse(selectedSchool)
+          schoolName = (parsed && parsed.name) || ''
+          schoolId = (parsed && parsed.id) || ''
+        } catch (e) {
+          schoolName = selectedSchool
+        }
+      }
+      if (schoolName && schoolName !== this.data.schoolInfo.name) {
+        // 优先在 mock.schools 按 name 匹配补齐展示字段；匹配不到（后端新建学校）直接用解析出的 id/name
+        const school = mock.schools.find(s => s.name === schoolName)
+        const schoolInfo = school
+          ? Object.assign({}, school, { icon: '/images/avatars/default.png' })
+          : { id: schoolId, name: schoolName, icon: '/images/avatars/default.png' }
+        this.setData({ schoolInfo, browsingCampusId: schoolId })
+        this.loadFeed()
+        // 切换学校后完整重载其余按学校隔离的数据
+        this.loadCampusData()
+        this.loadTeacherRatings()
+        this.loadSupplies(1)
       }
     }
 
@@ -259,7 +293,7 @@ Page({
     return request({
       url: '/api/v1/teacher/search',
       method: 'GET',
-      data: { pageSize: 10 }
+      data: Object.assign({ pageSize: 10 }, this.getBrowseParams())
     }).then(data => {
       const list = (data && data.list) ? data.list : []
       const cards = list.map(t => ({
@@ -573,7 +607,7 @@ Page({
     return request({
       url: '/api/v1/proxy-class-demand/list',
       method: 'GET',
-      data: { pageNum, pageSize: 10 }
+      data: Object.assign({ pageNum, pageSize: 10 }, this.getBrowseParams())
     }).then(data => {
       const list = (data.list || []).map(vo => this.mapErrandItem(vo))
       const errandList = pageNum === 1 ? list : [...this.data.errandList, ...list]
@@ -733,7 +767,7 @@ Page({
     return request({
       url: '/api/v1/proxy-class-supply/list',
       method: 'GET',
-      data: { pageNum, pageSize: 10 }
+      data: Object.assign({ pageNum, pageSize: 10 }, this.getBrowseParams())
     }).then(data => {
       const list = (data.list || []).map(vo => this.mapSupplyItem(vo))
       const supplyList = pageNum === 1 ? list : [...this.data.supplyList, ...list]
@@ -1165,6 +1199,7 @@ Page({
     this.setData({ bookLoading: true })
 
     const params = { pageNum, pageSize: 20 }
+    Object.assign(params, this.getBrowseParams())
     // 传递搜索关键词和分类筛选到后端
     if (this.data.bookSearchKeyword && this.data.bookSearchKeyword.trim()) {
       params.keyword = this.data.bookSearchKeyword.trim()
@@ -1212,6 +1247,7 @@ Page({
     this.setData({ otherLoading: true })
 
     const params = { pageNum, pageSize: 20 }
+    Object.assign(params, this.getBrowseParams())
     if (this.data.otherSearchKeyword && this.data.otherSearchKeyword.trim()) {
       params.keyword = this.data.otherSearchKeyword.trim()
     }
