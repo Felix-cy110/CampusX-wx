@@ -81,6 +81,11 @@
       <text>去购买</text>
     </view>
 
+    <!-- 跑腿关联帖：去抢单入口 -->
+    <view class="buy-entry grab-entry" wx:if="{{post.sourceType === 'PROXY_DEMAND'}}" bindtap="goGrabErrand">
+      <text>去抢单</text>
+    </view>
+
     <view class="meta-row">
       <text class="school-tag" wx:if="{{post.school}}">【{{post.school}}】</text>
       <text class="post-time">{{post.time}}</text>

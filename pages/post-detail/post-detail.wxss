@@ -287,6 +287,11 @@
   opacity: 0.85;
 }
 
+/* ===== 跑腿关联帖：去抢单入口 ===== */
+.grab-entry {
+  background: var(--color-orange);
+}
+
 /* ===== 学校标签 + 时间行 ===== */
 .meta-row {
   display: flex;

@@ -128,6 +128,31 @@ Page({
     safeNavigate({ url: '/pages/market-detail/market-detail?id=' + sourceId })
   },
 
+  /* 跑腿关联帖：跳转跑腿详情下单 */
+  goGrabErrand() {
+    const post = this.data.post
+    const sourceId = post.sourceId
+    if (!sourceId) {
+      wx.showToast({ title: '跑腿信息不可用', icon: 'none' })
+      return
+    }
+    // 从帖子正文解析代课费（关联帖正文格式：【代课费】¥xx）
+    const rewardMatch = (post.displayContent || '').match(/【代课费】¥([\d.]+)/)
+    const demand = {
+      id: sourceId,
+      type: 'errand',
+      title: (post.title || '').replace(/^【求代课】/, ''),
+      content: post.displayContent || '',
+      reward: rewardMatch ? Number(rewardMatch[1]) : 0,
+      time: post.time || '',
+      user: post.user || {},
+      status: 'available',
+      _raw: {}
+    }
+    wx.setStorageSync('currentErrand', demand)
+    safeNavigate({ url: '/pages/errand-detail/errand-detail?id=' + sourceId })
+  },
+
   /* 加载评论列表 */
   loadComments(postId) {
     if (!postId) return
