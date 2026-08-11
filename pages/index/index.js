@@ -180,8 +180,8 @@ Page({
     if (!canAccessCampusFeatures()) return Promise.resolve()
     return Promise.all([
       this.loadErrands(),
-      this.loadIdleBooks(),
-      this.loadIdleItems()
+      this.loadIdleBooks(1, true),
+      this.loadIdleItems(1, true)
     ])
   },
 
@@ -1188,9 +1188,9 @@ Page({
   /**
    * 从后端加载二手书列表
    * @param {number} pageNum - 页码（1-based）
-   * @param {boolean} reset - 是否重置已有数据
+   * @param {boolean} reset - 是否重置已有数据；pageNum=1 时默认重置（与 loadErrands 语义一致，防止切校/重载残留旧数据）
    */
-  loadIdleBooks(pageNum = 1, reset = false) {
+  loadIdleBooks(pageNum = 1, reset = pageNum === 1) {
     if (!canAccessCampusFeatures()) {
       this.setData({ bookLoading: false })
       return Promise.resolve()
@@ -1236,9 +1236,9 @@ Page({
   /**
    * 从后端加载其他闲置列表
    * @param {number} pageNum - 页码（1-based）
-   * @param {boolean} reset - 是否重置已有数据
+   * @param {boolean} reset - 是否重置已有数据；pageNum=1 时默认重置（与 loadErrands 语义一致，防止切校/重载残留旧数据）
    */
-  loadIdleItems(pageNum = 1, reset = false) {
+  loadIdleItems(pageNum = 1, reset = pageNum === 1) {
     if (!canAccessCampusFeatures()) {
       this.setData({ otherLoading: false })
       return Promise.resolve()
