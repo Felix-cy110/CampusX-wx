@@ -367,7 +367,8 @@ Page({
   /* ===== 数据映射：MyProxyClassDemandVO → 前端卡片 ===== */
   _mapProxyDemandToCard(vo) {
     const userInfo = this.data.userInfo || {}
-    const statusText = vo.status === 0 ? 'available' : 'taken'
+    const statusMap = { 0: 'pending', 1: 'available', 2: 'taken', 3: 'completed', 4: 'closed', 5: 'rejected' }
+    const statusText = statusMap[vo.status] || ''
     const detailParts = []
     if (vo.locationBuilding) detailParts.push(vo.locationBuilding)
     if (vo.locationRoom) detailParts.push(vo.locationRoom)
@@ -389,7 +390,8 @@ Page({
       itemStatus: statusText,
       _backendId: vo.id,
       _backendType: 'proxy_demand',
-      _createdAt: _parseTime(vo.createdAt)
+      _createdAt: _parseTime(vo.createdAt),
+      _raw: vo,
     }
   },
 
@@ -414,7 +416,8 @@ Page({
       itemStatus: 'available',
       _backendId: vo.id,
       _backendType: 'proxy_supply',
-      _createdAt: _parseTime(vo.createdAt)
+      _createdAt: _parseTime(vo.createdAt),
+      _raw: vo,
     }
   },
 
@@ -486,6 +489,26 @@ Page({
     const id = e.currentTarget.dataset.id
     const post = this.data.filteredContentList.find(item => String(item.id) === String(id))
     if (post) {
+      // 我发布的跑腿：跳转跑腿详情（需先组装数据塞 currentErrand）
+      if (post._backendType === 'proxy_demand' || post._backendType === 'proxy_supply') {
+        const raw = post._raw || {}
+        const isSupply = post._backendType === 'proxy_supply'
+        const demand = {
+          id: raw.id,
+          type: isSupply ? 'supply' : 'errand',
+          user: post.user || {},
+          title: isSupply ? (raw.subjectRange || '') : (raw.courseName || ''),
+          content: isSupply ? (raw.availableTime || '') : [raw.locationCampus, raw.locationBuilding, raw.locationRoom].filter(Boolean).join(' '),
+          reward: isSupply ? Number(raw.expectedFee || 0) : Number(raw.fee || 0),
+          time: post.time || '',
+          status: 'available',
+          countdown: '',
+          _raw: { onlySameSchool: raw.onlySameSchool }
+        }
+        wx.setStorageSync('currentErrand', demand)
+        safeNavigate({ url: '/pages/errand-detail/errand-detail?id=' + raw.id })
+        return
+      }
       // 收藏列表跳转时用 _backendId（原始对象 ID）
       const navId = post._backendId || post.id
       if (post._backendType === 'idle') {

@@ -588,6 +588,26 @@ image.func-icon {
   background: var(--color-bg);
 }
 
+.status-completed {
+  color: var(--color-green);
+  background: rgba(20, 181, 84, 0.1);
+}
+
+.status-closed {
+  color: var(--color-text-secondary);
+  background: var(--color-bg);
+}
+
+.status-pending {
+  color: var(--color-orange);
+  background: rgba(255, 122, 0, 0.1);
+}
+
+.status-rejected {
+  color: var(--color-red);
+  background: rgba(255, 77, 79, 0.1);
+}
+
 /* ========== 底部安全区 ========== */
 .bottom-safe {
   height: calc(120rpx + constant(safe-area-inset-bottom));

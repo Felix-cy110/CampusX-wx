@@ -163,7 +163,7 @@
             </view>
             <!-- 商品状态标签（集市/二手类） -->
             <view class="item-status-tag status-{{item.itemStatus}}" wx:if="{{item.itemStatus}}">
-              <text>{{item.itemStatus === 'available' ? '在售' : (item.itemStatus === 'taken' ? '已售出' : item.itemStatus)}}</text>
+              <text>{{item.itemStatus === 'available' ? '在售' : (item.itemStatus === 'taken' ? '已售出' : (item.itemStatus === 'completed' ? '已完成' : (item.itemStatus === 'closed' ? '已关闭' : (item.itemStatus === 'pending' ? '待审核' : (item.itemStatus === 'rejected' ? '审核驳回' : item.itemStatus)))))}}</text>
             </view>
           </view>
         </view>
