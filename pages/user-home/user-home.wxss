@@ -166,9 +166,9 @@
 }
 
 .follow-btn.followed {
-  background-color: rgba(255, 255, 255, 0.3);
+  background-color: rgba(255, 255, 255, 0.25);
   color: #FFFFFF;
-  border-color: rgba(255, 255, 255, 0.6);
+  border-color: rgba(255, 255, 255, 0.5);
 }
 
 .chat-btn {
