@@ -1050,6 +1050,27 @@
   border-bottom: 1rpx solid var(--color-border-light);
 }
 
+/* 关注页布局：头像栏 + 横向切换用户 swiper */
+.follow-page {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.follow-user-swiper {
+  flex: 1;
+  height: 0;
+}
+
+.follow-user-swiper swiper-item {
+  height: 100%;
+  overflow: hidden;
+}
+
+.follow-feed-scroll {
+  height: 100%;
+}
+
 .follow-avatars-scroll {
   width: 100%;
   white-space: nowrap;
@@ -1067,6 +1088,16 @@
   align-items: center;
   flex-shrink: 0;
   width: 100rpx;
+}
+
+.follow-avatar-item.selected .follow-avatar-img {
+  border: 4rpx solid var(--color-primary);
+  box-sizing: border-box;
+}
+
+.follow-avatar-item.selected .follow-avatar-name {
+  color: var(--color-primary);
+  font-weight: 600;
 }
 
 .follow-avatar-wrap {

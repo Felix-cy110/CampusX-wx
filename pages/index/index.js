@@ -110,11 +110,20 @@ Page({
     /* 关注视图数据 */
     followingUsers: [],
     followingPosts: [],
+    selectedFollowUid: '',
     followingUsersLoaded: false,
+    /* 关注用户头像栏：游标分页 */
+    followingCursor: null,
+    followingHasMore: true,
+    followingLoading: false,
+    /* 关注动态：游标分页 */
     _followScrollTop: 0,
     _followRefreshing: false,
     _followHasMore: true,
-    _followCursor: null
+    _followCursor: null,
+    /* 关注动态 swiper：横向切换用户（index 0 = 全部动态） */
+    followUserIndex: 0,
+    followFeedLists: [{ uid: '', posts: [] }]
   },
 
   onLoad() {
@@ -956,12 +965,16 @@ Page({
 
   /* ========== 关注视图方法 ========== */
 
-  /** 加载关注用户列表（来自 /api/v1/follow/following） */
-  loadFollowingUsers() {
+  /** 加载关注用户列表（来自 /api/v1/follow/following，游标滚动查询） */
+  loadFollowingUsers(cursor) {
     if (!canAccessCampusFeatures()) return Promise.resolve()
+    if (this.data.followingLoading) return Promise.resolve()
+    this.setData({ followingLoading: true })
+    const data = { size: 20 }
+    if (cursor) data.cursor = cursor
     return request({
       url: '/api/v1/follow/following',
-      data: { size: 20 }
+      data
     }).then(result => {
       const users = (result.list || []).map(vo => ({
         uid: String(vo.userId),
@@ -970,11 +983,25 @@ Page({
         campusName: vo.campusName || '',
         hasNew: false
       }))
-      this.setData({ followingUsers: users, followingUsersLoaded: true })
+      const followingUsers = cursor ? this.data.followingUsers.concat(users) : users
+      this.setData({
+        followingUsers,
+        followingCursor: result.nextCursor || null,
+        followingHasMore: result.hasMore !== false,
+        followingUsersLoaded: true,
+        followingLoading: false
+      })
+      this._sortFollowingUsersByLatestPost()
     }).catch(err => {
       console.error('加载关注用户失败:', err)
-      this.setData({ followingUsersLoaded: true })
+      this.setData({ followingUsersLoaded: true, followingLoading: false })
     })
+  },
+
+  /** 加载更多关注用户（头像栏横向滚动到底部时触发） */
+  loadMoreFollowingUsers() {
+    if (!this.data.followingHasMore || this.data.followingLoading) return
+    this.loadFollowingUsers(this.data.followingCursor)
   },
 
   /** 加载关注动态（只显示关注用户发布的帖子） */
@@ -997,6 +1024,9 @@ Page({
         _followHasMore: result.hasMore || false,
         _followRefreshing: false
       })
+      this._buildFollowFeedLists()
+      // 首次加载（非分页）后按最新发帖时间重排头像
+      if (!cursor) this._sortFollowingUsersByLatestPost()
     }).catch(err => {
       console.error('加载关注动态失败:', err)
       this.setData({ _followRefreshing: false })
@@ -1007,12 +1037,15 @@ Page({
   _mapFeedItem(vo) {
     const likedIds = wx.getStorageSync('likedPostIds') || {}
     let timeStr = ''
+    let ts = 0
     if (vo.createdAt) {
       if (Array.isArray(vo.createdAt)) {
-        const [y, m, d, h, mi] = vo.createdAt
+        const [y, m, d, h, mi, s] = vo.createdAt
         timeStr = `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')} ${String(h || 0).padStart(2, '0')}:${String(mi || 0).padStart(2, '0')}`
+        ts = new Date(y, m - 1, d, h || 0, mi || 0, s || 0).getTime()
       } else if (typeof vo.createdAt === 'string') {
         timeStr = vo.createdAt.replace('T', ' ').slice(0, 16)
+        ts = new Date(vo.createdAt.replace(' ', 'T')).getTime() || 0
       }
     }
     return {
@@ -1024,6 +1057,7 @@ Page({
       stats: { likes: vo.likeCount || 0, comments: vo.commentCount || 0 },
       liked: vo.liked || !!likedIds[vo.id],
       time: timeStr,
+      _ts: ts,
       school: vo.schoolName || '',
       sourceType: vo.sourceType || '',
       sourceId: vo.sourceId || ''
@@ -1042,6 +1076,117 @@ Page({
   loadMoreFollowing() {
     if (!this.data._followHasMore) return
     this.loadFollowingPosts(this.data._followCursor)
+  },
+
+  /** 点击关注用户头像：切换到该用户（再次点击回到「全部」） */
+  filterByFollowUser(e) {
+    const { uid } = e.currentTarget.dataset
+    const newSelectedUid = this.data.selectedFollowUid === uid ? '' : uid
+    this._setFollowUser(newSelectedUid)
+  },
+
+  /** 切换到指定关注用户（uid 为空 = 全部动态），同步 swiper 与头像栏选中态 */
+  _setFollowUser(uid) {
+    const selectedFollowUid = uid || ''
+    const { followFeedLists } = this.data
+    let idx = 0
+    if (selectedFollowUid) {
+      const i = followFeedLists.findIndex(l => l.uid === String(selectedFollowUid))
+      if (i > 0) idx = i
+    }
+    this.setData({ selectedFollowUid, followUserIndex: idx })
+  },
+
+  /** 横向滑动 swiper 切换用户时同步选中头像 */
+  onFollowUserSwiperChange(e) {
+    const lists = this.data.followFeedLists
+    if (!lists.length) return
+    const idx = e.detail.current
+    const safeIdx = idx < 0 ? 0 : (idx >= lists.length ? lists.length - 1 : idx)
+    const list = lists[safeIdx]
+    this.setData({ selectedFollowUid: list.uid || '', followUserIndex: safeIdx })
+  },
+
+  /** 关注页点赞/取消赞（乐观更新） */
+  toggleFollowFeedLike(e) {
+    if (!this.requireLogin()) return
+    const { id } = e.currentTarget.dataset
+    const idx = this.data.followingPosts.findIndex(item => String(item.id) === String(id))
+    if (idx < 0) return
+    const item = this.data.followingPosts[idx]
+    const isLiked = item.liked
+    const newLiked = !isLiked
+    const newLikes = Math.max(0, (item.stats.likes || 0) + (newLiked ? 1 : -1))
+    const apiUrl = isLiked ? '/api/post/unlike/' + id : '/api/post/like/' + id
+
+    this.setData({
+      ['followingPosts[' + idx + '].liked']: newLiked,
+      ['followingPosts[' + idx + '].stats.likes']: newLikes
+    })
+    this._buildFollowFeedLists()
+
+    request({ url: apiUrl, method: 'POST' }).then(() => {
+      const likedIds = wx.getStorageSync('likedPostIds') || {}
+      if (newLiked) likedIds[id] = true
+      else delete likedIds[id]
+      wx.setStorageSync('likedPostIds', likedIds)
+    }).catch(err => {
+      console.error('[toggleFollowFeedLike] 请求失败:', JSON.stringify(err))
+      this.setData({
+        ['followingPosts[' + idx + '].liked']: isLiked,
+        ['followingPosts[' + idx + '].stats.likes']: item.stats.likes
+      })
+      this._buildFollowFeedLists()
+      wx.showToast({ title: (err && err.message) || '操作失败，请重试', icon: 'none', duration: 2000 })
+    })
+  },
+
+  /** 根据 followingUsers + followingPosts 重建 swiper 页数据（index 0 = 全部动态） */
+  _buildFollowFeedLists() {
+    const { followingUsers, followingPosts, selectedFollowUid } = this.data
+    const lists = [{ key: 'all', uid: '', posts: followingPosts }]
+    followingUsers.forEach(u => {
+      const uid = String(u.uid)
+      lists.push({
+        key: 'u-' + uid,
+        uid,
+        posts: followingPosts.filter(p => p.user && String(p.user.uid) === uid)
+      })
+    })
+    let idx = 0
+    if (selectedFollowUid) {
+      const i = lists.findIndex(l => l.uid === String(selectedFollowUid))
+      if (i > 0) idx = i
+    }
+    this.setData({ followFeedLists: lists, followUserIndex: idx })
+  },
+
+  /** 按最新发帖时间降序重排关注用户头像（无帖子的用户排到最后，保持原相对顺序） */
+  _sortFollowingUsersByLatestPost() {
+    const { followingUsers, followingPosts } = this.data
+    if (!followingUsers.length) return
+    // 计算每个关注用户的最新发帖时间戳
+    const latestTs = {}
+    followingPosts.forEach(p => {
+      if (p.user && p.user.uid && p._ts) {
+        const uid = String(p.user.uid)
+        if (!latestTs[uid] || p._ts > latestTs[uid]) latestTs[uid] = p._ts
+      }
+    })
+    const sorted = followingUsers
+      .map((u, i) => ({ u, i, ts: latestTs[String(u.uid)] }))
+      .sort((a, b) => {
+        const ta = a.ts
+        const tb = b.ts
+        if (ta != null && tb != null) return tb - ta
+        if (ta != null) return -1
+        if (tb != null) return 1
+        return a.i - b.i
+      })
+      .map(x => x.u)
+    this.setData({ followingUsers: sorted })
+    // 头像顺序变化后，重建 swiper 页使其顺序一致
+    this._buildFollowFeedLists()
   },
 
   goToUserProfile(e) {

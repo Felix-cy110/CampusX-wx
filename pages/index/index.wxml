@@ -545,31 +545,26 @@
 
       <!-- 关注页 -->
       <swiper-item>
-        <scroll-view
-          class="page-content"
-          scroll-y
-          enhanced
-          scroll-top="{{_followScrollTop}}"
-          show-scrollbar="{{false}}"
-          enable-back-to-top
-          bindscrolltolower="loadMoreFollowing"
-          lower-threshold="200"
-          refresher-enabled
-          refresher-triggered="{{_followRefreshing}}"
-          bindrefresherrefresh="refreshFollowing"
-        >
+        <view class="follow-page">
           <!-- 关注用户头像栏 -->
           <view class="follow-avatars-bar">
-            <scroll-view class="follow-avatars-scroll" scroll-x enhanced show-scrollbar="{{false}}">
+            <scroll-view
+              class="follow-avatars-scroll"
+              scroll-x
+              enhanced
+              show-scrollbar="{{false}}"
+              scroll-into-view="{{selectedFollowUid ? 'follow-avatar-' + selectedFollowUid : ''}}"
+              bindscrolltolower="loadMoreFollowingUsers"
+              lower-threshold="100"
+            >
               <view class="follow-avatars-inner">
                 <view
-                  class="follow-avatar-item"
+                  id="follow-avatar-{{item.uid}}"
+                  class="follow-avatar-item {{selectedFollowUid === item.uid ? 'selected' : ''}}"
                   wx:for="{{followingUsers}}"
                   wx:key="uid"
-                  bindtap="goToUserProfile"
+                  bindtap="filterByFollowUser"
                   data-uid="{{item.uid}}"
-                  data-name="{{item.name}}"
-                  data-avatar="{{item.avatar}}"
                 >
                   <view class="follow-avatar-wrap">
                     <image class="follow-avatar-img" src="{{item.avatar}}" mode="aspectFill"></image>
@@ -581,50 +576,80 @@
             </scroll-view>
           </view>
 
-          <!-- 关注动态列表 -->
-          <view class="content-list">
-            <view class="feed-card" wx:for="{{followingPosts}}" wx:key="id" bindtap="goToPostDetail" data-id="{{item.id}}">
-              <view class="feed-card-header">
-                <image class="feed-card-avatar" src="{{item.user.avatar}}" mode="aspectFill" catchtap="goToUserProfile" data-uid="{{item.user.uid}}" data-name="{{item.user.name}}" data-avatar="{{item.user.avatar}}"></image>
-                <text class="feed-card-username">{{item.user.name}}</text>
-              </view>
-              <text class="feed-card-title">{{item.title}}</text>
-              <text class="feed-card-content ellipsis-2">{{item.content}}</text>
-              <view class="feed-card-images" wx:if="{{item.images && item.images.length > 0}}">
-                <image
-                  wx:for="{{item.images}}"
-                  wx:for-item="img"
-                  wx:key="*this"
-                  src="{{img}}"
-                  mode="aspectFill"
-                  class="feed-card-image {{item.images.length === 1 ? 'feed-card-image-single' : ''}}"
-                ></image>
-              </view>
-              <view class="feed-card-footer">
-                <view class="feed-card-tag">
-                  <text class="feed-tag-text">{{item.school || ''}}</text>
-                </view>
-                <view class="feed-card-stats">
-                  <view class="feed-stat-item">
-                    <image class="feed-stat-icon" src="/images/SVG/评论.svg" mode="aspectFit"></image>
-                    <text class="feed-stat-num">{{item.stats.comments}}</text>
+          <!-- 关注动态 swiper：横向滑动切换用户（第 0 项 = 全部动态） -->
+          <swiper
+            class="follow-user-swiper"
+            current="{{followUserIndex}}"
+            bindchange="onFollowUserSwiperChange"
+            easing-function="easeInOutCubic"
+          >
+            <swiper-item wx:for="{{followFeedLists}}" wx:key="key" wx:for-item="feed">
+              <scroll-view
+                class="follow-feed-scroll"
+                scroll-y
+                enhanced
+                show-scrollbar="{{false}}"
+                enable-back-to-top
+                bindscrolltolower="loadMoreFollowing"
+                lower-threshold="200"
+                refresher-enabled
+                refresher-triggered="{{_followRefreshing}}"
+                bindrefresherrefresh="refreshFollowing"
+              >
+                <view class="content-list">
+                  <block wx:for="{{feed.posts}}" wx:for-item="post" wx:key="id">
+                    <template is="followPostCard" data="{{post: post}}"></template>
+                  </block>
+                  <view class="load-more-tip" wx:if="{{feed.uid === '' && _followHasMore && feed.posts.length > 0}}">
+                    <text>上拉加载更多</text>
                   </view>
-                  <view class="feed-stat-item feed-like-btn" catchtap="toggleFeedLike" data-id="{{item.id}}" data-index="{{index}}" data-list="followingPosts">
-                    <image class="feed-stat-icon" src="/images/SVG/{{item.liked ? '点赞-已赞' : '点赞'}}.svg" mode="aspectFit"></image>
-                    <text class="feed-stat-num" style="color: {{item.liked ? 'var(--color-red)' : 'var(--color-text-secondary)'}};">{{item.stats.likes}}</text>
+                  <view class="empty-state" wx:if="{{feed.posts.length === 0}}">
+                    <text wx:if="{{feed.uid !== ''}}">该用户暂无动态</text>
+                    <text wx:else>关注的人暂无动态</text>
                   </view>
                 </view>
-              </view>
-            </view>
-            <view class="load-more-tip" wx:if="{{_followHasMore && followingPosts.length > 0}}">
-              <text>上拉加载更多</text>
-            </view>
-            <view class="empty-state" wx:if="{{followingPosts.length === 0}}">
-              <text>关注的人暂无动态</text>
-            </view>
-          </view>
-        </scroll-view>
+              </scroll-view>
+            </swiper-item>
+          </swiper>
+        </view>
       </swiper-item>
     </swiper>
 
 </view>
+
+<!-- 关注动态卡片模板 -->
+<template name="followPostCard">
+  <view class="feed-card" bindtap="goToPostDetail" data-id="{{post.id}}">
+    <view class="feed-card-header">
+      <image class="feed-card-avatar" src="{{post.user.avatar}}" mode="aspectFill" catchtap="goToUserProfile" data-uid="{{post.user.uid}}" data-name="{{post.user.name}}" data-avatar="{{post.user.avatar}}"></image>
+      <text class="feed-card-username">{{post.user.name}}</text>
+    </view>
+    <text class="feed-card-title">{{post.title}}</text>
+    <text class="feed-card-content ellipsis-2">{{post.content}}</text>
+    <view class="feed-card-images" wx:if="{{post.images && post.images.length > 0}}">
+      <image
+        wx:for="{{post.images}}"
+        wx:for-item="img"
+        wx:key="*this"
+        src="{{img}}"
+        mode="aspectFill"
+        class="feed-card-image {{post.images.length === 1 ? 'feed-card-image-single' : ''}}"
+      ></image>
+    </view>
+    <view class="feed-card-footer">
+      <view class="feed-card-tag">
+        <text class="feed-tag-text">{{post.school || ''}}</text>
+      </view>
+      <view class="feed-card-stats">
+        <view class="feed-stat-item">
+          <image class="feed-stat-icon" src="/images/SVG/评论.svg" mode="aspectFit"></image>
+          <text class="feed-stat-num">{{post.stats.comments}}</text>
+        </view>
+        <view class="feed-stat-item feed-like-btn" catchtap="toggleFollowFeedLike" data-id="{{post.id}}">
+          <image class="feed-stat-icon" src="/images/SVG/{{post.liked ? '点赞-已赞' : '点赞'}}.svg" mode="aspectFit"></image>
+          <text class="feed-stat-num" style="color: {{post.liked ? 'var(--color-red)' : 'var(--color-text-secondary)'}};">{{post.stats.likes}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+</template>
