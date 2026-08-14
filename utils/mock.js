@@ -26,7 +26,7 @@ const mock = {
       title: '文艺青年最后的音乐据点：网易云音乐评论区',
       content: '我们从分享时机、分享形式、分享动机、分享场景4个维度来聊聊「社交分享」的那些事儿。',
       fullContent: '我们从分享时机、分享形式、分享动机、分享场景4个维度来聊聊「社交分享」的那些事儿。\n\n网易云音乐的评论区，是国内互联网里少有的一片「文艺净土」。在这里，听众不只是被动接受音乐，更主动创作文字，把情感投射到旋律里。一首歌下面，往往能看到几百条真情实感的留言。\n\n从分享动机来看，用户在网易云分享，更多是一种情感出口——「这首歌说出了我想说的话」。这和微博的「炫耀型分享」或微信的「社交维系型分享」有本质区别。\n\n分享场景上，深夜是高峰期。孤独感��音乐产生化学反应，促使用户打开评论区倾诉。这也是为什么网易云的评论普遍比其他平台更「走心」。',
-      images: ['/images/sketch/179dd70c4388372729a818ff771ec95455423243.png', '/images/sketch/09b3ae480f6328a17c73e1689ba1200d202926f8.png'],
+      images: ['/images/mock/179dd70c4388372729a818ff771ec95455423243.webp', '/images/mock/09b3ae480f6328a17c73e1689ba1200d202926f8.webp'],
       stats: { likes: 65, comments: 13, shares: 0 },
       time: '3小时',
       liked: false,
@@ -40,7 +40,7 @@ const mock = {
       title: '下面我们会从不同维度来分析一下APP的社交分享功能设计',
       content: '下面我们会从不同维度来分析一下APP的社交分享功能设计，看看这里面有哪些值得注意的点。',
       fullContent: '下面我们会从不同维度来分析一下APP的社交分享功能设计，看看这里面有哪些值得注意的点。\n\n首先是分享时机：被动触发 vs 主动分享。被动触发指系统在某个时机主动提示用户分享，比如截图时弹窗；主动分享则是用户自己找到分享入口操作。\n\n其次是分享形式：图文卡片、链接、截图、海报等。不同形式适合不同场景，海报适合朋友圈，链接适合私聊。\n\n最后是分享动机：炫耀、记录、利益驱动、情感共鸣……理解用户真实动机，才能设计出真正被使用的分享功能，而不是一个没人点的按钮。',
-      images: ['/images/sketch/f1ad334c7d5e3be74216154a8a39614c0296aebb.png'],
+      images: ['/images/mock/f1ad334c7d5e3be74216154a8a39614c0296aebb.webp'],
       stats: { likes: 42, comments: 12, shares: 0 },
       time: '1天',
       liked: true,
@@ -53,7 +53,7 @@ const mock = {
       title: '现在很多APP在用户截图时会自动提示分享',
       content: '现在很多APP在用户截图时会自动提示用户是否要进行分享...',
       fullContent: '现在很多APP在用户截图时会自动提示用户是否要进行分享，这是一种典型的「被动触发」分享设计。\n\n这个功能最早由小红书大规模推广，随后抖音、B站等平台相继跟进。其核心逻辑是：用户截图这个动作本身，就已经说明他对这个内容感兴趣、有保存或分享的意图。\n\n但这类设计也有争议：频繁弹窗会影响体验，尤其是用户只是想截图保存而非分享时。更好的做法是在弹窗中提供「不再提示」选项，或者通过机器学习判断用户截图的真实意图。',
-      images: ['/images/sketch/568cc16fcde9d74720e2e0457a806f90c692e7c0.png'],
+      images: ['/images/mock/568cc16fcde9d74720e2e0457a806f90c692e7c0.webp'],
       stats: { likes: 16, comments: 9, shares: 0 },
       time: '3小时',
       liked: false,
@@ -90,7 +90,7 @@ const mock = {
       user: { name: '王涛', avatar: '/images/avatars/王涛.png', uid: '67890123' },
       title: '图书馆三楼空调坏了，太热了',
       content: '有没有人知道啥时候能修好啊，三楼自习室根本没法待，大家都挤到二楼去了...',
-      images: ['/images/sketch/568cc16fcde9d74720e2e0457a806f90c692e7c0.png'],
+      images: ['/images/mock/568cc16fcde9d74720e2e0457a806f90c692e7c0.webp'],
       stats: { likes: 52, comments: 18, shares: 0 },
       time: '2小时',
       liked: true,
@@ -102,7 +102,7 @@ const mock = {
       user: { name: '赵敏', avatar: '/images/avatars/赵敏.png', uid: '78901234' },
       title: '分享一个超好用的笔记方法',
       content: '最近试了康奈尔笔记法，真的记东西效率高了很多！尤其适合上课记笔记和期末复习，推荐给学弟学妹们~',
-      images: ['/images/sketch/f1ad334c7d5e3be74216154a8a39614c0296aebb.png'],
+      images: ['/images/mock/f1ad334c7d5e3be74216154a8a39614c0296aebb.webp'],
       stats: { likes: 89, comments: 32, shares: 5 },
       time: '3小时',
       liked: false,
@@ -114,7 +114,7 @@ const mock = {
       user: { name: '李天芳', avatar: '/images/avatars/李天芳.png', uid: '89012345' },
       title: '食堂新开的麻辣烫窗口绝了',
       content: '二食堂二楼新开的麻辣烫，汤底特别香，价格也不贵，人均15块就能吃饱，强烈安利！',
-      images: ['/images/sketch/179dd70c4388372729a818ff771ec95455423243.png'],
+      images: ['/images/mock/179dd70c4388372729a818ff771ec95455423243.webp'],
       stats: { likes: 126, comments: 45, shares: 12 },
       time: '5小时',
       liked: true,
@@ -162,7 +162,7 @@ const mock = {
       user: { name: '李梦慧', avatar: '/images/avatars/李梦慧.png', uid: '22334455' },
       title: '今晚操场有吉他弹唱，气氛超好',
       content: '几个大四学长在操场弹吉他唱歌，围了很多人，感觉这才是大学该有的样子。可惜快要毕业了...',
-      images: ['/images/sketch/09b3ae480f6328a17c73e1689ba1200d202926f8.png'],
+      images: ['/images/mock/09b3ae480f6328a17c73e1689ba1200d202926f8.webp'],
       stats: { likes: 215, comments: 58, shares: 23 },
       time: '1天',
       liked: true,
@@ -183,7 +183,7 @@ const mock = {
       time: '46分钟',
       status: 'available',
       tag: '二手书',
-      images: ['/images/sketch/374a2aa50c46e233a9cbcefa0489c5c1b7c7adb0.png']
+      images: ['/images/mock/374a2aa50c46e233a9cbcefa0489c5c1b7c7adb0.webp']
     },
     {
       id: 102,
@@ -196,7 +196,7 @@ const mock = {
       time: '2小时',
       status: 'available',
       tag: '数码',
-      images: ['/images/sketch/09b3ae480f6328a17c73e1689ba1200d202926f8.png']
+      images: ['/images/mock/09b3ae480f6328a17c73e1689ba1200d202926f8.webp']
     },
     {
       id: 103,
@@ -210,9 +210,9 @@ const mock = {
       time: '5小时',
       status: 'available',
       tag: '二手书',
-      images: ['/images/sketch/374a2aa50c46e233a9cbcefa0489c5c1b7c7adb0.png'],
+      images: ['/images/mock/374a2aa50c46e233a9cbcefa0489c5c1b7c7adb0.webp'],
       isRent: true,
-      images: ['/images/sketch/6818c3def960f792e0ac227d443b4cff71480894.png']
+      images: ['/images/mock/6818c3def960f792e0ac227d443b4cff71480894.webp']
     },
     {
       id: 104,
@@ -226,7 +226,7 @@ const mock = {
       time: '1天',
       status: 'available',
       tag: '其他闲置',
-      images: ['/images/sketch/7e7d5d041b63078acdcb76505ff820cfe630678b.png']
+      images: ['/images/mock/7e7d5d041b63078acdcb76505ff820cfe630678b.webp']
     }
   ],
 
@@ -662,14 +662,14 @@ const mock = {
 
   // 我的书单
   booklist: [
-    { title: '书名', publisher: 'xxxx出版社', semester: '大一上', cover: '/images/sketch/179dd70c4388372729a818ff771ec95455423243.png' },
-    { title: '书名', publisher: 'xxxx出版社', semester: '大一上', cover: '/images/sketch/09b3ae480f6328a17c73e1689ba1200d202926f8.png' },
-    { title: '书名', publisher: 'xxxx出版社', semester: '大一下', cover: '/images/sketch/f1ad334c7d5e3be74216154a8a39614c0296aebb.png' },
-    { title: '书名', publisher: 'xxxx出版社', semester: '大一下', cover: '/images/sketch/568cc16fcde9d74720e2e0457a806f90c692e7c0.png' },
-    { title: '书名', publisher: 'xxxx出版社', semester: '大二上', cover: '/images/sketch/22b68413c38ca21ddb1d26a74ca0809752385a80.png' },
-    { title: '书名', publisher: 'xxxx出版社', semester: '大二上', cover: '/images/sketch/25a8356c47527f2136c2a561a0e9de130e28bffd.png' },
-    { title: '书名', publisher: 'xxxx出版社', semester: '大二下', cover: '/images/sketch/29e1e9bda04ee8ec792b868eb3b94e43f2dc88f7.png' },
-    { title: '书名', publisher: 'xxxx出版社', semester: '大二下', cover: '/images/sketch/2b9ae21d4113d522a06330b2415e3eb8c44dac50.png' }
+    { title: '书名', publisher: 'xxxx出版社', semester: '大一上', cover: '/images/mock/179dd70c4388372729a818ff771ec95455423243.webp' },
+    { title: '书名', publisher: 'xxxx出版社', semester: '大一上', cover: '/images/mock/09b3ae480f6328a17c73e1689ba1200d202926f8.webp' },
+    { title: '书名', publisher: 'xxxx出版社', semester: '大一下', cover: '/images/mock/f1ad334c7d5e3be74216154a8a39614c0296aebb.webp' },
+    { title: '书名', publisher: 'xxxx出版社', semester: '大一下', cover: '/images/mock/568cc16fcde9d74720e2e0457a806f90c692e7c0.webp' },
+    { title: '书名', publisher: 'xxxx出版社', semester: '大二上', cover: '/images/mock/22b68413c38ca21ddb1d26a74ca0809752385a80.webp' },
+    { title: '书名', publisher: 'xxxx出版社', semester: '大二上', cover: '/images/mock/25a8356c47527f2136c2a561a0e9de130e28bffd.webp' },
+    { title: '书名', publisher: 'xxxx出版社', semester: '大二下', cover: '/images/mock/29e1e9bda04ee8ec792b868eb3b94e43f2dc88f7.webp' },
+    { title: '书名', publisher: 'xxxx出版社', semester: '大二下', cover: '/images/mock/2b9ae21d4113d522a06330b2415e3eb8c44dac50.webp' }
   ],
 
   // 关注/粉丝列表
@@ -705,7 +705,7 @@ const mock = {
       user: { name: '杨瑶', avatar: '/images/avatars/杨瑶.png', uid: '22222222' },
       title: '分享我最近读的一本好书《设计心理学》',
       content: '唐纳德·诺曼的经典之作，里面关于"示能性"和"意符"的讨论让我对产品设计有了全新的理解。强烈推荐给做交互设计的朋友们！',
-      images: ['/images/sketch/f1ad334c7d5e3be74216154a8a39614c0296aebb.png'],
+      images: ['/images/mock/f1ad334c7d5e3be74216154a8a39614c0296aebb.webp'],
       stats: { likes: 56, comments: 14, shares: 3 },
       time: '12分钟前', liked: true, isOwn: false, school: '南京大学'
     },
@@ -714,7 +714,7 @@ const mock = {
       user: { name: '蔡梓芳', avatar: '/images/avatars/蔡梓芳.png', uid: '33333333' },
       title: '周末去紫金山爬山，有人一起吗',
       content: '这周六早上7点出发，预计中午下山。目前有三个人了，再找两个小伙伴一起。体力要求不高，主要是休闲爬山，沿途可以拍照。',
-      images: ['/images/sketch/09b3ae480f6328a17c73e1689ba1200d202926f8.png'],
+      images: ['/images/mock/09b3ae480f6328a17c73e1689ba1200d202926f8.webp'],
       stats: { likes: 41, comments: 19, shares: 0 },
       time: '28分钟前', liked: false, isOwn: false, school: '南京信息工程大学'
     },
@@ -732,7 +732,7 @@ const mock = {
       user: { name: '汤乐乐', avatar: '/images/avatars/汤乐乐.png', uid: '55555555' },
       title: '校园樱花开了，拍了几张',
       content: '今天路过图书馆后面的时候发现樱花全开了，赶紧拍了几张。真的太美了，每年这个时候校园都变成粉色海洋。分享给大家一起欣赏~',
-      images: ['/images/sketch/179dd70c4388372729a818ff771ec95455423243.png', '/images/sketch/568cc16fcde9d74720e2e0457a806f90c692e7c0.png'],
+      images: ['/images/mock/179dd70c4388372729a818ff771ec95455423243.webp', '/images/mock/568cc16fcde9d74720e2e0457a806f90c692e7c0.webp'],
       stats: { likes: 198, comments: 36, shares: 15 },
       time: '2小时前', liked: true, isOwn: false, school: '东南大学'
     },
@@ -750,7 +750,7 @@ const mock = {
       user: { name: '沈慧', avatar: '/images/avatars/沈慧.png', uid: '77777777' },
       title: '推荐一个超好用的时间管理方法',
       content: '最近在尝试番茄工作法+GTD结合的方式管理学习和项目。上午用番茄钟集中精力写代码，下午处理杂事和开会。效率提升至少30%。',
-      images: ['/images/sketch/f1ad334c7d5e3be74216154a8a39614c0296aebb.png'],
+      images: ['/images/mock/f1ad334c7d5e3be74216154a8a39614c0296aebb.webp'],
       stats: { likes: 77, comments: 18, shares: 8 },
       time: '4小时前', liked: false, isOwn: false, school: '南京大学'
     },
@@ -777,7 +777,7 @@ const mock = {
       user: { name: '杨瑶', avatar: '/images/avatars/杨瑶.png', uid: '22222222' },
       title: '食堂三楼新开的奶茶店测评',
       content: '点了招牌波波奶茶和杨枝甘露，波波奶茶偏甜但是珍珠很Q弹，杨枝甘露芒果味很足。价格在12-18元之间，比校外的便宜。总体推荐！',
-      images: ['/images/sketch/09b3ae480f6328a17c73e1689ba1200d202926f8.png'],
+      images: ['/images/mock/09b3ae480f6328a17c73e1689ba1200d202926f8.webp'],
       stats: { likes: 65, comments: 28, shares: 3 },
       time: '2天前', liked: false, isOwn: false, school: '南京信息工程大学'
     }
@@ -824,7 +824,7 @@ const mock = {
       side: 'buy',
       user: { name: '陈雪', avatar: '/images/avatars/陈雪.png' },
       content: '二手书-高等数学第七版，九成新，只用了一学期，笔记很少',
-      image: '/images/sketch/179dd70c4388372729a818ff771ec95455423243.png',
+      image: '/images/mock/179dd70c4388372729a818ff771ec95455423243.webp',
       typeLabel: '二手',
       typeLabelColor: '#255AC5',
       priceLabel: '实付款',
@@ -842,7 +842,7 @@ const mock = {
       side: 'sell',
       user: { name: '李天芳', avatar: '/images/avatars/李天芳.png' },
       content: 'iPhone 15 Pro Max 256GB，使用半年，无磕碰，配件齐全',
-      image: '/images/sketch/03bd5cf7ab2b7663764c7eba2bfcce3875faf9e5.png',
+      image: '/images/mock/03bd5cf7ab2b7663764c7eba2bfcce3875faf9e5.webp',
       typeLabel: '二手',
       typeLabelColor: '#255AC5',
       priceLabel: '实付款',
@@ -860,7 +860,7 @@ const mock = {
       side: 'buy',
       user: { name: '王涛', avatar: '/images/avatars/王涛.png' },
       content: '考研数学复习全书，可租赁，按月计费',
-      image: '/images/sketch/09b3ae480f6328a17c73e1689ba1200d202926f8.png',
+      image: '/images/mock/09b3ae480f6328a17c73e1689ba1200d202926f8.webp',
       typeLabel: '租赁',
       typeLabelColor: '#FF9500',
       priceLabel: '实付款',
@@ -878,7 +878,7 @@ const mock = {
       side: 'sell',
       user: { name: '赵敏', avatar: '/images/avatars/赵敏.png' },
       content: '闲置台灯 LED护眼，毕业出，功能完好',
-      image: '/images/sketch/0aa656cd8b1bf992846a1f8e01181ba7d89b04d9.png',
+      image: '/images/mock/0aa656cd8b1bf992846a1f8e01181ba7d89b04d9.webp',
       typeLabel: '租赁',
       typeLabelColor: '#FF9500',
       priceLabel: '实付款',
@@ -896,7 +896,7 @@ const mock = {
       side: 'buy',
       user: { name: '高涵', avatar: '/images/avatars/高涵.png' },
       content: '文艺青年最后的音乐据点：网易云音乐评论区',
-      image: '/images/sketch/179dd70c4388372729a818ff771ec95455423243.png',
+      image: '/images/mock/179dd70c4388372729a818ff771ec95455423243.webp',
       typeLabel: '跑腿',
       typeLabelColor: '#255AC5',
       priceLabel: '应付款',
@@ -914,7 +914,7 @@ const mock = {
       side: 'sell',
       user: { name: '李莎莎', avatar: '/images/avatars/李莎莎.png' },
       content: '下面我们会从不同维度来分析一下APP的社交分享功能设计',
-      image: '/images/sketch/2b9ae21d4113d522a06330b2415e3eb8c44dac50.png',
+      image: '/images/mock/2b9ae21d4113d522a06330b2415e3eb8c44dac50.webp',
       typeLabel: '跑腿',
       typeLabelColor: '#255AC5',
       priceLabel: '实付款',
@@ -932,7 +932,7 @@ const mock = {
       side: 'buy',
       user: { name: '谭明扬', avatar: '/images/avatars/谭明扬.png' },
       content: '现在很多APP在用户截图时会自动提示分享...',
-      image: '/images/sketch/568cc16fcde9d74720e2e0457a806f90c692e7c0.png',
+      image: '/images/mock/568cc16fcde9d74720e2e0457a806f90c692e7c0.webp',
       typeLabel: '常规购物',
       typeLabelColor: '#255AC5',
       priceLabel: '实付款',
@@ -950,7 +950,7 @@ const mock = {
       side: 'sell',
       user: { name: '张德栋', avatar: '/images/avatars/张德栋.png' },
       content: '用户主动点击分享的设计思考...',
-      image: '/images/sketch/22b68413c38ca21ddb1d26a74ca0809752385a80.png',
+      image: '/images/mock/22b68413c38ca21ddb1d26a74ca0809752385a80.webp',
       typeLabel: '常规购物',
       typeLabelColor: '#255AC5',
       priceLabel: '实付款',
@@ -980,7 +980,7 @@ const mock = {
     {
       id: 1, title: '五四青年节邀请有奖活动', description: '邀请好友加入校园，赢取精美奖品！活动期间每成功邀请1位新用户注册并加入学校，即可获得1个抽奖号码。',
       startTime: '2026-05-01', endTime: '2026-05-31', status: 0,
-      coverImage: '/images/sketch/179dd70c4388372729a818ff771ec95455423243.png',
+      coverImage: '/images/mock/179dd70c4388372729a818ff771ec95455423243.webp',
       prizes: [
         { id: 1, level: '特等奖', description: 'AirPods Pro 耳机一副', sort: 1, winningCode: null, winnerUserId: null },
         { id: 2, level: '一等奖', description: '星巴克咖啡券 × 5', sort: 2, winningCode: null, winnerUserId: null },
@@ -990,7 +990,7 @@ const mock = {
     {
       id: 2, title: '新学期开学邀请活动', description: '新学期开始，邀请同学加入平台，共享校园生活。邀请越多，号码越多，中奖概率越大！',
       startTime: '2026-02-20', endTime: '2026-03-20', status: 1,
-      coverImage: '/images/sketch/f1ad334c7d5e3be74216154a8a39614c0296aebb.png',
+      coverImage: '/images/mock/f1ad334c7d5e3be74216154a8a39614c0296aebb.webp',
       prizes: [
         { id: 4, level: '特等奖', description: '小米手环 8 一条', sort: 1, winningCode: 'A3F7K2P9', winnerUserId: 1001 },
         { id: 5, level: '一等奖', description: '瑞幸咖啡券 × 10', sort: 2, winningCode: 'B8M1Q4R6', winnerUserId: null }
@@ -1011,21 +1011,21 @@ const mock = {
       id: 1, bookName: '高等数学（第七版）上册', author: '同济大学数学系', publisher: '高等教育出版社',
       isbn: '9787040396638', price: '38.00', depositAmount: '15.20', finalAmount: '22.80',
       stock: 200, orderedCount: 87, status: 1,
-      coverImage: '/images/sketch/09b3ae480f6328a17c73e1689ba1200d202926f8.png',
+      coverImage: '/images/mock/09b3ae480f6328a17c73e1689ba1200d202926f8.webp',
       startTime: '2026-05-10', endTime: '2026-06-10', remark: '教材统一发放，预计开学前到货'
     },
     {
       id: 2, bookName: '大学英语四级词汇手册', author: '华研外语', publisher: '华中科技大学出版社',
       isbn: '9787568093842', price: '22.00', depositAmount: '8.80', finalAmount: '13.20',
       stock: 0, orderedCount: 134, status: 1,
-      coverImage: '/images/sketch/568cc16fcde9d74720e2e0457a806f90c692e7c0.png',
+      coverImage: '/images/mock/568cc16fcde9d74720e2e0457a806f90c692e7c0.webp',
       startTime: '2026-05-15', endTime: '2026-06-15', remark: ''
     },
     {
       id: 3, bookName: '线性代数（第六版）', author: '同济大学数学系', publisher: '高等教育出版社',
       isbn: '9787040396621', price: '28.00', depositAmount: '11.20', finalAmount: '16.80',
       stock: 150, orderedCount: 150, status: 2,
-      coverImage: '/images/sketch/f1ad334c7d5e3be74216154a8a39614c0296aebb.png',
+      coverImage: '/images/mock/f1ad334c7d5e3be74216154a8a39614c0296aebb.webp',
       startTime: '2026-03-01', endTime: '2026-04-01', remark: ''
     },
     {
@@ -1055,7 +1055,7 @@ const mock = {
     {
       id: 1001,
       title: '《高等数学》同济第七版 上下册 无笔记',
-      images: ['/images/sketch/09b3ae480f6328a17c73e1689ba1200d202926f8.png'],
+      images: ['/images/mock/09b3ae480f6328a17c73e1689ba1200d202926f8.webp'],
       price: 15,
       originalPrice: 50,
       condition: '9成新',
@@ -1070,7 +1070,7 @@ const mock = {
     {
       id: 1002,
       title: '《考研英语历年真题》黄皮书 全套',
-      images: ['/images/sketch/568cc16fcde9d74720e2e0457a806f90c692e7c0.png', '/images/sketch/f1ad334c7d5e3be74216154a8a39614c0296aebb.png'],
+      images: ['/images/mock/568cc16fcde9d74720e2e0457a806f90c692e7c0.webp', '/images/mock/f1ad334c7d5e3be74216154a8a39614c0296aebb.webp'],
       price: 28,
       originalPrice: 89,
       condition: '几乎全新',
@@ -1085,7 +1085,7 @@ const mock = {
     {
       id: 1003,
       title: '《百年孤独》精装版 马尔克斯',
-      images: ['/images/sketch/179dd70c4388372729a818ff771ec95455423243.png'],
+      images: ['/images/mock/179dd70c4388372729a818ff771ec95455423243.webp'],
       price: 12,
       originalPrice: 39,
       condition: '8成新',
@@ -1100,7 +1100,7 @@ const mock = {
     {
       id: 1004,
       title: '《C程序设计》谭浩强 第五版',
-      images: ['/images/sketch/22b68413c38ca21ddb1d26a74ca0809752385a80.png'],
+      images: ['/images/mock/22b68413c38ca21ddb1d26a74ca0809752385a80.webp'],
       price: 10,
       originalPrice: 35,
       condition: '9成新',
@@ -1115,7 +1115,7 @@ const mock = {
     {
       id: 1005,
       title: '《大学英语四级词汇手册》乱序版',
-      images: ['/images/sketch/25a8356c47527f2136c2a561a0e9de130e28bffd.png'],
+      images: ['/images/mock/25a8356c47527f2136c2a561a0e9de130e28bffd.webp'],
       price: 8,
       originalPrice: 25,
       condition: '几乎全新',
@@ -1130,7 +1130,7 @@ const mock = {
     {
       id: 1006,
       title: '《线性代数》同济第六版 附习题解答',
-      images: ['/images/sketch/29e1e9bda04ee8ec792b868eb3b94e43f2dc88f7.png'],
+      images: ['/images/mock/29e1e9bda04ee8ec792b868eb3b94e43f2dc88f7.webp'],
       price: 0,
       originalPrice: 32,
       condition: '7成新',
@@ -1145,7 +1145,7 @@ const mock = {
     {
       id: 1007,
       title: '《肖秀荣考研政治1000题》2026版',
-      images: ['/images/sketch/2b9ae21d4113d522a06330b2415e3eb8c44dac50.png'],
+      images: ['/images/mock/2b9ae21d4113d522a06330b2415e3eb8c44dac50.webp'],
       price: 22,
       originalPrice: 58,
       condition: '全新',
@@ -1160,7 +1160,7 @@ const mock = {
     {
       id: 1008,
       title: '《数据结构》严蔚敏 清华版',
-      images: ['/images/sketch/03bd5cf7ab2b7663764c7eba2bfcce3875faf9e5.png'],
+      images: ['/images/mock/03bd5cf7ab2b7663764c7eba2bfcce3875faf9e5.webp'],
       price: 18,
       originalPrice: 45,
       condition: '9成新',
@@ -1175,7 +1175,7 @@ const mock = {
     {
       id: 1009,
       title: '《概率论与数理统计》浙大第四版',
-      images: ['/images/sketch/0aa656cd8b1bf992846a1f8e01181ba7d89b04d9.png'],
+      images: ['/images/mock/0aa656cd8b1bf992846a1f8e01181ba7d89b04d9.webp'],
       price: 14,
       originalPrice: 38,
       condition: '8成新',
@@ -1190,7 +1190,7 @@ const mock = {
     {
       id: 1010,
       title: '《小王子》中英双语版',
-      images: ['/images/sketch/374a2aa50c46e233a9cbcefa0489c5c1b7c7adb0.png'],
+      images: ['/images/mock/374a2aa50c46e233a9cbcefa0489c5c1b7c7adb0.webp'],
       price: 9,
       originalPrice: 28,
       condition: '几乎全新',
@@ -1205,7 +1205,7 @@ const mock = {
     {
       id: 1011,
       title: '《通信原理》樊昌信 第七版',
-      images: ['/images/sketch/3cac049cfa1b96c01f69455b7802e1871b42096c.png'],
+      images: ['/images/mock/3cac049cfa1b96c01f69455b7802e1871b42096c.webp'],
       price: 20,
       originalPrice: 55,
       condition: '9成新',
@@ -1220,7 +1220,7 @@ const mock = {
     {
       id: 1012,
       title: '《考研数学复习全书》李永乐',
-      images: ['/images/sketch/3e2f66805880c20793643e7396411a477aa98297.png'],
+      images: ['/images/mock/3e2f66805880c20793643e7396411a477aa98297.webp'],
       price: 35,
       originalPrice: 98,
       condition: '几乎全新',
@@ -1235,7 +1235,7 @@ const mock = {
     {
       id: 1013,
       title: '《活着》余华 正版',
-      images: ['/images/sketch/402ef5a16ed1b5f6f04221522fb5adc7b991f5bb.png'],
+      images: ['/images/mock/402ef5a16ed1b5f6f04221522fb5adc7b991f5bb.webp'],
       price: 0,
       originalPrice: 22,
       condition: '8成新',
@@ -1250,7 +1250,7 @@ const mock = {
     {
       id: 1014,
       title: '《操作系统概念》恐龙书 英文版',
-      images: ['/images/sketch/444a4e0ca51ad7236dce0b41002d1a246803ee32.png'],
+      images: ['/images/mock/444a4e0ca51ad7236dce0b41002d1a246803ee32.webp'],
       price: 45,
       originalPrice: 128,
       condition: '9成新',
@@ -1265,7 +1265,7 @@ const mock = {
     {
       id: 1015,
       title: '《电路分析》邱关源 第五版',
-      images: ['/images/sketch/47ceeeb558b9caef8da3de4f8752c6d3090ca95f.png'],
+      images: ['/images/mock/47ceeeb558b9caef8da3de4f8752c6d3090ca95f.webp'],
       price: 16,
       originalPrice: 42,
       condition: '8成新',
@@ -1280,7 +1280,7 @@ const mock = {
     {
       id: 1016,
       title: '《六级真题全解》新东方',
-      images: ['/images/sketch/4b9f998d6fd7bfb0773a84d623d751e07293f806.png'],
+      images: ['/images/mock/4b9f998d6fd7bfb0773a84d623d751e07293f806.webp'],
       price: 11,
       originalPrice: 32,
       condition: '几乎全新',
@@ -1295,7 +1295,7 @@ const mock = {
     {
       id: 1017,
       title: '《徐涛考研政治核心考案》2026',
-      images: ['/images/sketch/4d985c7ee67646fc3e2ca4171f4c9d25c6359137.png'],
+      images: ['/images/mock/4d985c7ee67646fc3e2ca4171f4c9d25c6359137.webp'],
       price: 19,
       originalPrice: 48,
       condition: '全新',
@@ -1310,7 +1310,7 @@ const mock = {
     {
       id: 1018,
       title: '《三体》全集 刘慈欣',
-      images: ['/images/sketch/4dace08c4004e50d5c3ce57682c293cfb9529a18.png'],
+      images: ['/images/mock/4dace08c4004e50d5c3ce57682c293cfb9529a18.webp'],
       price: 25,
       originalPrice: 68,
       condition: '9成新',
@@ -1325,7 +1325,7 @@ const mock = {
     {
       id: 1019,
       title: '《数字信号处理》程佩青',
-      images: ['/images/sketch/4e1c2c69affa78842a62e2a132fe6c32a96327c1.png'],
+      images: ['/images/mock/4e1c2c69affa78842a62e2a132fe6c32a96327c1.webp'],
       price: 17,
       originalPrice: 46,
       condition: '8成新',
@@ -1340,7 +1340,7 @@ const mock = {
     {
       id: 1020,
       title: '《计算机网络》谢希仁 第七版',
-      images: ['/images/sketch/09b3ae480f6328a17c73e1689ba1200d202926f8.png'],
+      images: ['/images/mock/09b3ae480f6328a17c73e1689ba1200d202926f8.webp'],
       price: 13,
       originalPrice: 38,
       condition: '9成新',

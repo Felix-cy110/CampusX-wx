@@ -9,32 +9,14 @@
     "pages/complete-info/complete-info",
     "pages/select-school/select-school",
     "pages/select-major/select-major",
-    "pages/post-detail/post-detail",
-    "pages/user-home/user-home",
-    "pages/market-detail/market-detail",
-    "pages/team-detail/team-detail",
-    "pages/rating-detail/rating-detail",
-
-    "pages/publish-post/publish-post",
-    "pages/publish-errand/publish-errand",
     "pages/publish-supply/publish-supply",
-    "pages/errand-detail/errand-detail",
-    "pages/publish-rating/publish-rating",
-    "pages/teacher-ratings/teacher-ratings",
     "pages/apply-teacher/apply-teacher",
-    "pages/school-appeal/school-appeal",
-    "pages/chat/chat",
     "pages/search/search",
-    "pages/search-result/search-result",
-    "pages/order/order",
     "pages/recharge/recharge",
     "pages/recharge-success/recharge-success",
     "pages/complaint/complaint",
-    "pages/edit-profile/edit-profile",
     "pages/my-market/my-market",
     "pages/my-booklist/my-booklist",
-    "pages/following/following",
-    "pages/followers/followers",
     "pages/liked/liked",
     "pages/purchased/purchased",
     "pages/share/share",
@@ -45,11 +27,87 @@
     "pages/more-options/more-options",
     "pages/published/published",
     "pages/comments/comments",
-    "pages/system-msg/system-msg",
     "pages/book-preorder/book-preorder",
-    "pages/book-preorder-detail/book-preorder-detail",
     "pages/invite/invite",
     "pages/invite-detail/invite-detail"
+  ],
+  "subPackages": [
+    {
+      "root": "pages/post-detail",
+      "pages": ["post-detail"]
+    },
+    {
+      "root": "pages/user-home",
+      "pages": ["user-home"]
+    },
+    {
+      "root": "pages/market-detail",
+      "pages": ["market-detail"]
+    },
+    {
+      "root": "pages/team-detail",
+      "pages": ["team-detail"]
+    },
+    {
+      "root": "pages/rating-detail",
+      "pages": ["rating-detail"]
+    },
+    {
+      "root": "pages/publish-post",
+      "pages": ["publish-post"]
+    },
+    {
+      "root": "pages/publish-rating",
+      "pages": ["publish-rating"]
+    },
+    {
+      "root": "pages/teacher-ratings",
+      "pages": ["teacher-ratings"]
+    },
+    {
+      "root": "pages/school-appeal",
+      "pages": ["school-appeal"]
+    },
+    {
+      "root": "pages/chat",
+      "pages": ["chat"]
+    },
+    {
+      "root": "pages/search-result",
+      "pages": ["search-result"]
+    },
+    {
+      "root": "pages/order",
+      "pages": ["order"]
+    },
+    {
+      "root": "pages/edit-profile",
+      "pages": ["edit-profile"]
+    },
+    {
+      "root": "pages/system-msg",
+      "pages": ["system-msg"]
+    },
+    {
+      "root": "pages/book-preorder-detail",
+      "pages": ["book-preorder-detail"]
+    },
+    {
+      "root": "pages/publish-errand",
+      "pages": ["publish-errand"]
+    },
+    {
+      "root": "pages/errand-detail",
+      "pages": ["errand-detail"]
+    },
+    {
+      "root": "pages/following",
+      "pages": ["following"]
+    },
+    {
+      "root": "pages/followers",
+      "pages": ["followers"]
+    }
   ],
   "window": {
     "navigationBarTextStyle": "black",
@@ -91,6 +149,7 @@
     ]
   },
   "style": "v2",
+  "lazyCodeLoading": "requiredComponents",
   "sitemapLocation": "sitemap.json",
   "networkTimeout": {
     "request": 60000,

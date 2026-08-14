@@ -5,7 +5,7 @@ var handleAuthFailure = require('../../utils/auth').handleAuthFailure
 
 var createStompClient = null
 try {
-  var stompModule = require('../../utils/stomp')
+  var stompModule = require('./stomp')
   createStompClient = stompModule.createStompClient
 } catch (e) {
   console.error('[Chat] stomp.js 模块加载失败:', e)
