@@ -1,6 +1,5 @@
 const { request, getBaseUrl, toFullUrl } = require('../../utils/request')
-const { safeSwitch } = require('../../utils/safeNavigate')
-const { storeToken, resetAuthNavigation, handleAuthFailure } = require('../../utils/auth')
+const { storeToken, resetAuthNavigation, handleAuthFailure, resumeAfterAuth } = require('../../utils/auth')
 
 Page({
   data: {
@@ -297,7 +296,7 @@ Page({
 
       wx.showToast({ title: '完善成功', icon: 'success' })
       setTimeout(() => {
-        safeSwitch({ url: '/pages/index/index' })
+        resumeAfterAuth()
       }, 1000)
     }).catch(err => {
       wx.hideLoading()
@@ -320,7 +319,7 @@ Page({
       app.globalData.userInfo = userInfo
       wx.setStorageSync('userInfo', userInfo)
       wx.showToast({ title: '资料已完善', icon: 'success' })
-      setTimeout(() => safeSwitch({ url: '/pages/index/index' }), 600)
+      setTimeout(() => resumeAfterAuth(), 600)
     }).catch(err => {
       console.error('同步已完善资料失败:', err)
       wx.showToast({ title: (err && err.message) || '同步资料失败，请重试', icon: 'none' })

@@ -1,6 +1,6 @@
 const app = getApp()
 const { request, toFullUrl } = require('../../utils/request')
-const { storeToken, resetAuthNavigation } = require('../../utils/auth')
+const { storeToken, resetAuthNavigation, resumeAfterAuth, discardPendingSelectionTarget } = require('../../utils/auth')
 
 Page({
   data: {
@@ -66,9 +66,11 @@ Page({
           this.finishLoginLoading()
 
           if (vo.isNewUser || !vo.campusId) {
+            // 新用户会在完善资料流程里选择学校，无需登录后再次进入学校选择页。
+            discardPendingSelectionTarget()
             wx.redirectTo({ url: '/pages/complete-info/complete-info' })
           } else {
-            wx.switchTab({ url: '/pages/index/index' })
+            resumeAfterAuth()
           }
         }).catch(err => {
           this.finishLoginLoading()

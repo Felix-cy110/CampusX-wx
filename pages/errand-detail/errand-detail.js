@@ -1,6 +1,7 @@
 const app = getApp()
 const { safeNavigate } = require('../../utils/safeNavigate')
 const { request, toFullUrl } = require('../../utils/request')
+const { requireAuth } = require('../../utils/auth')
 
 Page({
   data: {
@@ -76,7 +77,6 @@ Page({
 
   /* 联系发布者 */
   contactUser() {
-    if (!this.requireLogin()) return
     const { demand } = this.data
     if (!demand || !demand.user) return
     safeNavigate({
@@ -139,10 +139,6 @@ Page({
   },
 
   requireLogin() {
-    if (!app.globalData.isLoggedIn) {
-      safeNavigate({ url: '/pages/login/login' })
-      return false
-    }
-    return true
+    return requireAuth()
   }
 })

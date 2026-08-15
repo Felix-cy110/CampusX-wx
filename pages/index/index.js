@@ -2,7 +2,7 @@ const mock = require('../../utils/mock.js')
 const app = getApp()
 const { safeNavigate, safeSwitch } = require('../../utils/safeNavigate')
 const { request, toFullUrl } = require('../../utils/request')
-const { canAccessCampusFeatures } = require('../../utils/auth')
+const { canAccessCampusFeatures, requireAuth } = require('../../utils/auth')
 
 function pad2(value) {
   const text = String(value == null ? 0 : value)
@@ -387,6 +387,7 @@ Page({
   switchFeedType(e) {
     const type = e.currentTarget.dataset.type
     if (type === this.data.feedType) return
+    if (type === 'follow' && !requireAuth()) return
     const index = type === 'recommend' ? 0 : 1
     this.setData({
       feedSwiperIndex: index,
@@ -412,6 +413,10 @@ Page({
     const index = e.detail.current
     const type = index === 0 ? 'recommend' : 'follow'
     if (type === this.data.feedType) return
+    if (type === 'follow' && !requireAuth()) {
+      this.setData({ feedSwiperIndex: 0, feedType: 'recommend', feedIndicatorRatio: 0.25 })
+      return
+    }
     this.setData({
       feedType: type,
       feedSwiperIndex: index,
@@ -430,6 +435,7 @@ Page({
   /* 切换主 Tab（分类方块） */
   switchTab(e) {
     const tab = e.currentTarget.dataset.tab
+    if (tab !== 'feed' && !requireAuth()) return
     const map = { feed: 0, market: 1, errand: 3, rating: 4 }
     const index = map[tab] || 0
     this.setData({
@@ -448,6 +454,10 @@ Page({
     const index = e.detail.current
     const tabMap = { 0: 'feed', 1: 'market', 2: 'market', 3: 'errand', 4: 'rating' }
     const tab = tabMap[index] || 'feed'
+    if (tab !== 'feed' && !requireAuth()) {
+      this.setData({ innerSwiperIndex: 0, currentTab: 'feed' })
+      return
+    }
     const subTab = index === 1 ? 'book' : (index === 2 ? 'other' : this.data.marketSubTab)
     this.setData({
       innerSwiperIndex: index,
@@ -482,7 +492,6 @@ Page({
 
   /* 点击课程跳转至课程评价详情 */
   goToCourseRating(e) {
-    if (!this.requireLogin()) return
     const { teacherId, teacherName, teacherAvgscore, courseId, courseName, courseAvgscore } = e.currentTarget.dataset
     safeNavigate({
       url: `/pages/teacher-ratings/teacher-ratings?teacherId=${teacherId}&teacherName=${encodeURIComponent(teacherName)}&teacherAvgScore=${encodeURIComponent(teacherAvgscore || '')}&courseId=${courseId}&courseName=${encodeURIComponent(courseName)}&courseAvgScore=${encodeURIComponent(courseAvgscore || '')}`
@@ -496,38 +505,26 @@ Page({
 
   /* 跳转搜索 */
   requireLogin() {
-    if (!app.globalData.isLoggedIn) {
-      safeNavigate({ url: '/pages/login/login' })
-      return false
-    }
-    if (!canAccessCampusFeatures()) {
-      safeNavigate({ url: '/pages/complete-info/complete-info' })
-      return false
-    }
-    return true
+    return requireAuth()
   },
 
   /* 跳转搜索 */
   goToSearch() {
-    if (!this.requireLogin()) return
     safeNavigate({ url: '/pages/search/search' })
   },
 
   /* 跳转私信 */
   goToInbox() {
-    if (!this.requireLogin()) return
     safeSwitch({ url: '/pages/inbox/inbox' })
   },
 
   /* 跳转发布 */
   goToPublish() {
-    if (!this.requireLogin()) return
     safeNavigate({ url: '/pages/publish-post/publish-post' })
   },
 
   /* 跳转帖子详情 */
   goToPostDetail(e) {
-    if (!this.requireLogin()) return
     const id = e.currentTarget.dataset.id
     // 将当前帖子状态（含乐观更新的点赞）传递给详情页
     const post = this.data.feedList.find(item => String(item.id) === String(id))
@@ -581,7 +578,6 @@ Page({
 
   /* 跳转跑腿详情 */
   goToErrandDetail(e) {
-    if (!this.requireLogin()) return
     const id = e.currentTarget.dataset.id
     const item = this.data.errandList.find(i => i.id === id)
     if (item) {
@@ -592,7 +588,6 @@ Page({
 
   /* 跳转供给详情（复用跑腿详情页） */
   goToSupplyDetail(e) {
-    if (!this.requireLogin()) return
     const id = e.currentTarget.dataset.id
     const item = this.data.supplyList.find(i => i.id === id)
     if (item) {
@@ -603,7 +598,6 @@ Page({
 
   /* 联系跑腿用户 */
   contactErrandUser(e) {
-    if (!this.requireLogin()) return
     const { name, avatar, userId } = e.currentTarget.dataset
     safeNavigate({ url: `/pages/chat/chat?userId=${userId || ''}&name=${name}&avatar=${encodeURIComponent(avatar)}` })
   },
@@ -620,7 +614,6 @@ Page({
 
   /* 跳转集市详情 */
   goToMarketDetail(e) {
-    if (!this.requireLogin()) return
     const id = e.currentTarget.dataset.id
     safeNavigate({ url: `/pages/market-detail/market-detail?id=${id}` })
   },
@@ -993,7 +986,6 @@ Page({
   },
 
   goToBookDetail(e) {
-    if (!this.requireLogin()) return
     const id = e.currentTarget.dataset.id
     safeNavigate({ url: `/pages/market-detail/market-detail?id=${id}` })
   },
@@ -1225,7 +1217,6 @@ Page({
   },
 
   goToUserProfile(e) {
-    if (!this.requireLogin()) return
     const { uid, name, avatar } = e.currentTarget.dataset
     const currentUid = (app.globalData.userInfo || {}).uid
     if (uid && String(uid) === String(currentUid)) {

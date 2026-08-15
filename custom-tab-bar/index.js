@@ -1,6 +1,6 @@
 const { safeNavigate, safeSwitch } = require('../utils/safeNavigate')
 const { request } = require('../utils/request')
-const { canAccessCampusFeatures } = require('../utils/auth')
+const { canAccessCampusFeatures, requireAuth } = require('../utils/auth')
 
 Component({
   data: {
@@ -162,6 +162,7 @@ Component({
       if (this.data.popupVisible) {
         this.closePublishPopup()
       } else {
+        if (!requireAuth()) return
         // 保存当前页面的原始顶部背景色（用于关闭时恢复）
         const selected = this.data.selected
         // selected 3 = 个人资料页（蓝色 #255AC5），其他页面白色

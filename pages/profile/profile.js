@@ -630,7 +630,7 @@ Page({
     }
     const backendId = item._backendId
     const backendType = item._backendType || 'post'
-    wx.navigateTo({ url: '/pages/share/share?targetId=' + backendId + '&targetType=' + backendType })
+    safeNavigate({ url: '/pages/share/share?targetId=' + backendId + '&targetType=' + backendType })
   },
 
   /* 分享给微信好友 */

@@ -21,6 +21,11 @@ App({
     }
   },
 
+  onShow(options) {
+    const { guardAppEntry } = require('./utils/auth')
+    guardAppEntry(options)
+  },
+
   validateStoredSession(tokenSnapshot) {
     const { request, toFullUrl } = require('./utils/request')
     request({ url: '/api/v1/user/me', method: 'GET' }).then(vo => {
