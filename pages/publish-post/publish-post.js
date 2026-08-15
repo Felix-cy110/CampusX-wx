@@ -1,6 +1,12 @@
 const { safeNavigate } = require('../../utils/safeNavigate')
 const { request, getBaseUrl } = require('../../utils/request')
 const { handleAuthFailure } = require('../../utils/auth')
+const {
+  requestPayment,
+  waitForPaymentResult,
+  isPaymentProcessingError,
+  isPaymentCancelledError
+} = require('../../utils/payment')
 const app = getApp()
 
 Page({
@@ -381,38 +387,14 @@ Page({
     this.setData({ buyLotteryTicket: !this.data.buyLotteryTicket })
   },
 
-  /**
-   * 发起微信支付
-   * @param {Object} payParams - 后端返回的支付参数（JSON字符串或对象）
-   * @returns {Promise<void>}
-   */
-  requestPayment(payParams) {
-    return new Promise((resolve, reject) => {
-      let params = payParams
-      if (typeof params === 'string') {
-        try {
-          params = JSON.parse(params)
-        } catch (e) {
-          reject(new Error('支付参数解析失败'))
-          return
-        }
-      }
-      wx.requestPayment({
-        timeStamp: params.timeStamp || params.timestamp || '',
-        nonceStr: params.nonceStr || params.nonce_str || '',
-        package: params.package || params.packageValue || '',
-        signType: params.signType || params.sign_type || 'RSA',
-        paySign: params.paySign || params.pay_sign || '',
-        success: () => resolve(),
-        fail: (err) => {
-          if (err.errMsg && err.errMsg.indexOf('cancel') !== -1) {
-            reject(new Error('用户取消支付'))
-          } else {
-            reject(new Error('支付失败: ' + (err.errMsg || '未知错误')))
-          }
-        }
-      })
-    })
+  async confirmPayment(payParams, paymentNo) {
+    await requestPayment(payParams)
+    wx.showLoading({ title: '确认支付结果...', mask: true })
+    try {
+      return await waitForPaymentResult(paymentNo)
+    } finally {
+      wx.hideLoading()
+    }
   },
 
   // ===== 提交 =====
@@ -606,14 +588,32 @@ Page({
           wx.hideLoading()
           // 拉起微信支付
           try {
-            await this.requestPayment(paymentResult.payParams)
+            await this.confirmPayment(paymentResult.payParams, paymentResult.orderNo)
             wx.showToast({ title: '支付成功，帖子已发布', icon: 'success' })
             setTimeout(() => {
               safeNavigate({ url: '/pages/published/published?from=post' })
             }, 1500)
           } catch (payErr) {
             console.error('支付失败:', payErr)
-            wx.showToast({ title: payErr.message || '支付失败', icon: 'none' })
+            if (isPaymentCancelledError(payErr)) {
+              wx.showToast({ title: '已取消支付', icon: 'none' })
+            } else if (isPaymentProcessingError(payErr)) {
+              wx.showModal({
+                title: payErr.paymentSucceeded ? '支付成功' : '支付结果确认中',
+                content: payErr.paymentSucceeded
+                  ? '支付已经成功，帖子正在发布，请稍后刷新首页'
+                  : payErr.message,
+                showCancel: false,
+                confirmText: '知道了',
+                success: () => {
+                  if (payErr.paymentSucceeded) {
+                    safeNavigate({ url: '/pages/published/published?from=post' })
+                  }
+                }
+              })
+            } else {
+              wx.showToast({ title: payErr.message || '支付失败', icon: 'none' })
+            }
           }
         }
       } else {
@@ -634,7 +634,7 @@ Page({
         if (result && result.needPay) {
           // 需要支付抽奖号码费用
           try {
-            await this.requestPayment(result.payParams)
+            await this.confirmPayment(result.payParams, result.orderNo)
             wx.showToast({ title: '支付成功，抽奖号码已发放', icon: 'success' })
             setTimeout(() => {
               safeNavigate({ url: '/pages/published/published?from=post' })
@@ -642,7 +642,10 @@ Page({
           } catch (payErr) {
             console.error('支付失败:', payErr)
             // 帖子已发布（postId 已返回），仅抽奖号码未支付
-            wx.showToast({ title: payErr.message || '支付取消，帖子已发布', icon: 'none' })
+            let message = payErr.message || '支付未完成，帖子已发布'
+            if (isPaymentCancelledError(payErr)) message = '已取消支付，帖子已发布'
+            if (payErr.paymentSucceeded) message = '支付成功，抽奖号码正在发放'
+            wx.showToast({ title: message, icon: 'none' })
             // 即使支付失败，帖子已发布成功
             setTimeout(() => {
               safeNavigate({ url: '/pages/published/published?from=post' })

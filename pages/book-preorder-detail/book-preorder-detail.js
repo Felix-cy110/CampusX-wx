@@ -1,4 +1,11 @@
 const { request, toFullUrl } = require('../../utils/request')
+const {
+  createPaymentOrder,
+  requestPayment,
+  waitForPaymentResult,
+  isPaymentProcessingError,
+  isPaymentCancelledError
+} = require('../../utils/payment')
 
 const STATUS_LABEL = {
   0: '待付定金',
@@ -64,7 +71,8 @@ Page({
     safeAreaBottom: 0,
     statusBarHeight: 0,
     navBarHeight: 0,
-    submitting: false
+    submitting: false,
+    paying: false
   },
 
   onLoad(options) {
@@ -82,7 +90,7 @@ Page({
   },
 
   _loadPresale(id) {
-    request({ url: `/api/v1/presale/${id}` })
+    return request({ url: `/api/v1/presale/${id}` })
       .then(data => {
         const presale = formatPresale(data)
         this.setData({ presale })
@@ -95,7 +103,7 @@ Page({
   },
 
   _loadMyOrder(id) {
-    request({ url: '/api/v1/presale/orders/my' })
+    return request({ url: '/api/v1/presale/orders/my' })
       .then(res => {
         const list = (res && res.list) || []
         const rawOrder = list.find(o => {
@@ -150,12 +158,58 @@ Page({
       })
   },
 
+  async runPresalePayment(kind) {
+    const { myOrder, presale, paying } = this.data
+    if (!myOrder || !presale || paying) return
+    const isDeposit = kind === 'deposit'
+    this.setData({ paying: true })
+
+    try {
+      wx.showLoading({ title: '创建支付...', mask: true })
+      const paymentOrder = await createPaymentOrder({
+        url: `/api/v1/presale/orders/${myOrder.id}/${isDeposit ? 'pay-deposit' : 'pay-final'}`,
+        data: {}
+      })
+      wx.hideLoading()
+
+      await requestPayment(paymentOrder.payParams)
+
+      wx.showLoading({ title: '确认支付结果...', mask: true })
+      await waitForPaymentResult(paymentOrder.paymentNo)
+      wx.hideLoading()
+
+      await Promise.all([
+        this._loadPresale(presale.id),
+        this._loadMyOrder(presale.id)
+      ])
+      wx.showToast({ title: isDeposit ? '定金支付成功' : '尾款支付成功', icon: 'success' })
+    } catch (err) {
+      wx.hideLoading()
+      console.error('预购支付失败:', err)
+      if (isPaymentCancelledError(err)) {
+        wx.showToast({ title: '已取消支付', icon: 'none' })
+      } else if (isPaymentProcessingError(err)) {
+        wx.showModal({
+          title: err.paymentSucceeded ? '支付成功' : '支付结果确认中',
+          content: err.message,
+          showCancel: false,
+          confirmText: '知道了'
+        })
+        await this._loadMyOrder(presale.id)
+      } else {
+        wx.showToast({ title: (err && err.message) || '支付失败', icon: 'none' })
+      }
+    } finally {
+      this.setData({ paying: false })
+    }
+  },
+
   onPayDeposit() {
-    wx.showToast({ title: '支付功能开发中', icon: 'none' })
+    return this.runPresalePayment('deposit')
   },
 
   onPayFinal() {
-    wx.showToast({ title: '支付功能开发中', icon: 'none' })
+    return this.runPresalePayment('final')
   },
 
   onCancelOrder() {

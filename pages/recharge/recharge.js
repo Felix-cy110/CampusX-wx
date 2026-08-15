@@ -1,6 +1,5 @@
 const mock = require('../../utils/mock.js')
 const app = getApp()
-const { safeNavigate } = require('../../utils/safeNavigate')
 
 Page({
   data: {
@@ -52,17 +51,10 @@ Page({
     }
 
     wx.showModal({
-      title: '确认充值',
-      content: '确认充值 ' + amount + ' 次跨校发帖额度？',
-      success: (res) => {
-        if (res.confirm) {
-          // 更新全局额度
-          app.globalData.crossSchoolQuota = this.data.quota + amount
-          safeNavigate({
-            url: '/pages/recharge-success/recharge-success?amount=' + amount + '&quota=' + (this.data.quota + amount)
-          })
-        }
-      }
+      title: '充值暂未开放',
+      content: '额度充值尚未接入后端支付，当前不会扣款或修改额度。',
+      showCancel: false,
+      confirmText: '知道了'
     })
   }
 })
