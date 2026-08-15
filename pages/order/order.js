@@ -1,5 +1,12 @@
 const { request, toFullUrl } = require('../../utils/request')
 const { safeNavigate } = require('../../utils/safeNavigate')
+const {
+  createPaymentOrder,
+  requestPayment,
+  waitForPaymentResult,
+  isPaymentProcessingError,
+  isPaymentCancelledError
+} = require('../../utils/payment')
 
 Page({
   data: {
@@ -15,7 +22,8 @@ Page({
     ],
     orders: [],
     filteredOrders: [],
-    loading: false
+    loading: false,
+    payingOrderKey: ''
   },
 
   onLoad() {
@@ -346,21 +354,86 @@ Page({
     })
   },
 
+  async runPayment(options) {
+    if (this.data.payingOrderKey) return
+    this.setData({ payingOrderKey: options.key })
+
+    try {
+      wx.showLoading({ title: '创建支付...', mask: true })
+      const paymentOrder = await createPaymentOrder({
+        url: options.url,
+        data: options.data
+      })
+      wx.hideLoading()
+
+      await requestPayment(paymentOrder.payParams)
+
+      wx.showLoading({ title: '确认支付结果...', mask: true })
+      await waitForPaymentResult(paymentOrder.paymentNo)
+      wx.hideLoading()
+
+      wx.showToast({ title: options.successTitle, icon: 'success' })
+      await this.loadOrders()
+    } catch (err) {
+      wx.hideLoading()
+      console.error('订单支付失败:', err)
+      if (isPaymentCancelledError(err)) {
+        wx.showToast({ title: '已取消支付', icon: 'none' })
+      } else if (isPaymentProcessingError(err)) {
+        wx.showModal({
+          title: err.paymentSucceeded ? '支付成功' : '支付结果确认中',
+          content: err.message,
+          showCancel: false,
+          confirmText: '知道了'
+        })
+        await this.loadOrders()
+      } else {
+        wx.showToast({ title: (err && err.message) || '支付失败', icon: 'none' })
+      }
+    } finally {
+      this.setData({ payingOrderKey: '' })
+    }
+  },
+
   /* 去支付 */
-  onPayOrder(e) {
+  async onPayOrder(e) {
     const { id, type } = e.currentTarget.dataset
-    wx.showToast({ title: '支付功能开发中', icon: 'none' })
-    // TODO: 接入后端支付接口
-    // 闲置: POST /api/v1/idle/order/{id}/pay
-    // 租赁: POST /api/v1/rental/order/{id}/pay
-    // 代课: POST /api/v1/proxy-class-order/pay
+    const paymentOptions = {
+      secondhand: {
+        url: `/api/v1/idle/order/${id}/pay`,
+        data: {}
+      },
+      rental: {
+        url: `/api/v1/rental/order/${id}/pay`,
+        data: {}
+      },
+      errand: {
+        url: '/api/v1/proxy-class-order/pay',
+        data: { orderId: id }
+      }
+    }[type]
+
+    if (!paymentOptions) {
+      wx.showToast({ title: '暂不支持该订单支付', icon: 'none' })
+      return
+    }
+    await this.runPayment({
+      key: `${type}:${id}:payment`,
+      url: paymentOptions.url,
+      data: paymentOptions.data,
+      successTitle: '支付成功'
+    })
   },
 
   /* 缴纳押金（代课卖方） */
-  onPayDeposit(e) {
+  async onPayDeposit(e) {
     const { id } = e.currentTarget.dataset
-    wx.showToast({ title: '押金支付开发中', icon: 'none' })
-    // TODO: POST /api/v1/proxy-class-order/deposit-pay
+    await this.runPayment({
+      key: `errand:${id}:deposit`,
+      url: '/api/v1/proxy-class-order/deposit-pay',
+      data: { orderId: id },
+      successTitle: '押金支付成功'
+    })
   },
 
   /* 申请退款 */

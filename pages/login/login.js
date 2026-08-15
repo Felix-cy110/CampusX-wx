@@ -75,7 +75,13 @@ Page({
         }).catch(err => {
           this.finishLoginLoading()
           console.error('微信登录失败:', err)
-          wx.showToast({ title: (err && err.message) || '微信登录失败，请重试', icon: 'none' })
+          const message = (err && (err.message || err.errMsg)) || '微信登录失败，请重试'
+          wx.showModal({
+            title: '微信登录失败',
+            content: message,
+            showCancel: false,
+            confirmText: '知道了'
+          })
         })
       },
       fail: (err) => {

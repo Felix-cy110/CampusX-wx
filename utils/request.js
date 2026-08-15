@@ -1,6 +1,29 @@
 const { getBaseUrl } = require('./config')
 const { handleAuthFailure } = require('./auth')
 
+function normalizeRequestFailure(error) {
+  const source = error && typeof error === 'object' ? error : {}
+  const rawMessage = String(source.errMsg || source.message || '').trim()
+  let message = rawMessage || '网络请求失败，请重试'
+
+  if (/url not in domain list|domain list/i.test(rawMessage)) {
+    message = '微信尚未放行服务器域名，请确认 request 合法域名后重新进入体验版'
+  } else if (/name_not_resolved|dns|resolve host/i.test(rawMessage)) {
+    message = '域名解析失败，请彻底退出微信并切换网络后重试'
+  } else if (/ssl|certificate|cert_/i.test(rawMessage)) {
+    message = 'HTTPS 证书校验失败，请更新微信或切换网络后重试'
+  } else if (/timeout|timed out/i.test(rawMessage)) {
+    message = '连接服务器超时，请切换网络后重试'
+  }
+
+  return {
+    ...source,
+    code: source.code || source.errno || 'NETWORK_ERROR',
+    message,
+    rawMessage
+  }
+}
+
 function request(options) {
   const token = wx.getStorageSync('token')
   return new Promise((resolve, reject) => {
@@ -26,7 +49,9 @@ function request(options) {
           reject(error)
         }
       },
-      fail: reject
+      fail(error) {
+        reject(normalizeRequestFailure(error))
+      }
     })
   })
 }
