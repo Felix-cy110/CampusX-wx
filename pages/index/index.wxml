@@ -166,15 +166,6 @@
                             <text class="book-card-price {{item.isFree ? 'free' : ''}}">{{item.isFree ? '免费' : '¥' + item.price}}</text>
                             <text class="book-card-original" wx:if="{{!item.isFree && item.originalPrice}}">原价 ¥{{item.originalPrice}}</text>
                           </view>
-                          <view class="book-card-tags" wx:if="{{item.certTags && item.certTags.length > 0}}">
-                            <text class="book-cert-tag" wx:for="{{item.certTags}}" wx:for-item="tag" wx:key="*this">{{tag}}</text>
-                          </view>
-                          <text class="book-card-extra">{{item.extraInfo}}</text>
-                          <view class="book-card-seller">
-                            <image class="book-seller-avatar" src="{{item.seller.avatar}}" mode="aspectFill" catchtap="goToUserProfile" data-uid="{{item.seller.uid}}" data-name="{{item.seller.name}}" data-avatar="{{item.seller.avatar}}"></image>
-                            <text class="book-seller-name">{{item.seller.name}}</text>
-                            <text class="book-seller-school" wx:if="{{item.distance}}">· {{item.distance}}</text>
-                          </view>
                         </view>
                       </view>
                     </view>
@@ -207,15 +198,6 @@
                           <view class="book-card-price-row">
                             <text class="book-card-price {{item.isFree ? 'free' : ''}}">{{item.isFree ? '免费' : '¥' + item.price}}</text>
                             <text class="book-card-original" wx:if="{{!item.isFree && item.originalPrice}}">原价 ¥{{item.originalPrice}}</text>
-                          </view>
-                          <view class="book-card-tags" wx:if="{{item.certTags && item.certTags.length > 0}}">
-                            <text class="book-cert-tag" wx:for="{{item.certTags}}" wx:for-item="tag" wx:key="*this">{{tag}}</text>
-                          </view>
-                          <text class="book-card-extra">{{item.extraInfo}}</text>
-                          <view class="book-card-seller">
-                            <image class="book-seller-avatar" src="{{item.seller.avatar}}" mode="aspectFill" catchtap="goToUserProfile" data-uid="{{item.seller.uid}}" data-name="{{item.seller.name}}" data-avatar="{{item.seller.avatar}}"></image>
-                            <text class="book-seller-name">{{item.seller.name}}</text>
-                            <text class="book-seller-school" wx:if="{{item.distance}}">· {{item.distance}}</text>
                           </view>
                         </view>
                       </view>
