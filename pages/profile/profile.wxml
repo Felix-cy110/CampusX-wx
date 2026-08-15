@@ -101,20 +101,6 @@
     <view class="sub-tab-indicator" style="left: calc(100% * {{subIndicatorRatio}});"></view>
   </view>
 
-  <!-- 内容类型Tab：动态 / 二手 / 跑腿 -->
-  <view class="content-tabs">
-    <view class="content-tab {{currentContentTab === 'posts' ? 'active' : ''}}" bindtap="switchContentTab" data-tab="posts">
-      <text>动态</text>
-    </view>
-    <view class="content-tab {{currentContentTab === 'market' ? 'active' : ''}}" bindtap="switchContentTab" data-tab="market">
-      <text>二手</text>
-    </view>
-    <view class="content-tab {{currentContentTab === 'errand' ? 'active' : ''}}" bindtap="switchContentTab" data-tab="errand">
-      <text>跑腿</text>
-    </view>
-    <view class="content-tab-indicator" style="left: calc(100% * {{contentIndicatorRatio}});"></view>
-  </view>
-
   <!-- 帖子列表区域（可滚动 + 下拉刷新） -->
   <scroll-view class="post-list-scroll" scroll-y enhanced scroll-top="{{_scrollTop}}" show-scrollbar="{{false}}" enable-back-to-top refresher-enabled refresher-triggered="{{refreshing}}" bindrefresherrefresh="onRefresh" bindscrolltolower="onContentLoadMore" lower-threshold="150">
     <!-- 帖子列表 -->

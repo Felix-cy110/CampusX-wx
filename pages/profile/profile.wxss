@@ -363,44 +363,6 @@ image.func-icon {
   transition: left 0.35s cubic-bezier(0.32, 0.72, 0, 1);
 }
 
-/* ========== 内容类型Tab：动态 / 二手 / 跑腿 / 评分 ========== */
-.content-tabs {
-  display: flex;
-  background: var(--color-bg-white);
-  border-radius: 0;
-  position: relative;
-  border-bottom: 1rpx solid var(--color-border-light);
-}
-
-.content-tab {
-  flex: 1;
-  height: 64rpx;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  font-size: var(--font-sm);
-  color: var(--color-text-secondary);
-}
-
-.content-tab.active {
-  color: var(--color-text-dark);
-  font-weight: 600;
-}
-
-.content-tab-indicator {
-  position: absolute;
-  bottom: 4rpx;
-  left: 0;
-  transform: translateX(-50%);
-  width: 36rpx;
-  height: 4rpx;
-  background: var(--color-primary);
-  border-radius: 2rpx;
-  transition: left 0.35s cubic-bezier(0.32, 0.72, 0, 1);
-}
-
 /* ========== 帖子列表 ========== */
 .post-list {
   background: var(--color-bg-white);

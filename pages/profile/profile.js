@@ -10,9 +10,7 @@ Page({
       stats: { following: 0, followers: 0, likes: 0 }
     },
     currentSubTab: 'published',   // 'published' | 'favorited'
-    currentContentTab: 'posts',   // 'posts' | 'market' | 'errand'
     subIndicatorRatio: 0.25,
-    contentIndicatorRatio: 0.1667,
     allContentList: [],           // 全部内容数据
     filteredContentList: [],       // 根据Tab筛选后的列表
     showPostOptionsModal: false,   // 帖子选项弹窗
@@ -23,7 +21,6 @@ Page({
 
     /* 内容分页 */
     contentPage: 1,
-    contentCursor: null,
     contentHasMore: true,
     contentLoading: false,
     loadingMore: false,
@@ -145,12 +142,11 @@ Page({
     }
     this.setData({
       contentPage: 1,
-      contentCursor: null,
       contentHasMore: true,
       contentLoading: true,
       filteredContentList: []
     })
-    const { currentSubTab, currentContentTab } = this.data
+    const { currentSubTab } = this.data
     if (currentSubTab === 'published') {
       return this._loadPublished() || Promise.resolve()
     } else {
@@ -174,7 +170,7 @@ Page({
   onContentLoadMore() {
     if (!this.data.contentHasMore || this.data.loadingMore || this.data.contentLoading) return
     this.setData({ loadingMore: true })
-    const { currentSubTab, currentContentTab } = this.data
+    const { currentSubTab } = this.data
     if (currentSubTab === 'published') {
       this._loadPublished(true)
     } else {
@@ -182,71 +178,63 @@ Page({
     }
   },
 
-  /* ===== 我发布的 ===== */
+  /* ===== 我发布的（合并二手 + 跑腿） ===== */
 
   _loadPublished(isLoadMore) {
-    const { currentContentTab } = this.data
-    switch (currentContentTab) {
-      case 'posts': return this._fetchMyPosts(isLoadMore)
-      case 'market': return this._fetchMyIdleProducts(isLoadMore)
-      case 'errand': return this._fetchMyProxyItems(isLoadMore)
-      default: return this._finishLoading([], false)
-    }
+    const pageNum = isLoadMore ? this.data.contentPage + 1 : 1
+    return Promise.all([
+      this._fetchMyIdleProducts(pageNum).catch(() => ({ list: [], hasMore: false })),
+      this._fetchMyProxyItems(pageNum).catch(() => ({ list: [], hasMore: false }))
+    ]).then(([idle, errand]) => {
+      const list = [...idle.list, ...errand.list]
+        .sort((a, b) => (b._createdAt || 0) - (a._createdAt || 0))
+      const hasMore = idle.hasMore || errand.hasMore
+      this.setData({ contentPage: pageNum })
+      this._finishLoading(list, hasMore)
+    }).catch(err => {
+      console.error('加载我发布的内容失败:', err)
+      this._finishLoading([], false)
+    })
   },
 
-  /* ===== 我的收藏 ===== */
+  /* ===== 我的收藏（合并动态 + 二手） ===== */
 
   _loadFavorited(isLoadMore) {
-    const { currentContentTab } = this.data
-    switch (currentContentTab) {
-      case 'posts': return this._fetchFavoritePosts(isLoadMore)
-      case 'market': return this._fetchFavoriteIdle(isLoadMore)
-      case 'errand': return this._finishLoading([], false) // 暂无收藏跑腿 API
-      default: return this._finishLoading([], false)
-    }
-  },
-
-  /* ===== API 调用：我发布的动态 ===== */
-  _fetchMyPosts(isLoadMore) {
-    const data = { pageSize: 20 }
-    if (isLoadMore && this.data.contentCursor) {
-      data.cursor = this.data.contentCursor
-    }
-    request({ url: '/api/post/my', data }).then(result => {
-      const list = (result.list || []).map(vo => this._mapPostToCard(vo))
-      const nextCursor = result.nextCursor || null
-      const hasMore = result.hasMore || false
-      this._finishLoading(list, hasMore, nextCursor)
+    const pageNum = isLoadMore ? this.data.contentPage + 1 : 1
+    return Promise.all([
+      this._fetchFavoritePosts(pageNum).catch(() => ({ list: [], hasMore: false })),
+      this._fetchFavoriteIdle(pageNum).catch(() => ({ list: [], hasMore: false }))
+    ]).then(([posts, idle]) => {
+      const list = [...posts.list, ...idle.list]
+        .sort((a, b) => (b._createdAt || 0) - (a._createdAt || 0))
+      const hasMore = posts.hasMore || idle.hasMore
+      this.setData({ contentPage: pageNum })
+      this._finishLoading(list, hasMore)
     }).catch(err => {
-      console.error('获取我的帖子失败:', err)
+      console.error('加载我的收藏失败:', err)
       this._finishLoading([], false)
     })
   },
 
   /* ===== API 调用：我发布的二手 ===== */
-  _fetchMyIdleProducts(isLoadMore) {
-    const pageNum = isLoadMore ? this.data.contentPage + 1 : 1
-    request({
+  _fetchMyIdleProducts(pageNum) {
+    return request({
       url: '/api/v1/idle/product/my-list',
       data: { pageNum, pageSize: 20 }
     }).then(result => {
-      const list = (result.list || result.records || []).map(vo => this._mapIdleToCard(vo))
       const totalPages = result.pages || 1
-      const hasMore = pageNum < totalPages
-      this.setData({ contentPage: pageNum })
-      this._finishLoading(list, hasMore)
-    }).catch(err => {
-      console.error('获取我的二手商品失败:', err)
-      this._finishLoading([], false)
+      return {
+        list: (result.list || result.records || []).map(vo => this._mapIdleToCard(vo)),
+        hasMore: pageNum < totalPages
+      }
     })
   },
 
   /* ===== API 调用：我发布的跑腿 ===== */
-  _fetchMyProxyItems(isLoadMore) {
-    const pageNum = isLoadMore ? this.data.contentPage + 1 : 1
+  _fetchMyProxyItems(pageNum) {
     const pageSize = 10
     // 同时拉取代课需求和供给
-    Promise.all([
+    return Promise.all([
       request({ url: '/api/v1/proxy-class-demand/my-list', data: { pageNum, pageSize } }).catch(() => null),
       request({ url: '/api/v1/proxy-class-supply/my-list', data: { pageNum, pageSize } }).catch(() => null)
     ]).then(([demandResult, supplyResult]) => {
@@ -256,87 +244,49 @@ Page({
       const list = [...demands, ...supplies].sort((a, b) => (b._createdAt || 0) - (a._createdAt || 0))
       const demandPages = demandResult ? (demandResult.pages || 1) : 1
       const supplyPages = supplyResult ? (supplyResult.pages || 1) : 1
-      const hasMore = pageNum < Math.max(demandPages, supplyPages)
-      this.setData({ contentPage: pageNum })
-      this._finishLoading(list, hasMore)
-    }).catch(err => {
-      console.error('获取我的跑腿失败:', err)
-      this._finishLoading([], false)
+      return { list, hasMore: pageNum < Math.max(demandPages, supplyPages) }
     })
   },
 
   /* ===== API 调用：收藏的动态 ===== */
-  _fetchFavoritePosts(isLoadMore) {
-    const pageNum = isLoadMore ? this.data.contentPage + 1 : 1
-    request({
+  _fetchFavoritePosts(pageNum) {
+    return request({
       url: '/api/v1/favorite/list',
       data: { targetType: 3, pageNum, pageSize: 20 }
     }).then(result => {
-      const list = (result.list || result.records || []).map(vo => this._mapFavoriteToCard(vo))
       const totalPages = result.pages || 1
-      const hasMore = pageNum < totalPages
-      this.setData({ contentPage: pageNum })
-      this._finishLoading(list, hasMore)
-    }).catch(err => {
-      console.error('获取收藏帖子失败:', err)
-      this._finishLoading([], false)
+      return {
+        list: (result.list || result.records || []).map(vo => this._mapFavoriteToCard(vo)),
+        hasMore: pageNum < totalPages
+      }
     })
   },
 
   /* ===== API 调用：收藏的二手 ===== */
-  _fetchFavoriteIdle(isLoadMore) {
-    const pageNum = isLoadMore ? this.data.contentPage + 1 : 1
-    request({
+  _fetchFavoriteIdle(pageNum) {
+    return request({
       url: '/api/v1/favorite/list',
       data: { targetType: 2, pageNum, pageSize: 20 }
     }).then(result => {
-      const list = (result.list || result.records || []).map(vo => this._mapFavoriteToCard(vo))
       const totalPages = result.pages || 1
-      const hasMore = pageNum < totalPages
-      this.setData({ contentPage: pageNum })
-      this._finishLoading(list, hasMore)
-    }).catch(err => {
-      console.error('获取收藏二手失败:', err)
-      this._finishLoading([], false)
+      return {
+        list: (result.list || result.records || []).map(vo => this._mapFavoriteToCard(vo)),
+        hasMore: pageNum < totalPages
+      }
     })
   },
 
   /* ===== 完成加载，更新列表 ===== */
-  _finishLoading(newList, hasMore, nextCursor) {
+  _finishLoading(newList, hasMore) {
     const list = this.data.loadingMore
       ? this.data.filteredContentList.concat(newList)
       : newList
     this.setData({
       filteredContentList: list,
       contentHasMore: hasMore,
-      contentCursor: nextCursor !== undefined ? nextCursor : this.data.contentCursor,
       contentLoading: false,
       loadingMore: false
     })
-  },
-
-  /* ===== 数据映射：PostListVO → 前端卡片 ===== */
-  _mapPostToCard(vo) {
-    const userInfo = this.data.userInfo || {}
-    return {
-      id: String(vo.id),
-      type: 'posts',
-      pinned: vo.isTop === 1,
-      isPrivate: vo.status !== 1,
-      user: {
-        uid: String(vo.userId || userInfo.uid),
-        name: vo.nickname || userInfo.nickname || '',
-        avatar: toFullUrl(vo.avatarUrl) || userInfo.avatar || ''
-      },
-      time: _formatRelativeTime(vo.createdAt),
-      content: vo.title || vo.content || '',
-      images: vo.coverImage ? [toFullUrl(vo.coverImage)] : [],
-      stats: { likes: vo.likeCount || 0, comments: vo.commentCount || 0 },
-      itemStatus: '',
-      _backendId: vo.id,
-      _backendType: 'post',
-      _createdAt: _parseTime(vo.createdAt)
-    }
   },
 
   /* ===== 数据映射：IdleSellerProductVO → 前端卡片 ===== */
@@ -454,19 +404,6 @@ Page({
     this.setData({
       currentSubTab: tab,
       subIndicatorRatio: (index + 0.5) / 2
-    })
-    this.loadContentData()
-  },
-
-  /* 切换内容类型Tab（动态/二手/跑腿） */
-  switchContentTab(e) {
-    const tab = e.currentTarget.dataset.tab
-    if (tab === this.data.currentContentTab) return
-    const map = { posts: 0, market: 1, errand: 2 }
-    const index = map[tab] || 0
-    this.setData({
-      currentContentTab: tab,
-      contentIndicatorRatio: (index + 0.5) / 3
     })
     this.loadContentData()
   },
