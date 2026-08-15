@@ -7,22 +7,26 @@
     </view>
   </view>
   <view class="container">
-    <text class="text-3xl text-bold">登录</text>
+    <view class="login-brand">
+      <image class="login-logo" src="/images/tab-home-active.png" mode="aspectFit"></image>
+      <text class="text-3xl text-bold">登录 CampusX</text>
+      <text class="login-subtitle">使用你的微信账号安全登录</text>
+    </view>
 
     <view class="privacy-box mt-30">
-      <text class="text-bold">需要以下权限</text>
-      <text class="text-sm text-secondary mt-10">以下信息仅用于创建账号使用，任何用户以及学校管理员都无法获取。我们将严格对您的信息进行保密</text>
+      <text class="text-bold">真实微信身份登录</text>
+      <text class="text-sm text-secondary mt-10">登录时会使用微信提供的一次性凭证识别你的账号，不会向小程序暴露微信密码。</text>
       <view class="divider mt-20 mb-20"></view>
-      <text class="text-bold">授权手机号</text>
-      <text class="text-sm text-secondary mt-10">应相关国家法律要求，需要获取您的手机号用于资料鉴权</text>
+      <text class="text-bold">头像和昵称</text>
+      <text class="text-sm text-secondary mt-10">首次登录后，可直接选择微信头像并使用微信昵称作为默认资料。</text>
     </view>
 
-    <view class="btn btn-wechat mt-30" bindtap="wechatLogin">
-      <text>使用微信快速授权</text>
-    </view>
+    <button class="btn btn-wechat mt-30" bindtap="wechatLogin" loading="{{isLoggingIn}}" disabled="{{isLoggingIn}}">
+      <text>{{isLoggingIn ? '登录中...' : '微信一键登录'}}</text>
+    </button>
 
     <view class="agreement mt-30 text-center">
-      <text class="text-xs text-secondary">我已阅读并同意服务协议与隐私政策</text>
+      <text class="text-xs text-secondary">点击登录即表示你已阅读并同意服务协议与隐私政策</text>
     </view>
   </view>
 </view>

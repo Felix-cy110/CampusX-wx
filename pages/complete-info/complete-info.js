@@ -19,6 +19,7 @@ Page({
     departmentId: null,
     departmentName: '',
     phone: '',
+    avatarUploading: false,
     canSubmit: false
   },
 
@@ -36,14 +37,15 @@ Page({
       enrollmentYears.push(y + '年')
     }
 
-    // 模拟手机号授权页选择的号码会随登录缓存带入；已有头像/昵称也一并复用。
+    // 已有资料直接复用；新用户通过微信头像/昵称填写能力补齐。
     const cachedUserInfo = wx.getStorageSync('userInfo') || {}
     const cachedAvatar = cachedUserInfo.avatar || ''
+    const cachedNickname = cachedUserInfo.nickname === '微信用户' ? '' : (cachedUserInfo.nickname || '')
     this.setData({
       statusBarHeight,
       navBarHeight,
       enrollmentYears,
-      nickname: cachedUserInfo.nickname || '',
+      nickname: cachedNickname,
       avatar: cachedAvatar,
       avatarUrl: cachedAvatar,
       phone: cachedUserInfo.phone || ''
@@ -112,6 +114,7 @@ Page({
       phone
     } = this.data
 
+    if (this.data.avatarUploading) return '头像正在上传，请稍候'
     if (!String(avatarUrl || '').trim()) return '请先上传头像'
     if (!String(nickname || '').trim()) return '请输入昵称'
     if (!enrollmentYear) return '请选择入学时间'
@@ -130,47 +133,56 @@ Page({
     wx.navigateBack({ delta: 1 })
   },
 
-  // 上传头像
-  uploadAvatar() {
-    const that = this
-    wx.chooseImage({
-      count: 1,
-      sizeType: ['compressed'],
-      sourceType: ['album', 'camera'],
-      success: (res) => {
-        const tempFilePath = res.tempFilePaths[0]
-        const tokenSnapshot = wx.getStorageSync('token') || ''
-        that.setData({ avatar: tempFilePath })
+  // 微信头像填写能力：用户可直接选择当前微信头像，也可以从相册选择。
+  onChooseAvatar(e) {
+    const tempFilePath = e && e.detail && e.detail.avatarUrl
+    if (!tempFilePath) {
+      wx.showToast({ title: '未选择头像', icon: 'none' })
+      return
+    }
+    this.uploadWechatAvatar(tempFilePath)
+  },
 
-        // 上传到服务器
-        wx.showLoading({ title: '上传中...' })
-        wx.uploadFile({
-          url: getBaseUrl() + '/api/v1/upload/image',
-          filePath: tempFilePath,
-          name: 'file',
-          header: {
-            Authorization: 'Bearer ' + tokenSnapshot
-          },
-          success: (uploadRes) => {
-            wx.hideLoading()
-            try {
-              const result = JSON.parse(uploadRes.data)
-              if (result.code === 200 && result.data && result.data.url) {
-                that.setData({ avatarUrl: result.data.url }, () => that.checkCanSubmit())
-              } else {
-                if (!handleAuthFailure(result, tokenSnapshot)) {
-                  wx.showToast({ title: (result && result.message) || '上传失败', icon: 'none' })
-                }
-              }
-            } catch (e) {
-              wx.showToast({ title: '上传失败', icon: 'none' })
-            }
-          },
-          fail: () => {
-            wx.hideLoading()
-            wx.showToast({ title: '上传失败', icon: 'none' })
+  uploadWechatAvatar(tempFilePath) {
+    if (this.data.avatarUploading) return
+    const tokenSnapshot = wx.getStorageSync('token') || ''
+    if (!tokenSnapshot) {
+      wx.showToast({ title: '请先完成微信登录', icon: 'none' })
+      return
+    }
+
+    this.setData({ avatar: tempFilePath, avatarUploading: true }, () => this.checkCanSubmit())
+    wx.showLoading({ title: '上传头像中...', mask: true })
+    wx.uploadFile({
+      url: getBaseUrl() + '/api/v1/upload/image',
+      filePath: tempFilePath,
+      name: 'file',
+      header: {
+        Authorization: 'Bearer ' + tokenSnapshot
+      },
+      success: (uploadRes) => {
+        wx.hideLoading()
+        try {
+          const result = JSON.parse(uploadRes.data)
+          if (result.code === 200 && result.data && result.data.url) {
+            this.setData({ avatarUrl: result.data.url, avatarUploading: false }, () => this.checkCanSubmit())
+            return
           }
-        })
+          this.setData({ avatarUploading: false }, () => this.checkCanSubmit())
+          if (!handleAuthFailure(result, tokenSnapshot)) {
+            wx.showToast({ title: (result && result.message) || '头像上传失败', icon: 'none' })
+          }
+        } catch (error) {
+          this.setData({ avatarUploading: false }, () => this.checkCanSubmit())
+          console.error('解析头像上传结果失败:', error)
+          wx.showToast({ title: '头像上传失败', icon: 'none' })
+        }
+      },
+      fail: (error) => {
+        wx.hideLoading()
+        this.setData({ avatarUploading: false }, () => this.checkCanSubmit())
+        console.error('上传微信头像失败:', error)
+        wx.showToast({ title: '头像上传失败，请重试', icon: 'none' })
       }
     })
   },

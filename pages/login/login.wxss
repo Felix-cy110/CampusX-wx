@@ -28,6 +28,26 @@
 .container {
   padding: 60rpx 30rpx;
 }
+
+.login-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40rpx 0 28rpx;
+}
+
+.login-logo {
+  width: 128rpx;
+  height: 128rpx;
+  margin-bottom: 28rpx;
+}
+
+.login-subtitle {
+  margin-top: 16rpx;
+  font-size: var(--font-sm);
+  color: var(--color-text-secondary);
+}
+
 .privacy-box {
   background: var(--color-bg-white);
   border-radius: var(--radius-md);
@@ -37,9 +57,22 @@
   display: block;
 }
 .btn-wechat {
+  width: 100%;
+  border: 0;
   background-color: var(--color-wechat-green);
   color: #FFFFFF;
 }
+
+.btn-wechat::after {
+  border: 0;
+}
+
+.btn-wechat[disabled] {
+  background-color: var(--color-wechat-green);
+  color: #FFFFFF;
+  opacity: 0.65;
+}
+
 .agreement {
   padding: 0 60rpx;
 }

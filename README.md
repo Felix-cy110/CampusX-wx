@@ -122,7 +122,7 @@ CampusX-wx/
 ### 环境要求
 
 - [微信开发者工具](https://developers.weixin.qq.com/miniprogram/dev/devtools/download.html)（稳定版）
-- 后端服务默认运行在 `http://localhost:5659`（Spring Boot 项目，需单独启动）
+- 默认连接公网后端 `https://xixutech.cn`
 
 ### 启动步骤
 
@@ -133,21 +133,13 @@ CampusX-wx/
 
 2. **配置后端地址**
 
-   开发者工具默认使用 `http://localhost:5659`。真机调试时，`localhost` 指向手机自身，需在真机调试控制台设置电脑的局域网地址：
-   ```js
-   wx.setStorageSync('campusxApiBaseUrl', 'http://192.168.x.x:5659')
-   ```
+   开发版、体验版和正式版统一使用 `https://xixutech.cn`，不读取本地存储中的旧后端地址。
 
-   地址会被每次请求动态读取，无需重新编译。清除覆盖配置可执行：
-   ```js
-   wx.removeStorageSync('campusxApiBaseUrl')
-   ```
-
-   发布体验版或正式版前，请在 `utils/config.js` 的 `ENV_BASE_URLS.trial/release` 中填写已加入微信后台合法域名的 HTTPS 地址。代码会拒绝体验版/正式版使用 HTTP，未配置时也会直接提示错误，避免误连本机或不安全地址。
+   体验版和正式版只接受 HTTPS 地址。发布前还需在微信公众平台把 `https://xixutech.cn` 配置为 request/uploadFile/downloadFile 合法域名，把 `wss://xixutech.cn` 配置为 socket 合法域名。
 
 3. **打开微信开发者工具**
    
-   导入项目根目录，AppID 使用 `wxc798a954e7b425d7`（或替换为你的测试 AppID）。
+   导入项目根目录，AppID 使用 `wxe8f6bb8e3742f636`。
 
 4. **配置开发环境**
    

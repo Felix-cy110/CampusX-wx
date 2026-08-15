@@ -1,14 +1,12 @@
 /**
  * 后端地址配置。
- * - 开发者工具默认连接本机 5659 端口。
- * - 真机调试可通过 campusxApiBaseUrl 本地存储覆盖为电脑局域网地址。
- * - 体验版和正式版发布前必须配置已加入微信合法域名的 HTTPS 地址。
+ * - 开发版、体验版和正式版默认连接公网 HTTPS 后端。
  */
-const API_BASE_URL_STORAGE_KEY = 'campusxApiBaseUrl'
+const PUBLIC_API_BASE_URL = 'https://xixutech.cn'
 const ENV_BASE_URLS = {
-  develop: 'http://localhost:5659',
-  trial: '',
-  release: ''
+  develop: PUBLIC_API_BASE_URL,
+  trial: PUBLIC_API_BASE_URL,
+  release: PUBLIC_API_BASE_URL
 }
 
 function normalizeBaseUrl(value) {
@@ -29,51 +27,18 @@ function getEnvVersion() {
   }
 }
 
-function isDevtools() {
-  try {
-    const deviceInfo = typeof wx.getDeviceInfo === 'function'
-      ? wx.getDeviceInfo()
-      : wx.getSystemInfoSync()
-    return deviceInfo.platform === 'devtools'
-  } catch (e) {
-    return false
-  }
-}
-
 function getBaseUrl() {
   const envVersion = getEnvVersion()
-  if (envVersion === 'develop') {
-    const override = normalizeBaseUrl(wx.getStorageSync(API_BASE_URL_STORAGE_KEY))
-    if (override) return override
-  }
-
   const configured = normalizeBaseUrl(ENV_BASE_URLS[envVersion])
   if (configured && envVersion !== 'develop' && !/^https:\/\//i.test(configured)) {
     throw new Error(`${envVersion} 环境后端地址必须使用 HTTPS`)
   }
-  if (configured && (envVersion !== 'develop' || isDevtools())) return configured
+  if (configured) return configured
 
-  if (envVersion === 'develop') {
-    throw new Error('真机调试未配置后端地址，请设置 campusxApiBaseUrl 为电脑局域网地址')
-  }
-  throw new Error(`${envVersion} 环境未配置后端 HTTPS 地址`)
-}
-
-function setBaseUrl(value) {
-  const url = normalizeBaseUrl(value)
-  if (!url) throw new Error('后端地址不能为空')
-  wx.setStorageSync(API_BASE_URL_STORAGE_KEY, url)
-  return url
-}
-
-function clearBaseUrlOverride() {
-  wx.removeStorageSync(API_BASE_URL_STORAGE_KEY)
+  throw new Error(`${envVersion} 环境未配置后端地址`)
 }
 
 module.exports = {
-  API_BASE_URL_STORAGE_KEY,
   ENV_BASE_URLS,
-  getBaseUrl,
-  setBaseUrl,
-  clearBaseUrlOverride
+  getBaseUrl
 }

@@ -12,21 +12,27 @@
     <view class="nav-placeholder"></view>
   </view>
 
+  <view class="wechat-profile-tip">
+    <text class="wechat-profile-tip-title">使用微信资料</text>
+    <text class="wechat-profile-tip-text">点击头像可选择微信头像；点击昵称输入框可使用微信昵称</text>
+  </view>
+
   <!-- 头像 -->
   <view class="form-section">
-    <view class="form-item avatar-item" bindtap="uploadAvatar">
+    <button class="form-item avatar-item avatar-button" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar">
       <text class="form-label">头像</text>
       <view class="form-right">
         <image class="avatar-preview" src="{{avatar || '/images/avatars/default.png'}}" mode="aspectFill"></image>
+        <text class="avatar-action">{{avatarUploading ? '上传中' : (avatarUrl ? '更换' : '使用微信头像')}}</text>
         <text class="form-arrow">›</text>
       </view>
-    </view>
+    </button>
 
     <!-- 昵称 -->
     <view class="form-item">
       <text class="form-label">昵称</text>
       <view class="form-right">
-        <input class="form-input" placeholder="请输入昵称" value="{{nickname}}" bindinput="onNicknameInput" />
+        <input class="form-input" type="nickname" placeholder="点击使用微信昵称" value="{{nickname}}" bindinput="onNicknameInput" />
       </view>
     </view>
 

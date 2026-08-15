@@ -4,6 +4,26 @@ const { safeNavigate, safeSwitch } = require('../../utils/safeNavigate')
 const { request, toFullUrl } = require('../../utils/request')
 const { canAccessCampusFeatures } = require('../../utils/auth')
 
+function pad2(value) {
+  const text = String(value == null ? 0 : value)
+  return text.length < 2 ? '0' + text : text
+}
+
+function readObjectStorage(key) {
+  const value = wx.getStorageSync(key)
+  return value && typeof value === 'object' && !Array.isArray(value) ? value : {}
+}
+
+function getErrorMessage(error) {
+  if (error && error.message) return String(error.message)
+  if (error && error.errMsg) return String(error.errMsg)
+  try {
+    return JSON.stringify(error) || '未知错误'
+  } catch (e) {
+    return String(error || '未知错误')
+  }
+}
+
 Page({
   data: {
     isLoggedIn: false,
@@ -202,42 +222,57 @@ Page({
 
   loadFeed() {
     // 读取本地点赞记录，合并到 feed 数据中（feed API 不返回 liked 字段）
-    const likedIds = wx.getStorageSync('likedPostIds') || {}
+    const likedIds = readObjectStorage('likedPostIds')
     const browsingCampusId = this.data.browsingCampusId
     const reqOptions = browsingCampusId
       ? { url: '/api/post/list', method: 'GET', data: { targetCampusId: browsingCampusId, pageSize: 20 } }
       : { url: '/api/post/feed', method: 'GET', data: { pageSize: 20 } }
     return request(reqOptions).then(data => {
-      console.log('feed API 返回:', JSON.stringify(data))
-      const list = (data.list || []).map(vo => {
-        // 兼容多种日期格式：字符串 或 数组 [year,month,day,hour,min,sec]
-        let timeStr = ''
-        if (vo.createdAt) {
-          if (Array.isArray(vo.createdAt)) {
-            const [y, m, d, h, mi] = vo.createdAt
-            timeStr = `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')} ${String(h || 0).padStart(2, '0')}:${String(mi || 0).padStart(2, '0')}`
-          } else if (typeof vo.createdAt === 'string') {
-            timeStr = vo.createdAt.replace('T', ' ').slice(0, 16)
+      try {
+        console.log('feed API 返回:', JSON.stringify(data))
+        if (!data || !Array.isArray(data.list)) {
+          throw new Error('帖子接口返回格式不正确')
+        }
+        const list = data.list.map(vo => {
+          vo = vo && typeof vo === 'object' ? vo : {}
+          // 兼容多种日期格式：字符串 或 数组 [year,month,day,hour,min,sec]
+          let timeStr = ''
+          if (vo.createdAt) {
+            if (Array.isArray(vo.createdAt)) {
+              const [y, m, d, h, mi] = vo.createdAt
+              timeStr = `${y}-${pad2(m)}-${pad2(d)} ${pad2(h)}:${pad2(mi)}`
+            } else if (typeof vo.createdAt === 'string') {
+              timeStr = vo.createdAt.replace('T', ' ').slice(0, 16)
+            }
           }
-        }
-        return {
-          id: vo.id,
-          user: { uid: String(vo.userId || ''), name: vo.nickname || '', avatar: toFullUrl(vo.avatarUrl) || '' },
-          title: vo.title || '',
-          content: vo.content || '',
-          images: vo.coverImage ? [toFullUrl(vo.coverImage)] : [],
-          stats: { likes: vo.likeCount || 0, comments: vo.commentCount || 0 },
-          liked: vo.liked || !!likedIds[vo.id],
-          time: timeStr,
-          school: vo.schoolName || '',
-          sourceType: vo.sourceType || '',
-          sourceId: vo.sourceId || ''
-        }
-      })
-      this.setData({ feedList: list, currentList: list })
-    }).catch(err => {
-      console.error('loadFeed 失败:', JSON.stringify(err))
-      wx.showToast({ title: '加载帖子失败，请下拉刷新', icon: 'none', duration: 2000 })
+          return {
+            id: vo.id,
+            user: { uid: String(vo.userId || ''), name: vo.nickname || '', avatar: toFullUrl(vo.avatarUrl) || '' },
+            title: vo.title || '',
+            content: vo.content || '',
+            images: vo.coverImage ? [toFullUrl(vo.coverImage)] : [],
+            stats: { likes: vo.likeCount || 0, comments: vo.commentCount || 0 },
+            liked: vo.liked || !!likedIds[vo.id],
+            time: timeStr,
+            school: vo.schoolName || '',
+            sourceType: vo.sourceType || '',
+            sourceId: vo.sourceId || ''
+          }
+        })
+        this.setData({ feedList: list, currentList: list })
+        wx.removeStorageSync('lastFeedRenderError')
+        return true
+      } catch (err) {
+        const message = getErrorMessage(err)
+        console.error('处理帖子数据失败:', err)
+        wx.setStorageSync('lastFeedRenderError', message)
+        wx.showToast({ title: '帖子数据处理失败：' + message, icon: 'none', duration: 3500 })
+        return false
+      }
+    }, err => {
+      console.error('帖子接口请求失败:', err)
+      wx.showToast({ title: '帖子网络请求失败，请下拉刷新', icon: 'none', duration: 2000 })
+      return false
     })
   },
 

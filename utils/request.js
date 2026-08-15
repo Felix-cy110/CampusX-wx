@@ -38,11 +38,20 @@ function request(options) {
  */
 function toFullUrl(path) {
   if (!path) return ''
+  const value = String(path).trim()
+  if (!value) return ''
+
+  // 历史数据里曾保存过 localhost 地址。真机无法访问开发机 localhost，
+  // 将这类地址恢复成当前环境的公网后端地址。
+  const localPath = value.match(/^https?:\/\/(?:localhost|127\.0\.0\.1)(?::\d+)?(\/.*)?$/i)
+  if (localPath) return getBaseUrl() + (localPath[1] || '')
+
   // 已经是完整 URL，直接返回
-  if (path.startsWith('http://') || path.startsWith('https://')) return path
+  // 不使用 String.prototype.startsWith，兼容部分安卓微信 JS 运行环境。
+  if (/^https?:\/\//i.test(value)) return value
   // 相对路径，拼接当前环境的后端地址
-  if (path.startsWith('/')) return getBaseUrl() + path
-  return path
+  if (value.charAt(0) === '/') return getBaseUrl() + value
+  return value
 }
 
 module.exports = { request, getBaseUrl, toFullUrl }

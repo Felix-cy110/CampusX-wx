@@ -3,7 +3,7 @@
  *
  * 用法:
  *   const client = createStompClient({
- *     url: 'ws://localhost:5659/ws',
+ *     url: 'wss://xixutech.cn/ws',
  *     token: 'your-jwt-token',
  *     onMessage: (msg) => { ... },
  *     onConnected: () => { ... },

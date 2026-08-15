@@ -11,11 +11,11 @@
     <view class="section-header">
       <text>头像</text>
     </view>
-    <view class="avatar-area" bindtap="onChooseAvatar">
+    <button class="avatar-area avatar-button" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar">
       <image class="avatar-lg" src="{{avatar}}" mode="aspectFill" wx:if="{{avatar}}"></image>
       <view class="avatar-placeholder avatar-lg" wx:else></view>
-      <text class="text-xs text-secondary mt-10">点击更换头像</text>
-    </view>
+      <text class="text-xs text-secondary mt-10">点击选择微信头像</text>
+    </button>
   </view>
 
   <!-- 表单区域 -->
@@ -23,7 +23,7 @@
     <!-- 昵称 -->
     <view class="form-item">
       <text class="form-label">昵称</text>
-      <input class="form-input" value="{{nickname}}" placeholder="请输入昵称" bindinput="onInputNickname" />
+      <input class="form-input" type="nickname" value="{{nickname}}" placeholder="点击使用微信昵称" bindinput="onInputNickname" />
     </view>
 
     <!-- 入学时间 -->

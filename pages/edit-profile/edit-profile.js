@@ -142,21 +142,17 @@ Page({
 
   onBack() { wx.navigateBack() },
 
-  // 选择头像
-  onChooseAvatar() {
-    const that = this
-    wx.chooseImage({
-      count: 1,
-      sizeType: ['compressed'],
-      sourceType: ['album', 'camera'],
-      success: (res) => {
-        const tempFilePath = res.tempFilePaths[0]
-        that.setData({
-          avatar: tempFilePath,
-          avatarTempPath: tempFilePath,
-          avatarChanged: true
-        })
-      }
+  // 微信头像填写能力：可选择当前微信头像或相册图片。
+  onChooseAvatar(e) {
+    const tempFilePath = e && e.detail && e.detail.avatarUrl
+    if (!tempFilePath) {
+      wx.showToast({ title: '未选择头像', icon: 'none' })
+      return
+    }
+    this.setData({
+      avatar: tempFilePath,
+      avatarTempPath: tempFilePath,
+      avatarChanged: true
     })
   },
 
