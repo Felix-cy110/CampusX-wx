@@ -287,6 +287,61 @@
   color: var(--color-text-secondary);
 }
 
+/* ========== 活动横幅 ========== */
+.activity-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 8rpx 24rpx 12rpx;
+  padding: 20rpx 28rpx;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, var(--color-orange), var(--color-gold));
+  box-shadow: 0 4rpx 16rpx rgba(255, 128, 99, 0.25);
+}
+
+.activity-banner-left {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+}
+
+.activity-banner-star {
+  width: 36rpx;
+  height: 36rpx;
+  flex-shrink: 0;
+  margin-right: 10rpx;
+}
+
+.activity-banner-tag {
+  flex-shrink: 0;
+  margin-right: 14rpx;
+  padding: 4rpx 14rpx;
+  font-size: var(--font-sm);
+  font-weight: 600;
+  color: #ffffff;
+  border: 1rpx solid rgba(255, 255, 255, 0.85);
+  border-radius: 20rpx;
+}
+
+.activity-banner-text {
+  font-size: var(--font-md);
+  font-weight: 600;
+  color: #ffffff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.activity-banner-arrow {
+  flex-shrink: 0;
+  margin-left: 12rpx;
+  font-size: 32rpx;
+  line-height: 1;
+  color: #ffffff;
+  opacity: 0.9;
+}
+
 .market-sub-item.active .market-sub-text {
   color: var(--color-primary);
   font-weight: 700;

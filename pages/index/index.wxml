@@ -72,6 +72,15 @@
             <view class="market-sub-indicator" style="left: calc(30rpx + (100% - 60rpx) * {{marketIndicatorRatio}});"></view>
           </view>
 
+          <!-- 活动横幅（文案取自后端活动名，改名自动跟随） -->
+          <view class="activity-banner" wx:if="{{activityBanner && activityBanner.title}}" bindtap="goToActivity">
+            <view class="activity-banner-left">
+              <image class="activity-banner-star" src="/images/SVG/礼物.svg" mode="aspectFit"></image>
+              <text class="activity-banner-tag">活动</text>
+              <text class="activity-banner-text">{{activityBanner.title}}</text>
+            </view>
+            <text class="activity-banner-arrow">›</text>
+          </view>
 
           <!-- 内层 swiper：5 个分类面板 -->
           <swiper class="inner-swiper" current="{{innerSwiperIndex}}" bindchange="onInnerSwiperChange" easing-function="easeInOutCubic">

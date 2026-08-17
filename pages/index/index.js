@@ -3,6 +3,7 @@ const app = getApp()
 const { safeNavigate, safeSwitch } = require('../../utils/safeNavigate')
 const { request, toFullUrl } = require('../../utils/request')
 const { canAccessCampusFeatures, requireAuth } = require('../../utils/auth')
+const { getActivities } = require('../../utils/api/lottery')
 
 function pad2(value) {
   const text = String(value == null ? 0 : value)
@@ -52,6 +53,8 @@ Page({
     /* 数据 */
     userInfo: {},
     schoolInfo: {},
+    /* 首页活动横幅（取自后端活动名，改名自动跟随） */
+    activityBanner: null,
     /* 当前浏览学校 id，空表示本校 */
     browsingCampusId: '',
     feedList: [],
@@ -201,6 +204,7 @@ Page({
       bookServerHasMore: true
     })
     this.loadFeed()
+    this.loadActivityBanner()
     if (canAccessCampusFeatures()) this.loadCampusData()
   },
 
@@ -218,6 +222,28 @@ Page({
   getBrowseParams() {
     const campusId = this.data.browsingCampusId
     return campusId ? { campusId } : {}
+  },
+
+  /* 加载首页活动横幅：取进行中的活动名，改名后自动跟随 */
+  loadActivityBanner() {
+    getActivities(null, 20).then(res => {
+      // 进行中可能同时存在正式活动与测试活动，取最早创建（id 最小）的那一个
+      const ongoing = (res.list || [])
+        .filter(a => a.status === 0)
+        .sort((a, b) => a.id - b.id)[0]
+      this.setData({
+        activityBanner: ongoing ? { id: ongoing.id, title: ongoing.title } : null
+      })
+    }).catch(err => {
+      console.error('加载活动横幅失败:', err)
+    })
+  },
+
+  /* 点击活动横幅跳转到对应活动详情（邀请新人有奖里的具体活动） */
+  goToActivity() {
+    const banner = this.data.activityBanner
+    if (!banner || !banner.id) return
+    safeNavigate({ url: `/pages/invite-detail/invite-detail?id=${banner.id}` })
   },
 
   loadFeed() {
