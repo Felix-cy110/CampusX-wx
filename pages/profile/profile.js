@@ -21,6 +21,7 @@ Page({
 
     /* 内容分页 */
     contentPage: 1,
+    contentCursor: null,
     contentHasMore: true,
     contentLoading: false,
     loadingMore: false,
@@ -142,6 +143,7 @@ Page({
     }
     this.setData({
       contentPage: 1,
+      contentCursor: null,
       contentHasMore: true,
       contentLoading: true,
       filteredContentList: []
@@ -183,17 +185,36 @@ Page({
   _loadPublished(isLoadMore) {
     const pageNum = isLoadMore ? this.data.contentPage + 1 : 1
     return Promise.all([
+      this._fetchMyPosts(isLoadMore).catch(() => ({ list: [], hasMore: false, nextCursor: null })),
       this._fetchMyIdleProducts(pageNum).catch(() => ({ list: [], hasMore: false })),
       this._fetchMyProxyItems(pageNum).catch(() => ({ list: [], hasMore: false }))
-    ]).then(([idle, errand]) => {
-      const list = [...idle.list, ...errand.list]
+    ]).then(([posts, idle, errand]) => {
+      if (posts.nextCursor) {
+        this.setData({ contentCursor: posts.nextCursor })
+      }
+      const list = [...posts.list, ...idle.list, ...errand.list]
         .sort((a, b) => (b._createdAt || 0) - (a._createdAt || 0))
-      const hasMore = idle.hasMore || errand.hasMore
+      const hasMore = posts.hasMore || idle.hasMore || errand.hasMore
       this.setData({ contentPage: pageNum })
       this._finishLoading(list, hasMore)
     }).catch(err => {
       console.error('加载我发布的内容失败:', err)
       this._finishLoading([], false)
+    })
+  },
+
+  /* ===== API 调用：我发布的图文帖子（游标分页） ===== */
+  _fetchMyPosts(isLoadMore) {
+    const data = { pageSize: 20 }
+    if (isLoadMore && this.data.contentCursor) {
+      data.cursor = this.data.contentCursor
+    }
+    return request({ url: '/api/post/my', data }).then(result => {
+      return {
+        list: (result.list || []).map(vo => this._mapPostToCard(vo)),
+        hasMore: result.hasMore || false,
+        nextCursor: result.nextCursor || null
+      }
     })
   },
 
@@ -287,6 +308,30 @@ Page({
       contentLoading: false,
       loadingMore: false
     })
+  },
+
+  /* ===== 数据映射：PostListVO → 前端卡片 ===== */
+  _mapPostToCard(vo) {
+    const userInfo = this.data.userInfo || {}
+    return {
+      id: String(vo.id),
+      type: 'posts',
+      pinned: vo.isTop === 1,
+      isPrivate: vo.status !== 1,
+      user: {
+        uid: String(vo.userId || userInfo.uid),
+        name: vo.nickname || userInfo.nickname || '',
+        avatar: toFullUrl(vo.avatarUrl) || userInfo.avatar || ''
+      },
+      time: _formatRelativeTime(vo.createdAt),
+      content: vo.title || vo.content || '',
+      images: vo.coverImage ? [toFullUrl(vo.coverImage)] : [],
+      stats: { likes: vo.likeCount || 0, comments: vo.commentCount || 0 },
+      itemStatus: '',
+      _backendId: vo.id,
+      _backendType: 'post',
+      _createdAt: _parseTime(vo.createdAt)
+    }
   },
 
   /* ===== 数据映射：IdleSellerProductVO → 前端卡片 ===== */
