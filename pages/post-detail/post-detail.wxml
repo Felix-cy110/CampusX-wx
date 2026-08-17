@@ -61,12 +61,14 @@
         <text class="user-info-name">{{post.user.name}}</text>
       </view>
       <view class="user-info-right">
-        <view class="follow-btn" wx:if="{{!post.isFollowed}}" bindtap="toggleFollow">
-          <text>+关注</text>
-        </view>
-        <view class="follow-btn followed" wx:if="{{post.isFollowed}}" bindtap="toggleFollow">
-          <text>已关注</text>
-        </view>
+        <block wx:if="{{!post.isOwn}}">
+          <view class="follow-btn" wx:if="{{!post.isFollowed}}" bindtap="toggleFollow">
+            <text>+关注</text>
+          </view>
+          <view class="follow-btn followed" wx:if="{{post.isFollowed}}" bindtap="toggleFollow">
+            <text>已关注</text>
+          </view>
+        </block>
         <view class="share-btn" bindtap="showShareSheet">
           <image class="share-btn-icon" src="/images/SVG/转发.svg" mode="aspectFit"></image>
         </view>

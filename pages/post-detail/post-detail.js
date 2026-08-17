@@ -524,7 +524,7 @@ Page({
   toggleFollow() {
     const post = this.data.post
     const userId = post.user && post.user.uid
-    if (!userId) return
+    if (!userId || post.isOwn) return
 
     const isFollowed = post.isFollowed
     const method = isFollowed ? 'DELETE' : 'POST'
