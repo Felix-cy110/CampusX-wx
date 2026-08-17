@@ -211,7 +211,7 @@ Page({
     }
     return request({ url: '/api/post/my', data }).then(result => {
       return {
-        list: (result.list || []).map(vo => this._mapPostToCard(vo)),
+        list: (result.list || []).filter(vo => !vo.sourceType).map(vo => this._mapPostToCard(vo)),
         hasMore: result.hasMore || false,
         nextCursor: result.nextCursor || null
       }
