@@ -263,7 +263,6 @@
   align-items: center;
   margin-top: 16rpx;
   padding-top: 16rpx;
-  border-top: 1rpx solid #F0F0F0;
 }
 
 .post-stats {
