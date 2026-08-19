@@ -69,7 +69,7 @@
       <!-- 对方消息：链接卡片 -->
       <view wx:elif="{{item.from === 'other' && item.type === 'link'}}" class="msg-row msg-left">
         <view class="msg-avatar-wrap">
-          <image class="msg-avatar-img" src="{{otherAvatar}}" mode="aspectFill"></image>
+          <image class="msg-avatar-img" src="{{otherAvatar}}" mode="aspectFill" bindtap="goToUserHome"></image>
         </view>
         <view class="msg-body">
           <view class="link-card" bindtap="openSharedPost" data-post-id="{{item.linkPostId}}">
@@ -86,7 +86,7 @@
       <!-- 对方消息：图片 -->
       <view wx:elif="{{item.from === 'other' && item.type === 'image'}}" class="msg-row msg-left">
         <view class="msg-avatar-wrap">
-          <image class="msg-avatar-img" src="{{otherAvatar}}" mode="aspectFill"></image>
+          <image class="msg-avatar-img" src="{{otherAvatar}}" mode="aspectFill" bindtap="goToUserHome"></image>
         </view>
         <view class="msg-body">
           <view class="bubble bubble-other bubble-image">
@@ -99,7 +99,7 @@
       <!-- 对方消息：文字 -->
       <view wx:elif="{{item.from === 'other'}}" class="msg-row msg-left">
         <view class="msg-avatar-wrap">
-          <image class="msg-avatar-img" src="{{otherAvatar}}" mode="aspectFill"></image>
+          <image class="msg-avatar-img" src="{{otherAvatar}}" mode="aspectFill" bindtap="goToUserHome"></image>
         </view>
         <view class="msg-body">
           <view class="bubble bubble-other">

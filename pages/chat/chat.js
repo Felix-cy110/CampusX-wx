@@ -516,6 +516,17 @@ Page({
     safeNavigate({ url: '/pages/post-detail/post-detail?id=' + postId })
   },
 
+  goToUserHome: function () {
+    var otherUserId = this.data.otherUserId
+    if (!otherUserId) return
+    var safeNavigate = require('../../utils/safeNavigate').safeNavigate
+    safeNavigate({
+      url: '/pages/user-home/user-home?userId=' + otherUserId +
+        '&name=' + encodeURIComponent(this.data.otherName || '') +
+        '&avatar=' + encodeURIComponent(this.data.otherAvatar || '')
+    })
+  },
+
   goBack: function () {
     wx.navigateBack()
   }
