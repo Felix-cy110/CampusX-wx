@@ -13,7 +13,7 @@
   </view>
 
   <!-- 可滚动内容 -->
-  <scroll-view class="page-content" scroll-y enhanced show-scrollbar="{{false}}" bindscrolltolower="loadMorePosts" lower-threshold="150">
+  <scroll-view class="page-content" style="padding-top: {{statusBarHeight + navBarHeight}}px;" scroll-y enhanced show-scrollbar="{{false}}" bindscrolltolower="loadMorePosts" lower-threshold="150">
     <!-- 顶部背景区域 -->
     <view class="profile-header-bg">
       <!-- 头像 + 名称 + 学校标签 -->
