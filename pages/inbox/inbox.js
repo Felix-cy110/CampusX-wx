@@ -451,7 +451,7 @@ Page({
 
 /**
  * 将后端 ConversationVO 映射为 UI 所需格式
- * 互关（friend）= orderId 为空，临时会话（temp）= orderId 非空
+ * 只有双方互相关注时进入“互关”，其余会话统一进入“临时会话”
  */
 function mapConversation(vo) {
   return {
@@ -465,7 +465,7 @@ function mapConversation(vo) {
     unread: vo.unreadCount || 0,
     orderId: vo.orderId || null,
     orderType: vo.orderType || null,
-    type: vo.orderId ? 'temp' : 'friend'
+    type: vo.mutualFollow === true ? 'friend' : 'temp'
   }
 }
 
