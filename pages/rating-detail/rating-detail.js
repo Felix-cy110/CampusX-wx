@@ -1,5 +1,11 @@
 const mock = require('../../utils/mock.js')
 
+function buildShareTitle(value) {
+  const text = String(value || '').replace(/\s+/g, ' ').trim()
+  if (!text) return '分享一个校园评分'
+  return text.length > 40 ? text.slice(0, 40) + '…' : text
+}
+
 Page({
   data: {
     rating: {},
@@ -46,6 +52,16 @@ Page({
     })
   },
 
+  onShareAppMessage() {
+    const rating = this.data.rating || {}
+    const shareConfig = {
+      title: buildShareTitle(rating.title),
+      path: '/pages/rating-detail/rating-detail?id=' + encodeURIComponent(this.data.ratingId)
+    }
+    if (rating.images && rating.images[0]) shareConfig.imageUrl = rating.images[0]
+    return shareConfig
+  },
+
   getStarArray(score) {
     const fullStars = Math.floor(score)
     const hasHalf = score - fullStars >= 0.25
@@ -88,7 +104,7 @@ Page({
 
   showMoreOptions() {
     wx.showActionSheet({
-      itemList: ['举报帖子', '分享给好友', '分享到微信']
+      itemList: ['举报帖子']
     })
   },
 

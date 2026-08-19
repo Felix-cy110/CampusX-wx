@@ -142,6 +142,18 @@
   gap: 12rpx;
 }
 
+.share-native-button {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  line-height: normal;
+}
+
+.share-native-button::after {
+  border: 0;
+}
+
 .action-icon-wrap {
   width: 96rpx;
   height: 96rpx;

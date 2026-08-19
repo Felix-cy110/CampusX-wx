@@ -663,6 +663,19 @@ image.func-icon {
   opacity: 0.85;
 }
 
+.share-native-button {
+  margin-left: 0;
+  margin-right: 0;
+  padding: 0;
+  border: 0;
+  box-sizing: border-box;
+  line-height: normal;
+}
+
+.share-native-button::after {
+  border: 0;
+}
+
 .post-option-btn .option-icon {
   width: 32rpx;
   height: 32rpx;

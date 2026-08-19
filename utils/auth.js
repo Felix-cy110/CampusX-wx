@@ -126,6 +126,19 @@ function takePendingAuthTarget() {
   return target
 }
 
+function getPendingInviteCode() {
+  const target = wx.getStorageSync(PENDING_AUTH_TARGET_KEY)
+  const url = target && target.url
+  if (typeof url !== 'string') return ''
+  const match = url.match(/[?&]inviteCode=([^&#]*)/)
+  if (!match) return ''
+  try {
+    return decodeURIComponent(match[1]).trim()
+  } catch (e) {
+    return ''
+  }
+}
+
 function discardPendingSelectionTarget() {
   const target = wx.getStorageSync(PENDING_AUTH_TARGET_KEY)
   const route = target && normalizeRoute(target.url)
@@ -293,6 +306,7 @@ module.exports = {
   guardNavigation,
   guardAppEntry,
   resumeAfterAuth,
+  getPendingInviteCode,
   discardPendingSelectionTarget,
   handleAuthFailure,
   resetAuthNavigation

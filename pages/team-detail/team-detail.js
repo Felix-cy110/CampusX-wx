@@ -1,5 +1,11 @@
 const mock = require('../../utils/mock.js')
 
+function buildShareTitle(value) {
+  const text = String(value || '').replace(/\s+/g, ' ').trim()
+  if (!text) return '分享一个校园组队'
+  return text.length > 40 ? text.slice(0, 40) + '…' : text
+}
+
 Page({
   data: {
     team: {},
@@ -36,6 +42,16 @@ Page({
         }
       ]
     })
+  },
+
+  onShareAppMessage() {
+    const team = this.data.team || {}
+    const shareConfig = {
+      title: buildShareTitle(team.title),
+      path: '/pages/team-detail/team-detail?id=' + encodeURIComponent(this.data.teamId)
+    }
+    if (team.images && team.images[0]) shareConfig.imageUrl = team.images[0]
+    return shareConfig
   },
 
   goBack() {
@@ -79,7 +95,7 @@ Page({
 
   showMoreOptions() {
     wx.showActionSheet({
-      itemList: ['举报帖子', '分享给好友', '分享到微信']
+      itemList: ['举报帖子']
     })
   },
 

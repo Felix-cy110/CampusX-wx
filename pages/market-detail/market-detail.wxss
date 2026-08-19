@@ -388,6 +388,20 @@
   flex-direction: column;
   flex-shrink: 0;
 }
+.share-native-button {
+  margin-right: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  line-height: normal;
+}
+.share-native-button::after {
+  border: 0;
+}
+.share-action-icon {
+  width: 36rpx;
+  height: 36rpx;
+}
 .bottom-action-icon {
   font-size: 36rpx;
   line-height: 1;

@@ -201,10 +201,10 @@
             <image class="option-icon" src="/images/SVG/好友.svg" mode="aspectFit"></image>
             <text class="option-text">分享给互关好友</text>
           </view>
-          <view class="post-option-btn btn-green" bindtap="onShareToWechat">
+          <button class="post-option-btn btn-green share-native-button" open-type="share" data-id="{{selectedPostId}}">
             <image class="option-icon" src="/images/SVG/微信.svg" mode="aspectFit"></image>
             <text class="option-text">分享给微信好友</text>
-          </view>
+          </button>
           <view class="post-option-btn btn-red" bindtap="onDeletePost">
             <image class="option-icon" src="/images/SVG/删除.svg" mode="aspectFit"></image>
             <text class="option-text">{{selectedPostBackendType === 'idle' ? '下架商品' : '删除帖子'}}</text>

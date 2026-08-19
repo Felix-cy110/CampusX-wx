@@ -3,6 +3,12 @@ const { request, toFullUrl } = require('../../utils/request')
 const { safeNavigate, safeSwitch } = require('../../utils/safeNavigate')
 const { canAccessCampusFeatures } = require('../../utils/auth')
 
+function buildShareTitle(value, fallback) {
+  const text = String(value || '').replace(/\s+/g, ' ').trim()
+  if (!text) return fallback
+  return text.length > 40 ? text.slice(0, 40) + '…' : text
+}
+
 Page({
   data: {
     isLoggedIn: false,
@@ -77,6 +83,49 @@ Page({
     } else {
       this.resetLoggedOutContent()
     }
+  },
+
+  onShareAppMessage(res) {
+    if (!res || res.from !== 'button') {
+      return {
+        title: 'CampusX 校园生活服务平台',
+        path: '/pages/index/index'
+      }
+    }
+
+    const dataset = (res.target && res.target.dataset) || {}
+    const id = dataset.id || this.data.selectedPostId
+    const item = this.data.filteredContentList.find(content => String(content.id) === String(id))
+    if (!item) {
+      return {
+        title: 'CampusX 校园生活服务平台',
+        path: '/pages/index/index'
+      }
+    }
+
+    const backendId = item._backendId || item.id
+    const backendType = item._backendType || 'post'
+    const isIdle = backendType === 'idle'
+    const isProxy = backendType === 'proxy_demand' || backendType === 'proxy_supply'
+    let path
+    if (isIdle) {
+      path = '/pages/market-detail/market-detail?id=' + encodeURIComponent(backendId)
+    } else if (isProxy) {
+      path = '/pages/errand-detail/errand-detail?id=' + encodeURIComponent(backendId) +
+        '&type=' + (backendType === 'proxy_supply' ? 'supply' : 'demand')
+    } else {
+      path = '/pages/post-detail/post-detail?id=' + encodeURIComponent(backendId)
+    }
+    const shareConfig = {
+      title: buildShareTitle(item.content, isIdle ? '分享一个校园好物' : (isProxy ? '分享一个代课信息' : '分享一条校园动态')),
+      path
+    }
+    if (item.images && item.images[0]) {
+      shareConfig.imageUrl = item.images[0]
+    }
+
+    this.hidePostOptions()
+    return shareConfig
   },
 
   resetLoggedOutContent() {
@@ -613,13 +662,6 @@ Page({
     const backendId = item._backendId
     const backendType = item._backendType || 'post'
     safeNavigate({ url: '/pages/share/share?targetId=' + backendId + '&targetType=' + backendType })
-  },
-
-  /* 分享给微信好友 */
-  onShareToWechat() {
-    const id = this.data.selectedPostId
-    this.hidePostOptions()
-    wx.showToast({ title: '分享功能开发中', icon: 'none' })
   },
 
   /* 删除帖子 */

@@ -90,6 +90,10 @@
       <text class="bottom-action-icon">{{isFavorited ? '⭐' : '☆'}}</text>
       <text class="bottom-action-count" style="color: {{isFavorited ? 'var(--color-star)' : 'var(--color-text-secondary)'}};">{{isFavorited ? '已收藏' : '收藏'}}</text>
     </view>
+    <button class="bottom-action favorite-action share-native-button" open-type="share">
+      <image class="share-action-icon" src="/images/SVG/转发.svg" mode="aspectFit"></image>
+      <text class="bottom-action-count">分享</text>
+    </button>
     <!-- 占位：将右侧按钮推到末端 -->
     <view class="bottom-spacer"></view>
     <block wx:if="{{!item.isOwn}}">

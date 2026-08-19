@@ -7,7 +7,9 @@
         <image class="nav-back-icon" src="/images/SVG/返回.svg" mode="aspectFit"></image>
       </view>
       <text class="nav-title">跑腿详情</text>
-      <view class="nav-placeholder"></view>
+      <button class="nav-placeholder share-nav-button" open-type="share">
+        <image class="share-nav-icon" src="/images/SVG/转发.svg" mode="aspectFit"></image>
+      </button>
     </view>
   </view>
 
@@ -62,7 +64,7 @@
   <!-- 底部下单按钮 -->
   <view class="bottom-bar" wx:if="{{!loading && demand}}">
     <view class="bottom-btn {{applying ? 'disabled' : ''}}" bindtap="applyOrder">
-      <text>{{applying ? '下单中...' : '下单'}}</text>
+      <text>{{demand.type === 'supply' ? '联系TA' : (applying ? '下单中...' : '下单')}}</text>
     </view>
   </view>
 

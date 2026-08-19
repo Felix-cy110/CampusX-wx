@@ -4,6 +4,12 @@ const { safeNavigate, safeSwitch } = require('../../utils/safeNavigate')
 const { request, getBaseUrl, toFullUrl } = require('../../utils/request')
 const { handleAuthFailure } = require('../../utils/auth')
 
+function buildShareTitle(value) {
+  const text = String(value || '').replace(/\s+/g, ' ').trim()
+  if (!text) return '分享一条校园动态'
+  return text.length > 40 ? text.slice(0, 40) + '…' : text
+}
+
 Page({
   data: {
     post: {},
@@ -28,6 +34,8 @@ Page({
     commentCursor: null,
     commentHasMore: true,
     commentLoading: false,
+    sharedCommentId: '',
+    scrollIntoView: '',
     /* 举报弹窗 */
     showReportModal: false,
     reportReasons: [
@@ -50,6 +58,7 @@ Page({
     const statusBarHeight = systemInfo.statusBarHeight
     const navBarHeight = (menuButton.top - statusBarHeight) * 2 + menuButton.height
     const rawId = options.id || ''
+    const sharedCommentId = options.commentId || ''
     const numericId = Number(rawId)
     const cachedPost = wx.getStorageSync('selectedPostDetail')
     const postSource = this.findMockPost(rawId, numericId) ||
@@ -77,6 +86,7 @@ Page({
       this.setData({
         post,
         postId: rawId,
+        sharedCommentId,
         currentUserAvatar,
         statusBarHeight,
         navBarHeight
@@ -85,6 +95,7 @@ Page({
       this.setData({
         post: { id: rawId, user: {}, stats: {}, images: [] },
         postId: rawId,
+        sharedCommentId,
         currentUserAvatar,
         statusBarHeight,
         navBarHeight
@@ -92,6 +103,34 @@ Page({
     }
     this.loadPostDetail(rawId)
     this.loadComments(rawId)
+  },
+  onShareAppMessage(res) {
+    const post = this.data.post || {}
+    const postId = this.data.postId || post.id
+    const dataset = (res && res.target && res.target.dataset) || {}
+    const commentId = dataset.commentId || ''
+    const comment = commentId ? this.findCommentById(commentId) : null
+    const shareConfig = {
+      title: comment
+        ? buildShareTitle((comment.name ? comment.name + '：' : '') + (comment.content || ''))
+        : buildShareTitle(post.title || post.displayContent || post.content),
+      path: postId
+        ? '/pages/post-detail/post-detail?id=' + encodeURIComponent(postId) +
+          (commentId ? '&commentId=' + encodeURIComponent(commentId) : '')
+        : '/pages/index/index'
+    }
+    if (post.images && post.images[0]) {
+      shareConfig.imageUrl = post.images[0]
+    }
+    if (res && res.from === 'button') {
+      this.setData({
+        showActionSheet: false,
+        showShareModal: false,
+        showCommentOptionsModal: false,
+        selectedComment: null
+      })
+    }
+    return shareConfig
   },
   loadPostDetail(id) {
     if (!id) return
@@ -179,7 +218,7 @@ Page({
         commentCursor: result.nextCursor || null,
         commentHasMore: result.hasMore || false,
         commentLoading: false
-      })
+      }, () => this.scrollToSharedComment(groupedComments))
       // 同步更新帖子评论数
       const totalComments = this.countTotalComments(comments)
       const post = this.data.post
@@ -201,7 +240,7 @@ Page({
         commentCursor: null,
         commentHasMore: false,
         commentLoading: false
-      })
+      }, () => this.scrollToSharedComment(groupedComments))
       const totalComments = this.countTotalComments(comments)
       const post = this.data.post
       if (post.stats) post.stats.comments = totalComments
@@ -324,6 +363,38 @@ Page({
       }
     }
     return groups
+  },
+
+  scrollToSharedComment(groups) {
+    const targetId = this.data.sharedCommentId
+    if (!targetId) return
+
+    let groupIndex = -1
+    let replyIndex = -1
+    for (let i = 0; i < (groups || []).length; i++) {
+      const group = groups[i]
+      if (String(group.rootId) === String(targetId)) {
+        groupIndex = i
+        break
+      }
+      const index = (group.replies || []).findIndex(reply => String(reply.id) === String(targetId))
+      if (index >= 0) {
+        groupIndex = i
+        replyIndex = index
+        break
+      }
+    }
+    if (groupIndex < 0) return
+
+    const updates = { scrollIntoView: '' }
+    if (replyIndex > 0) {
+      updates[`groupedComments[${groupIndex}].expandedCount`] = replyIndex
+    }
+    this.setData(updates, () => {
+      setTimeout(() => {
+        this.setData({ scrollIntoView: 'comment-' + targetId })
+      }, 80)
+    })
   },
 
   /* 展开/折叠某一级评论下的回复：每次展开 8 条，全部展开后再点击收起 */
@@ -895,12 +966,6 @@ Page({
     wx.navigateTo({ url: '/pages/share/share?postId=' + postId })
   },
 
-  /* 分享给微信好友 */
-  shareToWechat() {
-    this.setData({ showActionSheet: false })
-    wx.showToast({ title: '分享给微信好友', icon: 'none' })
-  },
-
   /* 删除帖子 */
   deletePost() {
     this.setData({ showActionSheet: false })
@@ -1011,12 +1076,6 @@ Page({
   shareCommentToFriends() {
     this.hideCommentOptions()
     wx.showToast({ title: '分享给互关好友', icon: 'none' })
-  },
-
-  /* 分享评论给微信好友 */
-  shareCommentToWechat() {
-    this.hideCommentOptions()
-    wx.showToast({ title: '分享给微信好友', icon: 'none' })
   },
 
   /* 举报评论 */

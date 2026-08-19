@@ -53,6 +53,26 @@
   width: 80rpx;
 }
 
+.share-nav-button {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  line-height: normal;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.share-nav-button::after {
+  border: 0;
+}
+
+.share-nav-icon {
+  width: 36rpx;
+  height: 36rpx;
+}
+
 /* 内容区 */
 .content {
   flex: 1;

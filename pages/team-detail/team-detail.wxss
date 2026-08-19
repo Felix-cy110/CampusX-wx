@@ -266,6 +266,19 @@
   align-items: center;
   margin: 0 12rpx;
 }
+.share-native-button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  line-height: normal;
+}
+.share-native-button::after {
+  border: 0;
+}
+.share-action-icon {
+  width: 32rpx;
+  height: 32rpx;
+}
 .bottom-action-icon {
   font-size: var(--font-lg);
 }

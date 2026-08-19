@@ -1,6 +1,6 @@
 const app = getApp()
 const { request, toFullUrl } = require('../../utils/request')
-const { storeToken, resetAuthNavigation, resumeAfterAuth, discardPendingSelectionTarget } = require('../../utils/auth')
+const { storeToken, resetAuthNavigation, resumeAfterAuth, discardPendingSelectionTarget, getPendingInviteCode } = require('../../utils/auth')
 
 Page({
   data: {
@@ -31,10 +31,14 @@ Page({
           return
         }
 
+        const loginData = { code: loginRes.code }
+        const pendingInviteCode = getPendingInviteCode()
+        if (pendingInviteCode) loginData.inviteCode = pendingInviteCode
+
         request({
           url: '/api/v1/user/login/wechat',
           method: 'POST',
-          data: { code: loginRes.code }
+          data: loginData
         }).then(vo => {
           storeToken(vo.token, vo.tokenExpireTime)
 

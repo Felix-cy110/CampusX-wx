@@ -31,9 +31,9 @@
       <view class="action-sheet-item" bindtap="shareToFriends">
         <text>分享给互关好友</text>
       </view>
-      <view class="action-sheet-item action-sheet-green" bindtap="shareToWechat">
+      <button class="action-sheet-item action-sheet-green share-native-button" open-type="share">
         <text>分享给微信好友</text>
-      </view>
+      </button>
       <view class="action-sheet-item action-sheet-red" bindtap="deletePost">
         <text>删除帖子</text>
       </view>
@@ -43,7 +43,7 @@
     </view>
   </view>
 
-  <scroll-view class="content" scroll-y bindscrolltolower="loadMoreComments">
+  <scroll-view class="content" scroll-y scroll-into-view="{{scrollIntoView}}" scroll-with-animation bindscrolltolower="loadMoreComments">
     <!-- 图片轮播 -->
     <view class="image-swiper-wrap" wx:if="{{post.images && post.images.length}}">
       <swiper class="image-swiper" indicator-dots="{{post.images.length > 1}}" indicator-color="rgba(255,255,255,0.5)" indicator-active-color="#FFFFFF" current="{{swiperCurrent}}" bindchange="onSwiperChange">
@@ -104,7 +104,7 @@
       <!-- 分组评论列表：每组为一级评论 + 其下所有回复 -->
       <block wx:for="{{groupedComments}}" wx:key="rootId">
         <!-- 顶级评论：带头像 -->
-        <view class="comment-item" bindlongpress="showCommentOptions" data-id="{{item.root.id}}" data-name="{{item.root.name}}" data-content="{{item.root.content}}">
+        <view id="comment-{{item.root.id}}" class="comment-item" bindlongpress="showCommentOptions" data-id="{{item.root.id}}" data-name="{{item.root.name}}" data-content="{{item.root.content}}">
           <image class="comment-avatar" src="{{item.root.avatar}}" mode="aspectFill"></image>
           <view class="comment-body">
             <text class="comment-text comment-inline-text" bindtap="replyComment" data-id="{{item.root.id}}"><text class="comment-name">{{item.root.name}}</text><text class="comment-reply-text-black">：</text>{{item.root.content}}</text>
@@ -128,7 +128,7 @@
         <!-- 子回复组：统一灰色框包裹所有回复，默认只展示第一条，其余在按钮下方向下展开 -->
         <view class="comment-reply-wrap" wx:if="{{item.replies.length > 0}}">
           <!-- 默认展示第一条回复 -->
-          <view class="comment-reply" bindlongpress="showCommentOptions" data-id="{{item.replies[0].id}}" data-name="{{item.replies[0].name}}" data-content="{{item.replies[0].content}}">
+          <view id="comment-{{item.replies[0].id}}" class="comment-reply" bindlongpress="showCommentOptions" data-id="{{item.replies[0].id}}" data-name="{{item.replies[0].name}}" data-content="{{item.replies[0].content}}">
             <view class="comment-body">
               <text class="comment-text reply-text-inline" bindtap="replyComment" data-id="{{item.replies[0].id}}"><text class="comment-reply-nick">{{item.replies[0].name}}</text><text wx:if="{{item.replies[0].replyTo && item.replies[0].depth > 1}}" class="comment-reply-text-black"> 回复 </text><text wx:if="{{item.replies[0].replyTo && item.replies[0].depth > 1}}" class="comment-reply-nick">{{item.replies[0].replyTo}}</text><text class="comment-reply-text-black">：</text>{{item.replies[0].content}}</text>
               <image wx:if="{{item.replies[0].imageUrl}}" class="comment-image comment-reply-image" src="{{item.replies[0].imageUrl}}" mode="aspectFill" bindtap="previewCommentImage" data-src="{{item.replies[0].imageUrl}}"></image>
@@ -146,7 +146,7 @@
 
           <!-- 剩余回复：按 expandedCount 渐进展开，每次 8 条 -->
           <view class="comment-replies-collapse" style="max-height: {{(item._animClosing || item.expandedCount === 0) ? '0' : '1200rpx'}}; opacity: {{(item._animClosing || item.expandedCount === 0) ? 0 : 1}};">
-            <view class="comment-reply" wx:for="{{item.replies}}" wx:for-item="reply" wx:for-index="replyIdx" wx:key="id" wx:if="{{replyIdx >= 1 && replyIdx <= item.expandedCount}}" bindlongpress="showCommentOptions" data-id="{{reply.id}}" data-name="{{reply.name}}" data-content="{{reply.content}}">
+            <view id="comment-{{reply.id}}" class="comment-reply" wx:for="{{item.replies}}" wx:for-item="reply" wx:for-index="replyIdx" wx:key="id" wx:if="{{replyIdx >= 1 && replyIdx <= item.expandedCount}}" bindlongpress="showCommentOptions" data-id="{{reply.id}}" data-name="{{reply.name}}" data-content="{{reply.content}}">
               <view class="comment-body">
                 <text class="comment-text reply-text-inline" bindtap="replyComment" data-id="{{reply.id}}"><text class="comment-reply-nick">{{reply.name}}</text><text wx:if="{{reply.replyTo && reply.depth > 1}}" class="comment-reply-text-black"> 回复 </text><text wx:if="{{reply.replyTo && reply.depth > 1}}" class="comment-reply-nick">{{reply.replyTo}}</text><text class="comment-reply-text-black">：</text>{{reply.content}}</text>
                 <image wx:if="{{reply.imageUrl}}" class="comment-image comment-reply-image" src="{{reply.imageUrl}}" mode="aspectFill" bindtap="previewCommentImage" data-src="{{reply.imageUrl}}"></image>
@@ -247,6 +247,10 @@
           <image class="option-icon" src="/images/SVG/好友.svg" mode="aspectFit"></image>
           <text class="option-text">分享给互关好友</text>
         </view>
+        <button class="post-option-btn btn-green share-native-button" open-type="share">
+          <image class="option-icon" src="/images/SVG/微信.svg" mode="aspectFit"></image>
+          <text class="option-text">分享给微信好友</text>
+        </button>
       </view>
       <view class="post-option-report" bindtap="reportPost">
         <text class="report-text">举报</text>
@@ -269,10 +273,10 @@
           <image class="option-icon" src="/images/SVG/好友.svg" mode="aspectFit"></image>
           <text class="option-text">分享给互关好友</text>
         </view>
-        <view class="comment-option-btn btn-green" bindtap="shareCommentToWechat">
+        <button class="comment-option-btn btn-green share-native-button" open-type="share" data-comment-id="{{selectedComment.id}}">
           <image class="option-icon" src="/images/SVG/微信.svg" mode="aspectFit"></image>
           <text class="option-text">分享给微信好友</text>
-        </view>
+        </button>
       </view>
       <view class="comment-option-btn btn-gray" bindtap="deleteCommentAction" wx:if="{{commentIsOwn}}">
         <text class="option-text" style="color: #FF6B6B;">删除</text>

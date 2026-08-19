@@ -1,6 +1,12 @@
 const { request, toFullUrl } = require('../../utils/request')
 const app = getApp()
 
+function buildShareTitle(value) {
+  const text = String(value || '').replace(/\s+/g, ' ').trim()
+  if (!text) return '分享一个校园好物'
+  return text.length > 40 ? text.slice(0, 40) + '…' : text
+}
+
 Page({
   data: {
     item: {},
@@ -32,6 +38,16 @@ Page({
     const type = options.type || 'book'
     this.setData({ itemId: id })
     this.loadProductDetail(id, type)
+  },
+
+  onShareAppMessage() {
+    const item = this.data.item || {}
+    const shareConfig = {
+      title: buildShareTitle(item.title),
+      path: '/pages/market-detail/market-detail?id=' + encodeURIComponent(this.data.itemId)
+    }
+    if (item.images && item.images[0]) shareConfig.imageUrl = item.images[0]
+    return shareConfig
   },
 
   /** 加载商品详情 */
@@ -335,7 +351,7 @@ Page({
 
   showMoreOptions() {
     wx.showActionSheet({
-      itemList: ['举报帖子', '分享给好友'],
+      itemList: ['举报商品'],
       success: (res) => {
         if (res.tapIndex === 0) {
           this.doReport()

@@ -87,6 +87,7 @@
       <text class="invite-code">{{inviteCode}}</text>
       <view class="btn-copy" bindtap="onCopyCode">复制</view>
     </view>
-    <view class="btn-submit" bindtap="onShareInvite">邀请好友，获取抽奖号码</view>
+    <button wx:if="{{inviteCode}}" class="btn-submit share-native-button" open-type="share">邀请好友，获取抽奖号码</button>
+    <view wx:else class="btn-submit" bindtap="onShareInvite">邀请好友，获取抽奖号码</view>
   </view>
 </view>

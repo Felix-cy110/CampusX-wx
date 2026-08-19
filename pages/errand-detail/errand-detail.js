@@ -3,12 +3,32 @@ const { safeNavigate } = require('../../utils/safeNavigate')
 const { request, toFullUrl } = require('../../utils/request')
 const { requireAuth } = require('../../utils/auth')
 
+function formatDateTime(value) {
+  if (!value) return ''
+  if (Array.isArray(value)) {
+    const y = value[0]
+    const m = String(value[1]).padStart(2, '0')
+    const d = String(value[2]).padStart(2, '0')
+    const h = String(value[3] || 0).padStart(2, '0')
+    const minute = String(value[4] || 0).padStart(2, '0')
+    return `${y}-${m}-${d} ${h}:${minute}`
+  }
+  return String(value).replace('T', ' ').slice(0, 16)
+}
+
+function buildShareTitle(value, type) {
+  const text = String(value || '').replace(/\s+/g, ' ').trim()
+  if (!text) return type === 'supply' ? '分享一个代课供给' : '分享一个代课需求'
+  return text.length > 40 ? text.slice(0, 40) + '…' : text
+}
+
 Page({
   data: {
     statusBarHeight: 0,
     navBarHeight: 0,
 
     demand: null,
+    detailType: 'demand',
     loading: true,
     applying: false,
 
@@ -22,26 +42,38 @@ Page({
     const statusBarHeight = systemInfo.statusBarHeight
     const navBarHeight = (menuButton.top - statusBarHeight) * 2 + menuButton.height
 
+    const id = options.id || ''
+    const detailType = options.type === 'supply' ? 'supply' : 'demand'
     this.setData({
       statusBarHeight,
       navBarHeight,
+      detailType,
       isLoggedIn: app.globalData.isLoggedIn
     })
 
     // 从存储中读取跑腿数据
     const demand = wx.getStorageSync('currentErrand')
-    if (demand) {
-      this.setData({ demand, loading: false })
+    if (demand && (!id || String(demand.id) === String(id))) {
+      const cachedType = demand.type === 'supply' ? 'supply' : detailType
+      this.setData({ demand, detailType: cachedType, loading: false })
       wx.removeStorageSync('currentErrand')
     } else {
-      // 如果没有数据，尝试通过 id 加载（预留后端接口）
-      const id = options.id
+      if (demand) wx.removeStorageSync('currentErrand')
       if (id) {
-        this.loadDemandById(id)
+        this.loadDemandById(id, detailType)
       } else {
         this.setData({ loading: false })
         wx.showToast({ title: '数据不存在', icon: 'none' })
       }
+    }
+  },
+
+  onShareAppMessage() {
+    const demand = this.data.demand || {}
+    return {
+      title: buildShareTitle(demand.title, this.data.detailType),
+      path: '/pages/errand-detail/errand-detail?id=' + encodeURIComponent(demand.id || '') +
+        '&type=' + encodeURIComponent(this.data.detailType)
     }
   },
 
@@ -51,10 +83,59 @@ Page({
     })
   },
 
-  /* 预留：通过 ID 加载需求详情（后端接口就绪后使用） */
-  loadDemandById(id) {
-    this.setData({ loading: false })
-    wx.showToast({ title: '数据加载失败，请返回重试', icon: 'none' })
+  loadDemandById(id, detailType) {
+    const isSupply = detailType === 'supply'
+    request({
+      url: isSupply
+        ? '/api/v1/proxy-class-supply/' + id
+        : '/api/v1/proxy-class-demand/' + id,
+      method: 'GET'
+    }).then(vo => {
+      const demand = isSupply ? this.mapSupplyDetail(vo) : this.mapDemandDetail(vo)
+      this.setData({ demand, loading: false })
+    }).catch(err => {
+      console.error('加载跑腿详情失败:', err)
+      this.setData({ demand: null, loading: false })
+      wx.showToast({ title: (err && err.message) || '数据加载失败，请返回重试', icon: 'none' })
+    })
+  },
+
+  mapDemandDetail(vo) {
+    const location = [vo.locationCampus, vo.locationBuilding, vo.locationRoom].filter(Boolean).join(' ')
+    const content = [location, formatDateTime(vo.classTime), vo.remark].filter(Boolean).join('\n')
+    return {
+      id: vo.id,
+      type: 'errand',
+      user: {
+        uid: String(vo.userId || ''),
+        name: vo.nickname || '',
+        avatar: toFullUrl(vo.avatarUrl) || '/images/avatars/default.png'
+      },
+      title: vo.courseName || '',
+      content: content || vo.courseName || '',
+      reward: vo.fee != null ? Number(vo.fee) : 0,
+      time: formatDateTime(vo.createdAt),
+      status: vo.status,
+      _raw: { onlySameSchool: vo.onlySameSchool }
+    }
+  },
+
+  mapSupplyDetail(vo) {
+    return {
+      id: vo.id,
+      type: 'supply',
+      user: {
+        uid: String(vo.userId || ''),
+        name: vo.nickname || '',
+        avatar: toFullUrl(vo.avatarUrl) || '/images/avatars/default.png'
+      },
+      title: vo.subjectRange || '',
+      content: vo.availableTime || '',
+      reward: vo.expectedFee != null ? Number(vo.expectedFee) : 0,
+      time: formatDateTime(vo.createdAt),
+      status: vo.status,
+      _raw: {}
+    }
   },
 
   goBack() {
@@ -86,6 +167,10 @@ Page({
 
   /* 下单（申请接单） */
   applyOrder() {
+    if (this.data.detailType === 'supply') {
+      this.contactUser()
+      return
+    }
     if (!this.requireLogin()) return
     if (this.data.applying) return
 

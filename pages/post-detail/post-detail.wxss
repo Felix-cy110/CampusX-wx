@@ -110,6 +110,10 @@
   font-weight: 500;
 }
 
+.action-sheet-item.share-native-button {
+  width: 100%;
+}
+
 .action-sheet-green {
   background: #22C55E;
 }
@@ -602,6 +606,19 @@
   opacity: 0.85;
 }
 
+.share-native-button {
+  margin-left: 0;
+  margin-right: 0;
+  padding: 0;
+  border: 0;
+  box-sizing: border-box;
+  line-height: normal;
+}
+
+.share-native-button::after {
+  border: 0;
+}
+
 .post-option-btn .option-icon {
   width: 32rpx;
   height: 32rpx;
@@ -615,6 +632,10 @@
 
 .post-option-btn.btn-gray {
   background: #3B3B3B;
+}
+
+.post-option-btn.btn-green {
+  background: var(--color-green);
 }
 
 .post-option-report {

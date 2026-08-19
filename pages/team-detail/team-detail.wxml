@@ -96,6 +96,10 @@
         <text class="bottom-action-icon" style="color: {{isFavorited ? 'var(--color-star)' : 'var(--color-text-secondary)'}};">⭐</text>
         <text class="bottom-action-count">{{team.stats.comments}}</text>
       </view>
+      <button class="bottom-action share-native-button" open-type="share">
+        <image class="share-action-icon" src="/images/SVG/转发.svg" mode="aspectFit"></image>
+        <text class="bottom-action-count">分享</text>
+      </button>
     </view>
     <view class="bottom-plus-btn" bindtap="addComment">
       <text class="plus-icon">+</text>
