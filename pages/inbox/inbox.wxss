@@ -36,6 +36,8 @@
   display: flex;
   align-items: center;
   gap: 16rpx;
+  /* 与个人资料页保持一致，避开微信右上角原生胶囊按钮 */
+  margin-right: 180rpx;
 }
 
 .nav-btn {
