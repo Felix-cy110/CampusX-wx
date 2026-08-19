@@ -1,7 +1,8 @@
 const app = getApp()
 const mock = require('../../utils/mock.js')
 const { safeNavigate, safeSwitch } = require('../../utils/safeNavigate')
-const { request, toFullUrl } = require('../../utils/request')
+const { request, getBaseUrl, toFullUrl } = require('../../utils/request')
+const { handleAuthFailure } = require('../../utils/auth')
 
 Page({
   data: {
@@ -19,6 +20,9 @@ Page({
     selectedComment: null,
     commentIsOwn: false,
     commentInput: '',
+    showCommentTools: false,
+    commentImagePath: '',
+    commentSubmitting: false,
     currentUserAvatar: '',
     replyTarget: null,
     commentCursor: null,
@@ -260,6 +264,7 @@ Page({
       avatar: toFullUrl(vo.avatarUrl) || '',
       time: this.formatRelativeTime(vo.createdAt),
       content: vo.content || '',
+      imageUrl: toFullUrl(vo.imageUrl),
       likes: vo.likeCount || 0,
       liked: vo.liked || false,
       replies: [],
@@ -681,23 +686,6 @@ Page({
     }
   },
 
-  /* 在 flatComments 中查找指定评论 ID 所属的顶级根评论 ID */
-  findRootIdForComment(commentId) {
-    const flat = this.data.flatComments
-    if (!flat || flat.length === 0) return null
-    for (let i = 0; i < flat.length; i++) {
-      if (String(flat[i].id) === String(commentId)) {
-        if (flat[i].depth === 0) return commentId
-        // 向前找最近的 depth 0 评论
-        for (let j = i - 1; j >= 0; j--) {
-          if (flat[j].depth === 0) return flat[j].id
-        }
-        return null
-      }
-    }
-    return null
-  },
-
   /* 在评论树中查找指定 ID 的评论 */
   findCommentById(id) {
     const search = (list) => {
@@ -714,7 +702,66 @@ Page({
   },
 
   addImage() {
-    wx.showToast({ title: '选择图片', icon: 'none' })
+    this.setData({ showCommentTools: !this.data.showCommentTools })
+  },
+
+  /* 从评论工具栏选择一张图片，先展示预览，发送时再上传 */
+  chooseCommentImage() {
+    wx.chooseMedia({
+      count: 1,
+      mediaType: ['image'],
+      sourceType: ['album', 'camera'],
+      sizeType: ['compressed'],
+      success: (res) => {
+        const file = res.tempFiles && res.tempFiles[0]
+        if (!file || !file.tempFilePath) return
+        this.setData({
+          commentImagePath: file.tempFilePath,
+          showCommentTools: false
+        })
+      }
+    })
+  },
+
+  removeCommentImage() {
+    this.setData({ commentImagePath: '' })
+  },
+
+  previewPendingCommentImage() {
+    const src = this.data.commentImagePath
+    if (src) wx.previewImage({ current: src, urls: [src] })
+  },
+
+  previewCommentImage(e) {
+    const src = e.currentTarget.dataset.src
+    if (src) wx.previewImage({ current: src, urls: [src] })
+  },
+
+  /* 上传评论图片，返回后端保存的相对路径 */
+  uploadCommentImage(filePath) {
+    const token = wx.getStorageSync('token') || ''
+    return new Promise((resolve, reject) => {
+      wx.uploadFile({
+        url: getBaseUrl() + '/api/v1/upload/image',
+        filePath,
+        name: 'file',
+        header: token ? { Authorization: 'Bearer ' + token } : {},
+        success: (res) => {
+          try {
+            const result = JSON.parse(res.data)
+            if (result.code === 200 && result.data && result.data.url) {
+              resolve(result.data.url)
+            } else {
+              handleAuthFailure(result, token)
+              reject(result)
+            }
+          } catch (error) {
+            reject(new Error('解析上传结果失败'))
+          }
+        },
+        fail: () => reject(new Error('图片上传失败'))
+      })
+    })
   },
 
   /* 评论输入框内容变化 */
@@ -724,96 +771,53 @@ Page({
 
   /* 取消回复 */
   cancelReply() {
-    this.setData({ replyTarget: null, commentInput: '' })
-  },
-
-  /* 递归在评论树中找到父评论并追加回复（支持多层嵌套） */
-  addReplyToTree(comments, parentId, newReply) {
-    return comments.map(c => {
-      if (String(c.id) === String(parentId)) {
-        const replies = c.replies ? [...c.replies, newReply] : [newReply]
-        return { ...c, replies }
-      }
-      if (c.replies && c.replies.length > 0) {
-        return { ...c, replies: this.addReplyToTree(c.replies, parentId, newReply) }
-      }
-      return c
-    })
+    this.setData({ replyTarget: null })
   },
 
   /* 提交评论 */
-  submitComment() {
+  async submitComment() {
+    if (this.data.commentSubmitting) return
     const content = this.data.commentInput.trim()
-    if (!content) {
-      wx.showToast({ title: '请输入评论内容', icon: 'none' })
+    const commentImagePath = this.data.commentImagePath
+    if (!content && !commentImagePath) {
+      wx.showToast({ title: '请输入评论内容或选择图片', icon: 'none' })
       return
     }
     const postId = Number(this.data.postId)
     if (!postId) return
 
-    // 构建本地评论对象（乐观更新：先让用户看到自己的评论）
-    const userInfo = app.globalData.userInfo || {}
-    const now = new Date()
-    const localComment = {
-      id: 'local_' + Date.now(),
-      userId: userInfo.uid || 0,
-      name: userInfo.nickname || '我',
-      avatar: userInfo.avatar || '',
-      time: '刚刚',
-      content: content,
-      likes: 0,
-      liked: false,
-      replies: []
-    }
-
     const replyTarget = this.data.replyTarget
-    if (replyTarget) {
-      localComment.replyTo = replyTarget.name
-      // 递归找到父评论，追加到其 replies 中（支持多层嵌套）
-      const comments = this.addReplyToTree(this.data.comments, replyTarget.id, localComment)
-      const flatComments = this.flattenComments(comments)
-      const groupedComments = this.groupComments(flatComments, this.data.groupedComments)
-      // 被回复的组自动展开全部（用户刚回复了，应该看到自己的回复）
-      const targetRootId = this.findRootIdForComment(replyTarget.id)
-      if (targetRootId) {
-        for (const g of groupedComments) {
-          if (String(g.rootId) === String(targetRootId)) {
-            g.expandedCount = g.replies.length - 1
-            break
-          }
-        }
-      }
-      this.setData({ comments, flatComments, groupedComments, commentInput: '', replyTarget: null })
-    } else {
-      // 顶级评论：插入到列表最前面
-      const comments = [localComment].concat(this.data.comments)
-      const flatComments = this.flattenComments(comments)
-      const groupedComments = this.groupComments(flatComments, this.data.groupedComments)
-      this.setData({ comments, flatComments, groupedComments, commentInput: '' })
-    }
+    this.setData({ commentSubmitting: true, showCommentTools: false })
+    wx.showLoading({ title: commentImagePath ? '上传中...' : '发送中...', mask: true })
 
-    // 更新评论计数
-    const post = this.data.post
-    if (post.stats) post.stats.comments = (post.stats.comments || 0) + 1
-    this.setData({ post })
+    try {
+      const imageUrl = commentImagePath
+        ? await this.uploadCommentImage(commentImagePath)
+        : ''
+      const dto = { postId, content, imageUrl }
+      if (replyTarget) dto.parentId = replyTarget.id
 
-    // 后台发送请求
-    const dto = { postId, content }
-    if (replyTarget) {
-      dto.parentId = replyTarget.id
-    }
-    request({
-      url: '/api/post/comment',
-      method: 'POST',
-      data: dto
-    }).then(() => {
-      // API 成功后重新加载评论，后端数据会替换乐观更新的本地数据
+      await request({
+        url: '/api/post/comment',
+        method: 'POST',
+        data: dto
+      })
+
+      this.setData({
+        commentInput: '',
+        commentImagePath: '',
+        replyTarget: null,
+        commentSubmitting: false
+      })
+      wx.hideLoading()
+      wx.showToast({ title: '评论成功', icon: 'success' })
       this.loadComments(this.data.postId)
-    }).catch(err => {
+    } catch (err) {
+      wx.hideLoading()
+      this.setData({ commentSubmitting: false })
       console.error('评论发送失败:', err)
-      // 本地已经显示了，不需要回退，只给一个轻提示
-      wx.showToast({ title: (err && err.message) || '网络异常，评论仅本地可见', icon: 'none' })
-    })
+      wx.showToast({ title: (err && err.message) || '发送失败，请重试', icon: 'none' })
+    }
   },
 
   /* 删除评论 */

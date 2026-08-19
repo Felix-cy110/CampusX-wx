@@ -108,6 +108,7 @@
           <image class="comment-avatar" src="{{item.root.avatar}}" mode="aspectFill"></image>
           <view class="comment-body">
             <text class="comment-text comment-inline-text" bindtap="replyComment" data-id="{{item.root.id}}"><text class="comment-name">{{item.root.name}}</text><text class="comment-reply-text-black">：</text>{{item.root.content}}</text>
+            <image wx:if="{{item.root.imageUrl}}" class="comment-image" src="{{item.root.imageUrl}}" mode="aspectFill" bindtap="previewCommentImage" data-src="{{item.root.imageUrl}}"></image>
             <view class="comment-footer">
               <text class="comment-time">{{item.root.time}}</text>
               <view class="comment-actions">
@@ -130,6 +131,7 @@
           <view class="comment-reply" bindlongpress="showCommentOptions" data-id="{{item.replies[0].id}}" data-name="{{item.replies[0].name}}" data-content="{{item.replies[0].content}}">
             <view class="comment-body">
               <text class="comment-text reply-text-inline" bindtap="replyComment" data-id="{{item.replies[0].id}}"><text class="comment-reply-nick">{{item.replies[0].name}}</text><text wx:if="{{item.replies[0].replyTo && item.replies[0].depth > 1}}" class="comment-reply-text-black"> 回复 </text><text wx:if="{{item.replies[0].replyTo && item.replies[0].depth > 1}}" class="comment-reply-nick">{{item.replies[0].replyTo}}</text><text class="comment-reply-text-black">：</text>{{item.replies[0].content}}</text>
+              <image wx:if="{{item.replies[0].imageUrl}}" class="comment-image comment-reply-image" src="{{item.replies[0].imageUrl}}" mode="aspectFill" bindtap="previewCommentImage" data-src="{{item.replies[0].imageUrl}}"></image>
               <view class="comment-footer">
                 <text class="comment-time reply-time">{{item.replies[0].time}}</text>
                 <view class="comment-actions">
@@ -147,6 +149,7 @@
             <view class="comment-reply" wx:for="{{item.replies}}" wx:for-item="reply" wx:for-index="replyIdx" wx:key="id" wx:if="{{replyIdx >= 1 && replyIdx <= item.expandedCount}}" bindlongpress="showCommentOptions" data-id="{{reply.id}}" data-name="{{reply.name}}" data-content="{{reply.content}}">
               <view class="comment-body">
                 <text class="comment-text reply-text-inline" bindtap="replyComment" data-id="{{reply.id}}"><text class="comment-reply-nick">{{reply.name}}</text><text wx:if="{{reply.replyTo && reply.depth > 1}}" class="comment-reply-text-black"> 回复 </text><text wx:if="{{reply.replyTo && reply.depth > 1}}" class="comment-reply-nick">{{reply.replyTo}}</text><text class="comment-reply-text-black">：</text>{{reply.content}}</text>
+                <image wx:if="{{reply.imageUrl}}" class="comment-image comment-reply-image" src="{{reply.imageUrl}}" mode="aspectFill" bindtap="previewCommentImage" data-src="{{reply.imageUrl}}"></image>
                 <view class="comment-footer">
                   <text class="comment-time reply-time">{{reply.time}}</text>
                   <view class="comment-actions">
@@ -186,32 +189,53 @@
 
   <!-- 底部操作栏 -->
   <view class="bottom-bar">
-    <image class="bottom-user-avatar" src="{{currentUserAvatar}}" mode="aspectFill"></image>
-    <view class="bottom-input-wrap">
-      <image class="bottom-input-icon" src="/images/SVG/评论笔.svg" mode="aspectFit"></image>
-      <input class="bottom-comment-input"
-             placeholder="{{replyTarget ? '回复 @' + replyTarget.name + '...' : '说点什么...'}}"
-             value="{{commentInput}}"
-             bindinput="onCommentInput"
-             placeholder-class="input-placeholder" />
+    <view class="reply-indicator" wx:if="{{replyTarget}}">
+      <text class="reply-indicator-text">正在回复 @{{replyTarget.name}}</text>
+      <view class="reply-cancel" bindtap="cancelReply"><text>✕</text></view>
     </view>
-    <view class="bottom-actions">
-      <view class="bottom-action" bindtap="toggleLike">
-        <image class="bottom-action-icon" src="/images/SVG/{{post.liked ? '点赞-已赞' : '点赞'}}.svg" mode="aspectFit" style="opacity: {{post.liked ? 1 : 0.4}};"></image>
-        <text class="bottom-action-count" wx:if="{{post.stats.likes}}" style="color: {{post.liked ? 'var(--color-red)' : 'var(--color-text-secondary)'}};">{{post.stats.likes}}</text>
+    <view class="bottom-main-row">
+      <image class="bottom-user-avatar" src="{{currentUserAvatar}}" mode="aspectFill"></image>
+      <view class="bottom-input-wrap">
+        <image class="bottom-input-icon" src="/images/SVG/评论笔.svg" mode="aspectFit"></image>
+        <input class="bottom-comment-input"
+               placeholder="{{replyTarget ? '回复 @' + replyTarget.name + '...' : '说点什么...'}}"
+               value="{{commentInput}}"
+               bindinput="onCommentInput"
+               placeholder-class="input-placeholder" />
       </view>
-      <view class="bottom-action" bindtap="toggleFavorite">
-        <image class="bottom-action-icon" src="/images/SVG/{{post.favorited ? '收藏-已收藏' : '收藏'}}.svg" mode="aspectFit" style="opacity: {{post.favorited ? 1 : 0.4}};"></image>
-        <text class="bottom-action-count" wx:if="{{post.stats.favorites}}" style="color: {{post.favorited ? 'var(--color-red)' : 'var(--color-text-secondary)'}};">{{post.stats.favorites}}</text>
+      <view class="bottom-actions">
+        <view class="bottom-action" bindtap="toggleLike">
+          <image class="bottom-action-icon" src="/images/SVG/{{post.liked ? '点赞-已赞' : '点赞'}}.svg" mode="aspectFit" style="opacity: {{post.liked ? 1 : 0.4}};"></image>
+          <text class="bottom-action-count" wx:if="{{post.stats.likes}}" style="color: {{post.liked ? 'var(--color-red)' : 'var(--color-text-secondary)'}};">{{post.stats.likes}}</text>
+        </view>
+        <view class="bottom-action" bindtap="toggleFavorite">
+          <image class="bottom-action-icon" src="/images/SVG/{{post.favorited ? '收藏-已收藏' : '收藏'}}.svg" mode="aspectFit" style="opacity: {{post.favorited ? 1 : 0.4}};"></image>
+          <text class="bottom-action-count" wx:if="{{post.stats.favorites}}" style="color: {{post.favorited ? 'var(--color-red)' : 'var(--color-text-secondary)'}};">{{post.stats.favorites}}</text>
+        </view>
+      </view>
+      <view class="bottom-plus-btn {{showCommentTools ? 'open' : ''}}" bindtap="addImage">
+        <image class="bottom-action-icon" src="/images/SVG/新增.svg" mode="aspectFit"></image>
+      </view>
+      <view class="bottom-send-btn {{commentSubmitting ? 'disabled' : ''}}" bindtap="submitComment">
+        <text>{{commentSubmitting ? '发送中' : '发送'}}</text>
       </view>
     </view>
-    <view class="bottom-plus-btn" bindtap="{{replyTarget ? 'cancelReply' : 'addImage'}}">
-      <image wx:if="{{!replyTarget}}" class="bottom-action-icon" src="/images/SVG/新增.svg" mode="aspectFit"></image>
-      <text wx:else class="bottom-cancel-text">✕</text>
+
+    <view class="comment-image-preview" wx:if="{{commentImagePath}}">
+      <image class="comment-image-thumb" src="{{commentImagePath}}" mode="aspectFill" bindtap="previewPendingCommentImage"></image>
+      <view class="comment-image-remove" bindtap="removeCommentImage"><text>✕</text></view>
     </view>
-    <view class="bottom-send-btn" bindtap="submitComment">
-      <text>发送</text>
-    </view>
+
+    <scroll-view class="comment-tools-scroll" scroll-x wx:if="{{showCommentTools}}" enhanced show-scrollbar="{{false}}">
+      <view class="comment-tools-list">
+        <view class="comment-tool-item" bindtap="chooseCommentImage">
+          <view class="comment-tool-icon-wrap">
+            <image class="comment-tool-icon" src="/images/SVG/相册.svg" mode="aspectFit"></image>
+          </view>
+          <text class="comment-tool-label">图片</text>
+        </view>
+      </view>
+    </scroll-view>
   </view>
 
   <!-- 分享弹窗 -->
