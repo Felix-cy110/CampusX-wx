@@ -105,7 +105,7 @@
       <block wx:for="{{groupedComments}}" wx:key="rootId">
         <!-- 顶级评论：带头像 -->
         <view id="comment-{{item.root.id}}" class="comment-item" bindlongpress="showCommentOptions" data-id="{{item.root.id}}" data-name="{{item.root.name}}" data-content="{{item.root.content}}">
-          <image class="comment-avatar" src="{{item.root.avatar}}" mode="aspectFill"></image>
+          <image class="comment-avatar" src="{{item.root.avatar}}" mode="aspectFill" catchtap="goToUserProfile" data-uid="{{item.root.userId}}" data-name="{{item.root.name}}" data-avatar="{{item.root.avatar}}"></image>
           <view class="comment-body">
             <text class="comment-text comment-inline-text" bindtap="replyComment" data-id="{{item.root.id}}"><text class="comment-name">{{item.root.name}}</text><text class="comment-reply-text-black">：</text>{{item.root.content}}</text>
             <image wx:if="{{item.root.imageUrl}}" class="comment-image" src="{{item.root.imageUrl}}" mode="aspectFill" bindtap="previewCommentImage" data-src="{{item.root.imageUrl}}"></image>
