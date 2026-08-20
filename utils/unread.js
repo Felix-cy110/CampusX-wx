@@ -14,6 +14,7 @@ let mutationVersion = 0
 let pendingMutationCount = 0
 let refreshQueued = false
 let pendingMutations = Object.create(null)
+let unreadListeners = []
 
 function normalizeCounts(source) {
   const input = source || {}
@@ -35,6 +36,40 @@ function getUnreadCounts() {
   return normalizeCounts(globalData && globalData.notificationCounts)
 }
 
+function getUnreadTotal(source) {
+  const counts = normalizeCounts(source)
+  return COUNT_KEYS.reduce((total, key) => total + counts[key], 0)
+}
+
+function notifyUnreadListeners(counts) {
+  unreadListeners.slice().forEach(listener => {
+    try {
+      listener(counts)
+    } catch (err) {
+      console.warn('同步未读状态失败:', err)
+    }
+  })
+}
+
+function subscribeUnreadCounts(listener) {
+  if (typeof listener !== 'function') return function () {}
+  unreadListeners.push(listener)
+  notifyUnreadListenersTo(listener, getUnreadCounts())
+
+  return function unsubscribe() {
+    const index = unreadListeners.indexOf(listener)
+    if (index >= 0) unreadListeners.splice(index, 1)
+  }
+}
+
+function notifyUnreadListenersTo(listener, counts) {
+  try {
+    listener(counts)
+  } catch (err) {
+    console.warn('同步未读状态失败:', err)
+  }
+}
+
 function publishCounts(source) {
   const counts = normalizeCounts(source)
   const globalData = getGlobalData()
@@ -47,6 +82,7 @@ function publishCounts(source) {
   if (tabBar && typeof tabBar.updateBadgeFromGlobalData === 'function') {
     tabBar.updateBadgeFromGlobalData()
   }
+  notifyUnreadListeners(counts)
   return counts
 }
 
@@ -180,13 +216,16 @@ function resetUnreadState() {
   pendingMutationCount = 0
   refreshQueued = false
   pendingMutations = Object.create(null)
+  notifyUnreadListeners(getUnreadCounts())
 }
 
 module.exports = {
   getUnreadCounts,
+  getUnreadTotal,
   markChatConversationRead,
   markNotificationRead,
   normalizeCounts,
   refreshUnreadCounts,
-  resetUnreadState
+  resetUnreadState,
+  subscribeUnreadCounts
 }

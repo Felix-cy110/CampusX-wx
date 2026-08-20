@@ -32,8 +32,9 @@
           <view class="hero-action-btn" bindtap="goToSearch">
             <image class="hero-action-icon" src="/images/SVG/搜索.svg" mode="aspectFit"></image>
           </view>
-          <view class="hero-action-btn" bindtap="goToInbox">
+          <view class="hero-action-btn hero-inbox-btn" bindtap="goToInbox">
             <image class="hero-action-icon" src="/images/SVG/私信.svg" mode="aspectFit"></image>
+            <view class="hero-inbox-unread-dot" wx:if="{{hasInboxUnread}}"></view>
           </view>
         </view>
       </view>

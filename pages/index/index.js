@@ -5,6 +5,7 @@ const { request, toFullUrl } = require('../../utils/request')
 const { requestPostLikeChange, reconcileLikeCount } = require('../../utils/like')
 const { canAccessCampusFeatures, requireAuth } = require('../../utils/auth')
 const { getActivities } = require('../../utils/api/lottery')
+const { getUnreadCounts, getUnreadTotal, refreshUnreadCounts, subscribeUnreadCounts } = require('../../utils/unread')
 
 function pad2(value) {
   const text = String(value == null ? 0 : value)
@@ -25,6 +26,7 @@ Page({
   data: {
     isLoggedIn: false,
     isJoinedSchool: false,
+    hasInboxUnread: false,
     feedType: 'recommend',
     currentTab: 'feed',
     feedSwiperIndex: 0,
@@ -149,6 +151,10 @@ Page({
   },
 
   onLoad() {
+    this._unsubscribeUnreadCounts = subscribeUnreadCounts(counts => {
+      this.updateInboxUnreadIndicator(counts)
+    })
+
     /* 计算自定义导航栏尺寸，与胶囊按钮对齐 */
     const systemInfo = wx.getSystemInfoSync()
     const menuButton = wx.getMenuButtonBoundingClientRect()
@@ -343,6 +349,11 @@ Page({
       isLoggedIn: app.globalData.isLoggedIn,
       isJoinedSchool
     })
+    this.updateInboxUnreadIndicator(getUnreadCounts())
+    if (isJoinedSchool) {
+      // 与 TabBar 共享单飞请求；页面重新可见时确保红点使用服务端最新未读状态。
+      refreshUnreadCounts().catch(() => {})
+    }
 
     // 完善资料后 switchTab 回到已存在的首页实例，onLoad 不会重跑，需在这里补加载校园数据。
     if (!previouslyJoined && isJoinedSchool) this.loadCampusData()
@@ -382,6 +393,20 @@ Page({
 
     // 同步详情页的点赞/取消赞操作到列表
     this._syncPostLikeUpdate()
+  },
+
+  onUnload() {
+    if (this._unsubscribeUnreadCounts) {
+      this._unsubscribeUnreadCounts()
+      this._unsubscribeUnreadCounts = null
+    }
+  },
+
+  updateInboxUnreadIndicator(counts) {
+    const hasInboxUnread = canAccessCampusFeatures() && getUnreadTotal(counts) > 0
+    if (this.data.hasInboxUnread !== hasInboxUnread) {
+      this.setData({ hasInboxUnread })
+    }
   },
 
   /* 加载教师评分（真实 API） */

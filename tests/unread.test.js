@@ -127,3 +127,49 @@ test('退出或切换账号后不接受旧会话的迟到响应', async function
   assert.equal(app.globalData.notificationCounts.likes, 0)
   assert.equal(app.globalData._notificationCountsLoaded, false)
 })
+
+test('未读订阅会同步权威刷新、乐观已读和会话重置', async function () {
+  reset({ likes: 2, chatUnread: 3 })
+  const totals = []
+  const unsubscribe = unread.subscribeUnreadCounts(function (counts) {
+    totals.push(unread.getUnreadTotal(counts))
+  })
+
+  assert.deepEqual(totals, [5])
+
+  const refresh = unread.refreshUnreadCounts()
+  succeed(0, { likes: 1, followers: 1, comments: 0, system: 0, chatUnread: 2 })
+  await refresh
+  assert.deepEqual(totals, [5, 4])
+
+  const markRead = unread.markNotificationRead('likes')
+  assert.deepEqual(totals, [5, 4, 3])
+  succeed(1, null)
+  await Promise.resolve()
+  succeed(2, { likes: 0, followers: 1, comments: 0, system: 0, chatUnread: 2 })
+  await markRead
+  assert.deepEqual(totals, [5, 4, 3, 3])
+
+  app.globalData.notificationCounts = {
+    likes: 0,
+    followers: 0,
+    comments: 0,
+    system: 0,
+    chatUnread: 0
+  }
+  unread.resetUnreadState()
+  assert.deepEqual(totals, [5, 4, 3, 3, 0])
+
+  unsubscribe()
+})
+
+test('未读总数会归一化异常数据', function () {
+  reset()
+  assert.equal(unread.getUnreadTotal({
+    likes: '2',
+    followers: -1,
+    comments: 1.9,
+    system: 'bad',
+    chatUnread: 3
+  }), 6)
+})

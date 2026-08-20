@@ -1,6 +1,6 @@
 const { safeNavigate, safeSwitch } = require('../utils/safeNavigate')
 const { canAccessCampusFeatures, requireAuth } = require('../utils/auth')
-const { refreshUnreadCounts } = require('../utils/unread')
+const { getUnreadTotal, refreshUnreadCounts } = require('../utils/unread')
 
 Component({
   data: {
@@ -88,8 +88,7 @@ Component({
     /** 直接从 globalData 计算并更新 badge（子页面进入时立即调用） */
     updateBadgeFromGlobalData() {
       const counts = getApp().globalData.notificationCounts || {}
-      const total = (counts.likes || 0) + (counts.followers || 0) + (counts.comments || 0) + (counts.system || 0) + (counts.chatUnread || 0)
-      this.setData({ 'list[2].badge': total })
+      this.setData({ 'list[2].badge': getUnreadTotal(counts) })
     },
 
     switchTab(e) {

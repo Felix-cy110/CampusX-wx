@@ -204,6 +204,22 @@
   height: 40rpx;
 }
 
+.hero-inbox-btn {
+  position: relative;
+}
+
+.hero-inbox-unread-dot {
+  position: absolute;
+  top: 2rpx;
+  right: 2rpx;
+  width: 14rpx;
+  height: 14rpx;
+  border: 3rpx solid #FFFFFF;
+  border-radius: 50%;
+  background-color: #FF3B30;
+  pointer-events: none;
+}
+
 /* ========== 分类图标 ========== */
 .category-squares {
   display: flex;
