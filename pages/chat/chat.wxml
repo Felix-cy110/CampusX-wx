@@ -1,5 +1,5 @@
 <!-- 聊天界面 -->
-<view class="page">
+<view class="page {{keyboardHeight > 0 ? 'keyboard-open' : ''}}" style="height: calc(100vh - {{keyboardHeight}}px);">
   <!-- 页面加载出错时的兜底 -->
   <view wx:if="{{pageError}}" class="msg-empty-wrap">
     <text class="msg-empty-text">页面加载出错: {{errorMsg}}</text>
@@ -167,6 +167,8 @@
           placeholder-class="input-placeholder"
           value="{{inputValue}}"
           bindinput="onInput"
+          adjust-position="{{false}}"
+          bindkeyboardheightchange="onChatKeyboardHeightChange"
           confirm-type="send"
           bindconfirm="sendMessage"
         />

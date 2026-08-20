@@ -32,6 +32,7 @@ Page({
     commentSubmitting: false,
     currentUserAvatar: '',
     replyTarget: null,
+    keyboardHeight: 0,
     commentCursor: null,
     commentHasMore: true,
     commentLoading: false,
@@ -820,6 +821,15 @@ Page({
   /* 评论输入框内容变化 */
   onCommentInput(e) {
     this.setData({ commentInput: e.detail.value })
+  },
+
+  /* 由键盘高度直接缩小页面，避免部分设备的系统自动顶起失效 */
+  onCommentKeyboardHeightChange(e) {
+    const detail = (e && e.detail) || {}
+    const height = Number(detail.height)
+    const keyboardHeight = Number.isFinite(height) && height > 0 ? height : 0
+    if (keyboardHeight === this.data.keyboardHeight) return
+    this.setData({ keyboardHeight })
   },
 
   /* 取消回复 */

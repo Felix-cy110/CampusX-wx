@@ -27,6 +27,7 @@ Page({
     statusBarHeight: 0,
     navBarHeight: 0,
     showPanel: false,
+    keyboardHeight: 0,
     toastVisible: false,
     toastText: '',
     cursor: null,
@@ -355,6 +356,23 @@ Page({
 
   onInput: function (e) {
     this.setData({ inputValue: e.detail.value })
+  },
+
+  // 直接按键盘高度缩小聊天页，避免固定输入栏被部分设备的键盘覆盖。
+  onChatKeyboardHeightChange: function (e) {
+    var detail = (e && e.detail) || {}
+    var height = Number(detail.height)
+    var keyboardHeight = isFinite(height) && height > 0 ? height : 0
+    if (keyboardHeight === this.data.keyboardHeight) return
+
+    var updates = { keyboardHeight: keyboardHeight }
+    if (keyboardHeight > 0 && this.data.showPanel) {
+      updates.showPanel = false
+    }
+    var that = this
+    this.setData(updates, function () {
+      if (keyboardHeight > 0) that.scrollToBottom()
+    })
   },
 
   sendMessage: function () {
