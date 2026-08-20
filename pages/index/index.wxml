@@ -86,7 +86,7 @@
           <swiper class="inner-swiper" current="{{innerSwiperIndex}}" bindchange="onInnerSwiperChange" easing-function="easeInOutCubic">
             <!-- 帖子 -->
             <swiper-item>
-              <scroll-view class="panel-scroll" scroll-y enhanced show-scrollbar="{{false}}" enable-back-to-top refresher-enabled refresher-triggered="{{feedRefreshing}}" bindrefresherrefresh="refreshFeed">
+              <scroll-view class="panel-scroll" scroll-y enhanced show-scrollbar="{{false}}" enable-back-to-top refresher-enabled refresher-triggered="{{feedRefreshing}}" bindrefresherrefresh="refreshFeed" bindscrolltolower="loadMoreFeed" lower-threshold="200">
                 <view class="content-list">
                   <view class="feed-card" wx:for="{{feedList}}" wx:key="id" bindtap="goToPostDetail" data-id="{{item.id}}">
                     <view class="feed-card-header">
@@ -123,6 +123,9 @@
                   </view>
                   <view class="empty-state" wx:if="{{feedList.length === 0}}">
                     <text>暂无内容</text>
+                  </view>
+                  <view class="load-more-tip" wx:if="{{feedHasMore && feedList.length > 0}}">
+                    <text>{{feedLoading ? '正在加载...' : '上拉加载更多'}}</text>
                   </view>
                 </view>
               </scroll-view>

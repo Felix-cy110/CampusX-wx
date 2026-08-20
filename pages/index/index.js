@@ -54,6 +54,9 @@ Page({
     /* 当前浏览学校 id，空表示本校 */
     browsingCampusId: '',
     feedList: [],
+    feedCursor: null,
+    feedHasMore: true,
+    feedLoading: false,
     marketList: [],
     errandList: [],
     errandPage: 1,
@@ -242,12 +245,28 @@ Page({
     safeNavigate({ url: `/pages/invite-detail/invite-detail?id=${banner.id}` })
   },
 
-  loadFeed() {
+  loadFeed(cursor = null) {
+    const isLoadMore = cursor !== null && cursor !== undefined
+    if (isLoadMore && (this.data.feedLoading || !this.data.feedHasMore)) {
+      return Promise.resolve(false)
+    }
+
+    // 首次加载/下拉刷新允许覆盖仍在途的翻页请求，旧响应通过 requestId 丢弃。
+    const requestId = (this._feedRequestId || 0) + 1
+    this._feedRequestId = requestId
+    this.setData({ feedLoading: true })
+
     const browsingCampusId = this.data.browsingCampusId
+    const requestData = browsingCampusId
+      ? { targetCampusId: browsingCampusId, pageSize: 20 }
+      : { pageSize: 20 }
+    if (isLoadMore) requestData.cursor = cursor
+
     const reqOptions = browsingCampusId
-      ? { url: '/api/post/list', method: 'GET', data: { targetCampusId: browsingCampusId, pageSize: 20 } }
-      : { url: '/api/post/feed', method: 'GET', data: { pageSize: 20 } }
+      ? { url: '/api/post/list', method: 'GET', data: requestData }
+      : { url: '/api/post/feed', method: 'GET', data: requestData }
     return request(reqOptions).then(data => {
+      if (requestId !== this._feedRequestId) return false
       try {
         console.log('feed API 返回:', JSON.stringify(data))
         if (!data || !Array.isArray(data.list)) {
@@ -279,21 +298,39 @@ Page({
             sourceId: vo.sourceId || ''
           }
         })
-        this.setData({ feedList: list, currentList: list })
+        const feedList = isLoadMore ? this.data.feedList.concat(list) : list
+        const nextCursor = data.nextCursor === undefined ? null : data.nextCursor
+        const feedHasMore = nextCursor !== null && data.hasMore !== false
+        this.setData({
+          feedList,
+          currentList: feedList,
+          feedCursor: nextCursor,
+          feedHasMore,
+          feedLoading: false
+        })
         wx.removeStorageSync('lastFeedRenderError')
         return true
       } catch (err) {
         const message = getErrorMessage(err)
         console.error('处理帖子数据失败:', err)
+        this.setData({ feedLoading: false })
         wx.setStorageSync('lastFeedRenderError', message)
         wx.showToast({ title: '帖子数据处理失败：' + message, icon: 'none', duration: 3500 })
         return false
       }
     }, err => {
+      if (requestId !== this._feedRequestId) return false
       console.error('帖子接口请求失败:', err)
+      this.setData({ feedLoading: false })
       wx.showToast({ title: '帖子网络请求失败，请下拉刷新', icon: 'none', duration: 2000 })
       return false
     })
+  },
+
+  loadMoreFeed() {
+    if (this.data.feedLoading || !this.data.feedHasMore) return Promise.resolve(false)
+    if (this.data.feedCursor === null || this.data.feedCursor === undefined) return Promise.resolve(false)
+    return this.loadFeed(this.data.feedCursor)
   },
 
   onShow() {
