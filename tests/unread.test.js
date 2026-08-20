@@ -173,3 +173,37 @@ test('未读总数会归一化异常数据', function () {
     chatUnread: 3
   }), 6)
 })
+
+test('完整会话列表校准会阻止旧统计响应恢复已读数字', async function () {
+  reset({ chatUnread: 1 })
+
+  const staleRefresh = unread.refreshUnreadCounts()
+  unread.reconcileChatUnread(0)
+  assert.equal(app.globalData.notificationCounts.chatUnread, 0)
+
+  // 校准前发出的响应必须丢弃，并自动再取一次当前权威值。
+  succeed(0, { likes: 0, followers: 0, comments: 0, system: 0, chatUnread: 1 })
+  await new Promise(resolve => setImmediate(resolve))
+  assert.equal(pendingRequests.length, 2)
+  assert.equal(app.globalData.notificationCounts.chatUnread, 0)
+
+  succeed(1, { likes: 0, followers: 0, comments: 0, system: 0, chatUnread: 0 })
+  await staleRefresh
+  assert.equal(app.globalData.notificationCounts.chatUnread, 0)
+})
+
+test('多个未读显示实例会同时收到更新，解绑后停止接收', function () {
+  reset({ chatUnread: 1 })
+  const first = []
+  const second = []
+  const unsubscribeFirst = unread.subscribeUnreadCounts(counts => first.push(counts.chatUnread))
+  const unsubscribeSecond = unread.subscribeUnreadCounts(counts => second.push(counts.chatUnread))
+
+  unread.reconcileChatUnread(0)
+  unsubscribeFirst()
+  unread.reconcileChatUnread(2)
+  unsubscribeSecond()
+
+  assert.deepEqual(first, [1, 0])
+  assert.deepEqual(second, [1, 0, 2])
+})

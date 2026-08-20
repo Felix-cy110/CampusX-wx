@@ -59,11 +59,17 @@
   <!-- 子 tab：互关/临时会话 -->
   <view class="sub-tabs">
     <view class="sub-tab-item {{chatTab === 'friend' ? 'active' : ''}}" bindtap="switchChatTab" data-tab="friend">
-      <text class="sub-tab-text">互关</text>
+      <view class="sub-tab-label">
+        <text class="sub-tab-text">互关</text>
+        <view class="sub-tab-unread-dot" wx:if="{{friendHasUnread}}"></view>
+      </view>
       <view class="sub-tab-indicator" wx:if="{{chatTab === 'friend'}}"></view>
     </view>
     <view class="sub-tab-item {{chatTab === 'temp' ? 'active' : ''}}" bindtap="switchChatTab" data-tab="temp">
-      <text class="sub-tab-text">临时会话</text>
+      <view class="sub-tab-label">
+        <text class="sub-tab-text">临时会话</text>
+        <view class="sub-tab-unread-dot" wx:if="{{tempHasUnread}}"></view>
+      </view>
       <view class="sub-tab-indicator" wx:if="{{chatTab === 'temp'}}"></view>
     </view>
   </view>

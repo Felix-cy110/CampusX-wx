@@ -1,6 +1,6 @@
 const { safeNavigate, safeSwitch } = require('../utils/safeNavigate')
 const { canAccessCampusFeatures, requireAuth } = require('../utils/auth')
-const { getUnreadTotal, refreshUnreadCounts } = require('../utils/unread')
+const { getUnreadTotal, refreshUnreadCounts, subscribeUnreadCounts } = require('../utils/unread')
 
 Component({
   data: {
@@ -51,9 +51,22 @@ Component({
     attached() {
       const systemInfo = wx.getSystemInfoSync()
       this.setData({ statusBarHeight: systemInfo.statusBarHeight })
+      // 每个 tab 页都有独立的自定义 TabBar 实例，必须各自订阅，不能只更新全局记录的一个实例。
+      this._unsubscribeUnreadCounts = subscribeUnreadCounts(counts => {
+        this.updateBadge(counts)
+      })
       this.loadInboxBadge()
       // 将 tabBar 实例保存到全局，方便非 tab 页刷新 badge
       getApp().globalData._tabBar = this
+    },
+
+    detached() {
+      if (this._unsubscribeUnreadCounts) {
+        this._unsubscribeUnreadCounts()
+        this._unsubscribeUnreadCounts = null
+      }
+      const globalData = getApp().globalData
+      if (globalData._tabBar === this) globalData._tabBar = null
     }
   },
 
@@ -88,7 +101,12 @@ Component({
     /** 直接从 globalData 计算并更新 badge（子页面进入时立即调用） */
     updateBadgeFromGlobalData() {
       const counts = getApp().globalData.notificationCounts || {}
-      this.setData({ 'list[2].badge': getUnreadTotal(counts) })
+      this.updateBadge(counts)
+    },
+
+    updateBadge(counts) {
+      const badge = canAccessCampusFeatures() ? getUnreadTotal(counts) : 0
+      this.setData({ 'list[2].badge': badge })
     },
 
     switchTab(e) {

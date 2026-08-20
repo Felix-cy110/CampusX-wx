@@ -212,6 +212,12 @@
   opacity: 0.7;
 }
 
+.sub-tab-label {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+}
+
 .sub-tab-text {
   font-size: 30rpx;
   color: var(--color-text-secondary);
@@ -224,6 +230,14 @@
   color: var(--color-primary);
   font-weight: 700;
   font-size: 32rpx;
+}
+
+.sub-tab-unread-dot {
+  width: 12rpx;
+  height: 12rpx;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--color-red);
 }
 
 .sub-tab-indicator {

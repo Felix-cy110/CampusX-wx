@@ -2,7 +2,7 @@ const app = getApp()
 const { safeNavigate } = require('../../utils/safeNavigate')
 const { request, toFullUrl } = require('../../utils/request')
 const { canAccessCampusFeatures } = require('../../utils/auth')
-const { markChatConversationRead, refreshUnreadCounts } = require('../../utils/unread')
+const { markChatConversationRead, reconcileChatUnread, refreshUnreadCounts } = require('../../utils/unread')
 
 const SWIPE_THRESHOLD = 80
 const REFRESH_THRESHOLD = 80
@@ -18,6 +18,8 @@ Page({
     },
     conversations: [],
     chatTab: 'friend',
+    friendHasUnread: false,
+    tempHasUnread: false,
     filteredConversations: [],
     statusBarHeight: 0,
     navBarHeight: 0,
@@ -64,7 +66,13 @@ Page({
       this.syncNotificationsFromCache()
     }
     if (!canAccessCampusFeatures()) {
-      this.setData({ conversations: [], filteredConversations: [], loading: false })
+      this.setData({
+        conversations: [],
+        filteredConversations: [],
+        friendHasUnread: false,
+        tempHasUnread: false,
+        loading: false
+      })
       this._initialized = true
       return
     }
@@ -80,7 +88,13 @@ Page({
   /** 加载所有数据 */
   loadData() {
     if (!canAccessCampusFeatures()) {
-      this.setData({ conversations: [], filteredConversations: [], loading: false })
+      this.setData({
+        conversations: [],
+        filteredConversations: [],
+        friendHasUnread: false,
+        tempHasUnread: false,
+        loading: false
+      })
       return Promise.resolve()
     }
     this.setData({ loading: true })
@@ -109,7 +123,13 @@ Page({
   /** 获取会话列表（调用后端 API） */
   loadConversations() {
     if (!canAccessCampusFeatures()) {
-      this.setData({ conversations: [], filteredConversations: [], loading: false })
+      this.setData({
+        conversations: [],
+        filteredConversations: [],
+        friendHasUnread: false,
+        tempHasUnread: false,
+        loading: false
+      })
       return Promise.resolve()
     }
     const that = this
@@ -119,10 +139,20 @@ Page({
       data: { page: 1, size: 50 }
     }).then(function (data) {
       const conversations = (data || []).map(mapConversation)
-      that.setData({
+      const tabUnreadState = getChatTabUnreadState(conversations)
+      that.setData(Object.assign({
         conversations,
         loading: false
-      }, function () { that.filterConversations() })
+      }, tabUnreadState), function () { that.filterConversations() })
+
+      // 请求固定取 50 条；不足 50 条即为完整列表，可安全用各会话之和校准全局聊天未读。
+      // 这会让“会话行均已读但底部仍残留数字”的旧前端状态立即归零。
+      if (conversations.length < 50) {
+        const chatUnread = conversations.reduce((total, conversation) => {
+          return total + Math.max(0, Number(conversation.unread) || 0)
+        }, 0)
+        reconcileChatUnread(chatUnread)
+      }
     }).catch(function (err) {
       console.error('加载会话列表失败:', err)
       that.setData({ loading: false })
@@ -158,7 +188,9 @@ Page({
         }
         return c
       })
-      this.setData({ conversations: convs }, () => { this.filterConversations() })
+      this.setData(Object.assign({ conversations: convs }, getChatTabUnreadState(convs)), () => {
+        this.filterConversations()
+      })
 
     }
 
@@ -246,7 +278,11 @@ Page({
       success: (res) => {
         if (res.confirm) {
           const conversations = this.data.conversations.filter(c => c.id !== conv.id)
-          this.setData({ conversations, swipeIndex: -1, swipeOffset: 0 }, () => {
+          this.setData(Object.assign({
+            conversations,
+            swipeIndex: -1,
+            swipeOffset: 0
+          }, getChatTabUnreadState(conversations)), () => {
             this.filterConversations()
             // 如果删除的会话有未读消息，同步扣减全局计数
             if (conv.unread > 0) {
@@ -309,7 +345,12 @@ Page({
             content: '确定清空所有会话吗？此操作不可撤销。',
             success: (r) => {
               if (r.confirm) {
-                this.setData({ conversations: [], filteredConversations: [] })
+                this.setData({
+                  conversations: [],
+                  filteredConversations: [],
+                  friendHasUnread: false,
+                  tempHasUnread: false
+                })
                 wx.showToast({ title: '已清空', icon: 'none' })
               }
             }
@@ -329,7 +370,11 @@ Page({
     }
     // 先乐观清零会话列表，再由统一协调器并发提交并最终回查权威结果。
     const conversations = that.data.conversations.map(function (c) { return { ...c, unread: 0 } })
-    that.setData({ conversations }, function () { that.filterConversations() })
+    that.setData({
+      conversations,
+      friendHasUnread: false,
+      tempHasUnread: false
+    }, function () { that.filterConversations() })
     const promises = unreadConvs.map(function (conv) {
       return markChatConversationRead({
         otherUserId: conv.otherUserId,
@@ -402,6 +447,14 @@ function mapConversation(vo) {
     orderId: vo.orderId || null,
     orderType: vo.orderType || null,
     type: vo.mutualFollow === true ? 'friend' : 'temp'
+  }
+}
+
+function getChatTabUnreadState(conversations) {
+  const list = conversations || []
+  return {
+    friendHasUnread: list.some(conversation => conversation.type === 'friend' && conversation.unread > 0),
+    tempHasUnread: list.some(conversation => conversation.type === 'temp' && conversation.unread > 0)
   }
 }
 

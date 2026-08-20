@@ -41,6 +41,20 @@ function getUnreadTotal(source) {
   return COUNT_KEYS.reduce((total, key) => total + counts[key], 0)
 }
 
+/**
+ * 用完整会话列表校准聊天未读总数。会提升版本号，使校准前发出的 count 响应失效，
+ * 避免页面已经展示全已读时又被旧响应恢复 Badge。
+ */
+function reconcileChatUnread(chatUnread) {
+  const counts = getUnreadCounts()
+  const normalizedChatUnread = normalizeCounts({ chatUnread }).chatUnread
+  if (counts.chatUnread === normalizedChatUnread) return counts
+
+  mutationVersion += 1
+  counts.chatUnread = normalizedChatUnread
+  return publishCounts(counts)
+}
+
 function notifyUnreadListeners(counts) {
   unreadListeners.slice().forEach(listener => {
     try {
@@ -225,6 +239,7 @@ module.exports = {
   markChatConversationRead,
   markNotificationRead,
   normalizeCounts,
+  reconcileChatUnread,
   refreshUnreadCounts,
   resetUnreadState,
   subscribeUnreadCounts
