@@ -1,5 +1,6 @@
 const { request, toFullUrl } = require('../../utils/request')
 const { safeNavigate } = require('../../utils/safeNavigate')
+const { markNotificationRead } = require('../../utils/unread')
 
 Page({
   data: {
@@ -19,7 +20,6 @@ Page({
       const navBarHeight = (menuButton.top - statusBarHeight) * 2 + menuButton.height
       this.setData({ statusBarHeight, navBarHeight })
       this.loadComments()
-      this.markCommentsRead()
     } catch (err) {
       console.error('[comments] onLoad error:', err)
     }
@@ -34,8 +34,10 @@ Page({
       params.cursor = this.data.nextCursor
     }
 
-    request({ url: '/api/v1/notification/comments', data: params }).then(data => {
-      const list = (data.list || []).map(mapCommentItem)
+    const isFirstPage = !this.data.nextCursor
+    return request({ url: '/api/v1/notification/comments', data: params }).then(data => {
+      const rawList = data.list || []
+      const list = rawList.map(mapCommentItem)
       const commentList = this.data.nextCursor
         ? this.data.commentList.concat(list)
         : list
@@ -45,6 +47,10 @@ Page({
         hasMore: data.hasMore !== undefined ? data.hasMore : list.length >= 20,
         nextCursor: data.nextCursor || null
       })
+      if (isFirstPage) {
+        const readThrough = rawList.length > 0 ? rawList[0].createdAt : null
+        if (readThrough) this.markCommentsRead(readThrough)
+      }
     }).catch((err) => {
       console.error('[comments] loadComments fail:', err)
       this.setData({ loading: false })
@@ -68,18 +74,10 @@ Page({
   },
 
   /** 标记评论通知为已读，并立即刷新 tabBar badge */
-  markCommentsRead() {
-    const app = getApp()
-    app.globalData.notificationCounts.comments = 0
-    app.globalData._notificationReadSent.comments = true
-    const tabBar = app.globalData._tabBar
-    if (tabBar) tabBar.updateBadgeFromGlobalData()
-    request({ url: '/api/v1/notification/read/comments', method: 'POST' }).catch(() => {})
-    // 30秒安全兜底清除乐观标记（正常流程由 count API 确认归零后清除）
-    if (app.globalData._commentsReadTimer) clearTimeout(app.globalData._commentsReadTimer)
-    app.globalData._commentsReadTimer = setTimeout(() => {
-      app.globalData._notificationReadSent.comments = false
-    }, 30000)
+  markCommentsRead(readThrough) {
+    markNotificationRead('comments', readThrough).catch(err => {
+      console.error('标记评论通知已读失败:', err)
+    })
   }
 })
 

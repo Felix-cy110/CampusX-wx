@@ -1,5 +1,6 @@
 const { request, toFullUrl } = require('../../utils/request')
 const { safeNavigate, safeSwitch } = require('../../utils/safeNavigate')
+const { markNotificationRead } = require('../../utils/unread')
 
 Page({
   data: {
@@ -26,7 +27,6 @@ Page({
       })
       this.loadFollowers()
       this.loadFollowing()
-      this.markFollowersRead()
     } catch (err) {
       console.error('[followers] onLoad error:', err)
     }
@@ -69,8 +69,10 @@ Page({
       params.cursor = this.data.followerCursor
     }
 
-    request({ url: '/api/v1/follow/followers', data: params }).then(data => {
-      const list = (data.list || []).map(mapFollowItem)
+    const isFirstPage = !this.data.followerCursor
+    return request({ url: '/api/v1/follow/followers', data: params }).then(data => {
+      const rawList = data.list || []
+      const list = rawList.map(mapFollowItem)
       const followerList = this.data.followerCursor
         ? this.data.followerList.concat(list)
         : list
@@ -80,6 +82,10 @@ Page({
         followerHasMore: data.hasMore !== undefined ? data.hasMore : list.length >= 20,
         followerCursor: data.nextCursor || null
       })
+      if (isFirstPage) {
+        const readThrough = rawList.length > 0 ? rawList[0].createdAt : null
+        if (readThrough) this.markFollowersRead(readThrough)
+      }
     }).catch((err) => {
       console.error('[followers] loadFollowers fail:', err)
       this.setData({ followerLoading: false })
@@ -176,18 +182,10 @@ Page({
   },
 
   /** 标记粉丝通知为已读，并立即刷新 tabBar badge */
-  markFollowersRead() {
-    const app = getApp()
-    app.globalData.notificationCounts.followers = 0
-    app.globalData._notificationReadSent.followers = true
-    const tabBar = app.globalData._tabBar
-    if (tabBar) tabBar.updateBadgeFromGlobalData()
-    request({ url: '/api/v1/notification/read/followers', method: 'POST' }).catch(() => {})
-    // 30秒安全兜底清除乐观标记（正常流程由 count API 确认归零后清除）
-    if (app.globalData._followersReadTimer) clearTimeout(app.globalData._followersReadTimer)
-    app.globalData._followersReadTimer = setTimeout(() => {
-      app.globalData._notificationReadSent.followers = false
-    }, 30000)
+  markFollowersRead(readThrough) {
+    markNotificationRead('followers', readThrough).catch(err => {
+      console.error('标记粉丝通知已读失败:', err)
+    })
   }
 })
 
@@ -197,6 +195,7 @@ function mapFollowItem(item) {
     avatar: toFullUrl(item.avatarUrl || ''),
     name: item.nickname || '',
     campusName: item.campusName || '',
+    createdAt: item.createdAt || null,
     isFollowed: item.followedByMe !== undefined ? item.followedByMe : false,
     isMutual: item.followedByMe !== undefined ? item.followedByMe : false
   }

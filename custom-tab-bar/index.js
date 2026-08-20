@@ -1,6 +1,6 @@
 const { safeNavigate, safeSwitch } = require('../utils/safeNavigate')
-const { request } = require('../utils/request')
 const { canAccessCampusFeatures, requireAuth } = require('../utils/auth')
+const { refreshUnreadCounts } = require('../utils/unread')
 
 Component({
   data: {
@@ -77,47 +77,7 @@ Component({
         that.setData({ 'list[2].badge': 0 })
         return Promise.resolve()
       }
-      return request({ url: '/api/v1/notification/count' }).then(data => {
-        // 使用实时 globalData（非快照），防止并发请求中较旧回调覆盖子页面刚做的乐观更新
-        const app = getApp()
-        const localCounts = app.globalData.notificationCounts || {}
-        const readSent = app.globalData._notificationReadSent || {}
-        const pendingChat = app.globalData._pendingChatDecrement || 0
-
-        // 对于通知类型：如果本地已标记已读（值为0且已发送API），不接受 API 返回的更大值
-        const mergeLikes = readSent.likes && localCounts.likes === 0 && (data.likes || 0) > 0
-          ? 0 : (data.likes || 0)
-        const mergeFollowers = readSent.followers && localCounts.followers === 0 && (data.followers || 0) > 0
-          ? 0 : (data.followers || 0)
-        const mergeComments = readSent.comments && localCounts.comments === 0 && (data.comments || 0) > 0
-          ? 0 : (data.comments || 0)
-        const mergeSystem = readSent.system && localCounts.system === 0 && (data.system || 0) > 0
-          ? 0 : (data.system || 0)
-
-        // 当 API 返回值已确认归零，清除乐观标记
-        if (readSent.likes && (data.likes || 0) === 0) app.globalData._notificationReadSent.likes = false
-        if (readSent.followers && (data.followers || 0) === 0) app.globalData._notificationReadSent.followers = false
-        if (readSent.comments && (data.comments || 0) === 0) app.globalData._notificationReadSent.comments = false
-        if (readSent.system && (data.system || 0) === 0) app.globalData._notificationReadSent.system = false
-
-        // 对于聊天未读：用 pendingChat 调整 API 返回值
-        const apiChat = data.chatUnread || 0
-        let mergeChat
-        if (apiChat <= localCounts.chatUnread) {
-          app.globalData._pendingChatDecrement = 0
-          mergeChat = apiChat
-        } else {
-          mergeChat = Math.max(0, apiChat - pendingChat)
-        }
-
-        app.globalData.notificationCounts = {
-          likes: mergeLikes,
-          followers: mergeFollowers,
-          comments: mergeComments,
-          system: mergeSystem,
-          chatUnread: mergeChat
-        }
-        app.globalData._notificationCountsLoaded = true
+      return refreshUnreadCounts().then(() => {
         that.updateBadgeFromGlobalData()
       }).catch(() => {
         // 请求失败用现有缓存兜底

@@ -2,6 +2,7 @@ const app = getApp()
 const { safeNavigate } = require('../../utils/safeNavigate')
 const { request, toFullUrl } = require('../../utils/request')
 const { canAccessCampusFeatures } = require('../../utils/auth')
+const { markChatConversationRead, refreshUnreadCounts } = require('../../utils/unread')
 
 const SWIPE_THRESHOLD = 80
 const REFRESH_THRESHOLD = 80
@@ -91,57 +92,13 @@ Page({
   loadNotificationCounts() {
     if (!canAccessCampusFeatures()) return Promise.resolve()
     const that = this
-    return request({ url: '/api/v1/notification/count' }).then(data => {
-      // 使用实时 globalData（非快照），防止并发请求中较旧回调覆盖子页面刚做的乐观更新
-      const app = getApp()
-      const localCounts = app.globalData.notificationCounts
-      const readSent = app.globalData._notificationReadSent || {}
-      const pendingChat = app.globalData._pendingChatDecrement || 0
-
-      // 对于通知类型：如果本地已标记已读（值为0且已发送API），不接受 API 返回的更大值
-      const mergeLikes = readSent.likes && localCounts.likes === 0 && (data.likes || 0) > 0
-        ? 0 : (data.likes || 0)
-      const mergeFollowers = readSent.followers && localCounts.followers === 0 && (data.followers || 0) > 0
-        ? 0 : (data.followers || 0)
-      const mergeComments = readSent.comments && localCounts.comments === 0 && (data.comments || 0) > 0
-        ? 0 : (data.comments || 0)
-      const mergeSystem = readSent.system && localCounts.system === 0 && (data.system || 0) > 0
-        ? 0 : (data.system || 0)
-
-      // 当 API 返回值已确认归零，清除乐观标记
-      if (readSent.likes && (data.likes || 0) === 0) app.globalData._notificationReadSent.likes = false
-      if (readSent.followers && (data.followers || 0) === 0) app.globalData._notificationReadSent.followers = false
-      if (readSent.comments && (data.comments || 0) === 0) app.globalData._notificationReadSent.comments = false
-      if (readSent.system && (data.system || 0) === 0) app.globalData._notificationReadSent.system = false
-
-      // 对于聊天未读：用 pendingChat 调整 API 返回值，防止 API 未及时更新时覆盖本地已扣除的值
-      const apiChat = data.chatUnread || 0
-      let mergeChat
-      if (apiChat <= localCounts.chatUnread) {
-        // API 返回值已确认本地扣除 → 清除 pending，直接使用 API 值
-        app.globalData._pendingChatDecrement = 0
-        mergeChat = apiChat
-      } else {
-        // API 返回值可能过期 → 减去待确认扣除量
-        mergeChat = Math.max(0, apiChat - pendingChat)
-      }
-
-      // 同步到全局缓存
-      app.globalData.notificationCounts = {
-        likes: mergeLikes,
-        followers: mergeFollowers,
-        comments: mergeComments,
-        system: mergeSystem,
-        chatUnread: mergeChat
-      }
-      app.globalData._notificationCountsLoaded = true
-
+    return refreshUnreadCounts().then(counts => {
       that.setData({
         notifications: {
-          likes: { count: mergeLikes },
-          followers: { count: mergeFollowers },
-          comments: { count: mergeComments },
-          system: { count: mergeSystem }
+          likes: { count: counts.likes },
+          followers: { count: counts.followers },
+          comments: { count: counts.comments },
+          system: { count: counts.system }
         }
       })
     }).catch(() => {
@@ -203,25 +160,19 @@ Page({
       })
       this.setData({ conversations: convs }, () => { this.filterConversations() })
 
-      // 2. 从全局通知计数中减去该会话的未读数
-      const app = getApp()
-      const counts = app.globalData.notificationCounts
-      counts.chatUnread = Math.max(0, (counts.chatUnread || 0) - unreadCount)
-      // 记录待确认的扣除量，防止 loadNotificationCounts 用过期 API 数据覆盖
-      app.globalData._pendingChatDecrement = (app.globalData._pendingChatDecrement || 0) + unreadCount
-      // 5秒超时兜底：清除 pending（此时后端应已处理标记已读请求）
-      if (app.globalData._pendingChatTimer) clearTimeout(app.globalData._pendingChatTimer)
-      app.globalData._pendingChatTimer = setTimeout(() => {
-        app.globalData._pendingChatDecrement = 0
-      }, 5000)
-
-      // 3. 立即刷新 tabBar badge
-      const tabBar = app.globalData._tabBar
-      if (tabBar) tabBar.updateBadgeFromGlobalData()
     }
 
+    // 2. 无论列表缓存是否为 0，都立即向后端确认当前会话已读。
+    markChatConversationRead({
+      otherUserId: userId,
+      orderId,
+      unreadCount
+    }).catch(err => {
+      console.error('标记会话已读失败:', err)
+    })
+
     safeNavigate({
-      url: `/pages/chat/chat?convId=${convId}&userId=${userId}&name=${encodeURIComponent(name || '')}&avatar=${encodeURIComponent(avatar || '')}&orderId=${orderId || ''}&orderType=${orderType || ''}&unread=${unreadCount}`
+      url: `/pages/chat/chat?convId=${convId}&userId=${userId}&name=${encodeURIComponent(name || '')}&avatar=${encodeURIComponent(avatar || '')}&orderId=${orderId || ''}&orderType=${orderType || ''}&unread=${unreadCount}&readStarted=1`
     })
   },
 
@@ -376,37 +327,22 @@ Page({
       wx.showToast({ title: '没有未读消息', icon: 'none' })
       return
     }
-    // 并发标记所有会话已读
+    // 先乐观清零会话列表，再由统一协调器并发提交并最终回查权威结果。
+    const conversations = that.data.conversations.map(function (c) { return { ...c, unread: 0 } })
+    that.setData({ conversations }, function () { that.filterConversations() })
     const promises = unreadConvs.map(function (conv) {
-      return request({
-        url: '/api/v1/chat/read',
-        method: 'POST',
-        data: { otherUserId: conv.otherUserId, orderId: conv.orderId }
-      }).catch(function () { /* 单个失败不影响整体 */ })
+      return markChatConversationRead({
+        otherUserId: conv.otherUserId,
+        orderId: conv.orderId,
+        unreadCount: conv.unread
+      }).then(function () { return true }, function () { return false })
     })
-    Promise.all(promises).then(function () {
-      const conversations = that.data.conversations.map(function (c) { return { ...c, unread: 0 } })
-      that.setData({ conversations }, function () {
-        that.filterConversations()
-        // 同步清零全局聊天未读计数
-        const app = getApp()
-        app.globalData.notificationCounts.chatUnread = 0
-        app.globalData._pendingChatDecrement = 0
-        const tabBar = app.globalData._tabBar
-        if (tabBar) tabBar.updateBadgeFromGlobalData()
-        wx.showToast({ title: '已全部已读', icon: 'none' })
-      })
-    }).catch(function () {
-      // 即使部分失败也更新本地状态
-      const conversations = that.data.conversations.map(function (c) { return { ...c, unread: 0 } })
-      that.setData({ conversations }, function () {
-        that.filterConversations()
-        const app = getApp()
-        app.globalData.notificationCounts.chatUnread = 0
-        app.globalData._pendingChatDecrement = 0
-        const tabBar = app.globalData._tabBar
-        if (tabBar) tabBar.updateBadgeFromGlobalData()
-        wx.showToast({ title: '已全部已读', icon: 'none' })
+    Promise.all(promises).then(function (results) {
+      const failed = results.filter(function (ok) { return !ok }).length
+      that.loadConversations()
+      wx.showToast({
+        title: failed > 0 ? failed + '个会话标记失败' : '已全部已读',
+        icon: 'none'
       })
     })
   },

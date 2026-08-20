@@ -2,6 +2,8 @@ var requestModule = require('../../utils/request')
 var request = requestModule.request
 var getBaseUrl = requestModule.getBaseUrl
 var handleAuthFailure = require('../../utils/auth').handleAuthFailure
+var unreadModule = require('../../utils/unread')
+var markChatConversationRead = unreadModule.markChatConversationRead
 
 var createStompClient = null
 try {
@@ -73,6 +75,12 @@ Page({
       var userInfo = app.globalData.userInfo || {}
       var myUid = userInfo.uid || ''
       var myAvatar = userInfo.avatar || '/images/avatars/default.png'
+      var resolvedConversationId = convId
+      if (!resolvedConversationId && !orderId && myUid && otherUserId) {
+        var firstUserId = Math.min(Number(myUid), Number(otherUserId))
+        var secondUserId = Math.max(Number(myUid), Number(otherUserId))
+        resolvedConversationId = firstUserId + '_' + secondUserId
+      }
 
       this.setData({
         otherName: otherName,
@@ -81,7 +89,7 @@ Page({
         myUid: String(myUid),
         statusBarHeight: statusBarHeight,
         navBarHeight: navBarHeight,
-        conversationId: convId,
+        conversationId: resolvedConversationId,
         otherUserId: otherUserId,
         orderId: orderId,
         orderType: orderType
@@ -104,6 +112,11 @@ Page({
       } catch (err) {
         console.error('[Chat] 连接 WebSocket 失败:', err)
       }
+
+      // 从非收件箱入口进入聊天时，也要立即提交已读；该动作不再依赖 WebSocket 建连。
+      if (!(options && options.readStarted === '1')) {
+        this.markConversationRead('page-entry')
+      }
     } catch (err) {
       console.error('[Chat] onLoad error:', err)
       this.setData({
@@ -115,6 +128,10 @@ Page({
   },
 
   onUnload: function () {
+    if (this._markReadTimer) {
+      clearTimeout(this._markReadTimer)
+      this._markReadTimer = null
+    }
     try {
       if (this._stompClient) {
         this._stompClient.disconnect()
@@ -290,7 +307,13 @@ Page({
             function (msg) { that.onReceiveMessage(msg) }
           )
         }
-        that.markConversationRead()
+        // 单独订阅会话 topic 作为在线状态信号；消息仍从用户队列接收。
+        if (that.data.conversationId) {
+          that._presenceSubId = that._stompClient.subscribe(
+            '/topic/chat/' + that.data.conversationId,
+            function () { }
+          )
+        }
       },
       onMessage: function () { },
       onError: function (err) {
@@ -325,6 +348,9 @@ Page({
       scrollToView: 'msg-bottom'
     })
     this.scrollToBottom()
+    if (Number(msg.receiverId) === Number(this.data.myUid)) {
+      this.scheduleConversationRead(msg.id || Date.now())
+    }
   },
 
   onInput: function (e) {
@@ -366,24 +392,24 @@ Page({
     this._stompClient.send(dest, body)
   },
 
-  markConversationRead: function () {
-    if (!this.data.otherUserId) return
+  scheduleConversationRead: function (messageId) {
     var that = this
-    request({
-      url: '/api/v1/chat/read',
-      method: 'POST',
-      data: { otherUserId: this.data.otherUserId, orderId: this.data.orderId }
-    }).then(function () {
-      // 标记已读成功：通过 API 刷新 badge（loadInboxBadge 内部有乐观更新保护）
-      var tabBar = getApp().globalData._tabBar
-      if (tabBar) {
-        tabBar.loadInboxBadge()
-      }
+    if (this._markReadTimer) clearTimeout(this._markReadTimer)
+    this._markReadTimer = setTimeout(function () {
+      that._markReadTimer = null
+      that.markConversationRead('message-' + messageId)
+    }, 200)
+  },
+
+  markConversationRead: function (mutationKey) {
+    if (!this.data.otherUserId) return
+    markChatConversationRead({
+      otherUserId: this.data.otherUserId,
+      orderId: this.data.orderId,
+      unreadCount: 0,
+      mutationKey: mutationKey || 'page-entry'
     }).catch(function (err) {
       console.error('标记已读失败:', err)
-      // 失败时也用本地缓存更新 badge
-      var tabBar = getApp().globalData._tabBar
-      if (tabBar) tabBar.updateBadgeFromGlobalData()
     })
   },
 
