@@ -2,6 +2,7 @@ const app = getApp()
 const mock = require('../../utils/mock.js')
 const { safeNavigate, safeSwitch } = require('../../utils/safeNavigate')
 const { request, getBaseUrl, toFullUrl } = require('../../utils/request')
+const { requestPostLikeChange, requestCommentLikeChange, reconcileLikeCount } = require('../../utils/like')
 const { handleAuthFailure } = require('../../utils/auth')
 
 function buildShareTitle(value) {
@@ -540,9 +541,11 @@ Page({
   toggleLike() {
     const post = this.data.post
     const isLiked = post.liked
+    const oldLikes = Number(post.stats.likes) || 0
     const newLiked = !isLiked
-    const newLikes = Math.max(0, post.stats.likes + (newLiked ? 1 : -1))
-    const url = isLiked ? '/api/post/unlike/' + post.id : '/api/post/like/' + post.id
+    const newLikes = reconcileLikeCount(isLiked, oldLikes, newLiked)
+    const operation = requestPostLikeChange(post.id, isLiked)
+    if (!operation) return
 
     // 乐观更新：精准 setData，不传整个 post 对象
     this.setData({
@@ -550,21 +553,23 @@ Page({
       'post.stats.likes': newLikes
     })
 
-    request({
-      url: url,
-      method: 'POST'
-    }).then(() => {
-      if (newLiked) {
+    operation.then(confirmedLiked => {
+      const confirmedLikes = reconcileLikeCount(isLiked, oldLikes, confirmedLiked)
+      this.setData({
+        'post.liked': confirmedLiked,
+        'post.stats.likes': confirmedLikes
+      })
+      if (confirmedLiked) {
         wx.showToast({ title: '点赞成功', icon: 'success' })
       }
       // 将点赞状态同步到 storage，供浏览页 onShow 读取
-      wx.setStorageSync('postLikeUpdate', { id: post.id, liked: newLiked, likeCount: newLikes })
+      wx.setStorageSync('postLikeUpdate', { id: post.id, liked: confirmedLiked, likeCount: confirmedLikes })
     }).catch(err => {
       console.error('点赞操作失败:', err)
       // 精准回滚
       this.setData({
         'post.liked': isLiked,
-        'post.stats.likes': post.stats.likes
+        'post.stats.likes': oldLikes
       })
       wx.showToast({ title: (err && err.message) || '操作失败，请重试', icon: 'none' })
     })
@@ -641,79 +646,56 @@ Page({
 
   toggleCommentLike(e) {
     const commentId = e.currentTarget.dataset.id
-    const path = this.findCommentPath(commentId)
-    if (!path) return
+    const initialPath = this.findCommentPath(commentId)
+    if (!initialPath) return
 
-    const comment = this.getByPath(path)
+    const comment = this.getByPath(initialPath)
     const isLiked = comment.liked
+    const oldLikes = Number(comment.likes) || 0
     const newLiked = !isLiked
-    const newLikes = Math.max(0, (comment.likes || 0) + (newLiked ? 1 : -1))
-    const url = isLiked ? '/api/post/comment/unlike/' + commentId : '/api/post/comment/like/' + commentId
+    const newLikes = reconcileLikeCount(isLiked, oldLikes, newLiked)
+    const operation = requestCommentLikeChange(commentId, isLiked)
+    if (!operation) return
 
-    // 在 flatComments 中找到对应评论的索引
-    const flatIndex = this.data.flatComments.findIndex(c => String(c.id) === String(commentId))
+    const applyState = (liked, likes) => {
+      const path = this.findCommentPath(commentId)
+      if (!path) return
 
-    // 在 groupedComments 中定位（root 或 replies）
-    let groupIndex = -1
-    let replyIndex = -1
-    for (let i = 0; i < this.data.groupedComments.length; i++) {
-      const g = this.data.groupedComments[i]
-      if (String(g.root.id) === String(commentId)) {
-        groupIndex = i
-        break
+      const updates = {
+        [path + '.liked']: liked,
+        [path + '.likes']: likes
       }
-      const rIdx = g.replies.findIndex(r => String(r.id) === String(commentId))
-      if (rIdx >= 0) {
-        groupIndex = i
-        replyIndex = rIdx
-        break
+      const flatIndex = this.data.flatComments.findIndex(c => String(c.id) === String(commentId))
+      if (flatIndex >= 0) {
+        updates[`flatComments[${flatIndex}].liked`] = liked
+        updates[`flatComments[${flatIndex}].likes`] = likes
       }
+
+      for (let groupIndex = 0; groupIndex < this.data.groupedComments.length; groupIndex++) {
+        const group = this.data.groupedComments[groupIndex]
+        if (String(group.root.id) === String(commentId)) {
+          updates[`groupedComments[${groupIndex}].root.liked`] = liked
+          updates[`groupedComments[${groupIndex}].root.likes`] = likes
+          break
+        }
+        const replyIndex = group.replies.findIndex(reply => String(reply.id) === String(commentId))
+        if (replyIndex >= 0) {
+          updates[`groupedComments[${groupIndex}].replies[${replyIndex}].liked`] = liked
+          updates[`groupedComments[${groupIndex}].replies[${replyIndex}].likes`] = likes
+          break
+        }
+      }
+      this.setData(updates)
     }
 
     // 乐观更新：精准更新 comments 树、flatComments 列表和 groupedComments 列表
-    const updates = {
-      [path + '.liked']: newLiked,
-      [path + '.likes']: newLikes
-    }
-    if (flatIndex >= 0) {
-      updates[`flatComments[${flatIndex}].liked`] = newLiked
-      updates[`flatComments[${flatIndex}].likes`] = newLikes
-    }
-    if (groupIndex >= 0) {
-      if (replyIndex >= 0) {
-        updates[`groupedComments[${groupIndex}].replies[${replyIndex}].liked`] = newLiked
-        updates[`groupedComments[${groupIndex}].replies[${replyIndex}].likes`] = newLikes
-      } else {
-        updates[`groupedComments[${groupIndex}].root.liked`] = newLiked
-        updates[`groupedComments[${groupIndex}].root.likes`] = newLikes
-      }
-    }
-    this.setData(updates)
+    applyState(newLiked, newLikes)
 
-    request({
-      url: url,
-      method: 'POST'
+    operation.then(confirmedLiked => {
+      applyState(confirmedLiked, reconcileLikeCount(isLiked, oldLikes, confirmedLiked))
     }).catch(err => {
       console.error('评论点赞操作失败:', err)
-      // 精准回滚
-      const rollback = {
-        [path + '.liked']: isLiked,
-        [path + '.likes']: comment.likes
-      }
-      if (flatIndex >= 0) {
-        rollback[`flatComments[${flatIndex}].liked`] = isLiked
-        rollback[`flatComments[${flatIndex}].likes`] = comment.likes
-      }
-      if (groupIndex >= 0) {
-        if (replyIndex >= 0) {
-          rollback[`groupedComments[${groupIndex}].replies[${replyIndex}].liked`] = isLiked
-          rollback[`groupedComments[${groupIndex}].replies[${replyIndex}].likes`] = comment.likes
-        } else {
-          rollback[`groupedComments[${groupIndex}].root.liked`] = isLiked
-          rollback[`groupedComments[${groupIndex}].root.likes`] = comment.likes
-        }
-      }
-      this.setData(rollback)
+      applyState(isLiked, oldLikes)
       wx.showToast({ title: (err && err.message) || '操作失败，请重试', icon: 'none' })
     })
   },

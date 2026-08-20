@@ -1,6 +1,7 @@
 const app = getApp()
 const { safeNavigate } = require('../../utils/safeNavigate')
 const { request, toFullUrl } = require('../../utils/request')
+const { requestPostLikeChange, reconcileLikeCount } = require('../../utils/like')
 
 Page({
   data: {
@@ -274,26 +275,33 @@ Page({
     if (String(item.id) !== String(id)) return
 
     const isLiked = item.liked
+    const oldLikes = Number(item.stats.likes) || 0
     const newLiked = !isLiked
-    const newLikes = Math.max(0, (item.stats.likes || 0) + (newLiked ? 1 : -1))
-    const apiUrl = isLiked ? '/api/post/unlike/' + id : '/api/post/like/' + id
+    const newLikes = reconcileLikeCount(isLiked, oldLikes, newLiked)
+    const operation = requestPostLikeChange(id, isLiked)
+    if (!operation) return
+
+    const applyState = (liked, likes) => {
+      const latestIndex = this.data.posts.findIndex(post => String(post.id) === String(id))
+      if (latestIndex < 0) return
+      this.setData({
+        ['posts[' + latestIndex + '].liked']: liked,
+        ['posts[' + latestIndex + '].stats.likes']: likes
+      })
+    }
 
     // 乐观更新
-    this.setData({
-      ['posts[' + index + '].liked']: newLiked,
-      ['posts[' + index + '].stats.likes']: newLikes
-    })
+    applyState(newLiked, newLikes)
 
-    request({ url: apiUrl, method: 'POST' }).then(() => {
+    operation.then(confirmedLiked => {
+      const confirmedLikes = reconcileLikeCount(isLiked, oldLikes, confirmedLiked)
+      applyState(confirmedLiked, confirmedLikes)
       // 同步点赞状态，供其他页面读取
-      wx.setStorageSync('postLikeUpdate', { id: id, liked: newLiked, likeCount: newLikes })
+      wx.setStorageSync('postLikeUpdate', { id, liked: confirmedLiked, likeCount: confirmedLikes })
     }).catch(err => {
       console.error('点赞操作失败:', err)
       // 回滚
-      this.setData({
-        ['posts[' + index + '].liked']: isLiked,
-        ['posts[' + index + '].stats.likes']: item.stats.likes
-      })
+      applyState(isLiked, oldLikes)
       wx.showToast({ title: (err && err.message) || '操作失败', icon: 'none' })
     })
   },

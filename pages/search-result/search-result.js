@@ -1,5 +1,6 @@
 const { request, toFullUrl } = require('../../utils/request.js')
 const { safeNavigate } = require('../../utils/safeNavigate')
+const { requestPostLikeChange, reconcileLikeCount } = require('../../utils/like')
 
 // 帖子状态映射
 const POST_STATUS_MAP = { 1: '可联系', 2: '已关闭', 3: '违规删除' }
@@ -208,26 +209,33 @@ Page({
     if (String(item.id) !== String(id)) return
 
     const isLiked = item.liked
+    const oldLikes = Number(item.stats.likes) || 0
     const newLiked = !isLiked
-    const newLikes = Math.max(0, (item.stats.likes || 0) + (newLiked ? 1 : -1))
-    const apiUrl = isLiked ? '/api/post/unlike/' + id : '/api/post/like/' + id
+    const newLikes = reconcileLikeCount(isLiked, oldLikes, newLiked)
+    const operation = requestPostLikeChange(id, isLiked)
+    if (!operation) return
+
+    const applyState = (liked, likes) => {
+      const latestIndex = this.data.filteredPosts.findIndex(post => String(post.id) === String(id))
+      if (latestIndex < 0) return
+      this.setData({
+        ['filteredPosts[' + latestIndex + '].liked']: liked,
+        ['filteredPosts[' + latestIndex + '].stats.likes']: likes
+      })
+    }
 
     // 乐观更新
-    this.setData({
-      ['filteredPosts[' + index + '].liked']: newLiked,
-      ['filteredPosts[' + index + '].stats.likes']: newLikes
-    })
+    applyState(newLiked, newLikes)
 
-    request({ url: apiUrl, method: 'POST' }).then(() => {
+    operation.then(confirmedLiked => {
+      const confirmedLikes = reconcileLikeCount(isLiked, oldLikes, confirmedLiked)
+      applyState(confirmedLiked, confirmedLikes)
       // 同步点赞状态，供其他页面读取
-      wx.setStorageSync('postLikeUpdate', { id: id, liked: newLiked, likeCount: newLikes })
+      wx.setStorageSync('postLikeUpdate', { id, liked: confirmedLiked, likeCount: confirmedLikes })
     }).catch(err => {
       console.error('点赞操作失败:', err)
       // 回滚
-      this.setData({
-        ['filteredPosts[' + index + '].liked']: isLiked,
-        ['filteredPosts[' + index + '].stats.likes']: item.stats.likes
-      })
+      applyState(isLiked, oldLikes)
       wx.showToast({ title: (err && err.message) || '操作失败', icon: 'none' })
     })
   },
