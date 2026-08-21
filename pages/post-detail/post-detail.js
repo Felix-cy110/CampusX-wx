@@ -40,12 +40,14 @@ Page({
     commentSubmitting: false,
     currentUserAvatar: '',
     replyTarget: null,
+    commentInputFocus: false,
     keyboardHeight: 0,
     commentCursor: null,
     commentHasMore: true,
     commentLoading: false,
     sharedCommentId: '',
     scrollIntoView: '',
+    scrollTop: 0,
     /* 举报弹窗 */
     showReportModal: false,
     reportReasons: [
@@ -752,13 +754,52 @@ Page({
     }
     return obj
   },
-  /* 回复评论（点击评论上的回复图标） */
+  /* 回复评论（点击评论上的回复图标），同时聚焦输入框弹出键盘 */
   replyComment(e) {
     const commentId = e.currentTarget.dataset.id
     const target = this.findCommentById(commentId)
     if (target) {
-      this.setData({ replyTarget: { id: target.id, name: target.name } })
+      this.setData({ replyTarget: { id: target.id, name: target.name }, commentInputFocus: false }, () => {
+        this.setData({ commentInputFocus: true })
+        this.ensureReplyTargetVisible(target.id)
+      })
     }
+  },
+
+  /* 输入框失焦后复位 focus 标记，保证下次点击回复能重新聚焦 */
+  onCommentBlur() {
+    if (this.data.commentInputFocus) {
+      this.setData({ commentInputFocus: false })
+    }
+  },
+
+  /* 键盘弹出或切换回复目标后，如目标评论被底部输入框/键盘遮挡则滚动到可见位置 */
+  ensureReplyTargetVisible(commentId) {
+    if (!commentId) return
+    setTimeout(() => {
+      const query = wx.createSelectorQuery().in(this)
+      query.select('#comment-' + commentId).boundingClientRect()
+      query.select('.content').boundingClientRect()
+      query.select('.content').scrollOffset()
+      query.exec((res) => {
+        const rect = res && res[0]
+        const scrollRect = res && res[1]
+        const offset = res && res[2]
+        if (!rect || !scrollRect || !offset) return
+        const margin = 8
+        let delta = 0
+        if (rect.bottom > scrollRect.bottom - margin) {
+          /* 评论底部被输入框遮挡：向下滚动使其完整露出 */
+          delta = rect.bottom - scrollRect.bottom + margin
+        } else if (rect.top < scrollRect.top) {
+          /* 评论顶部在可视区上方：向上滚动 */
+          delta = rect.top - scrollRect.top
+        }
+        if (delta !== 0) {
+          this.setData({ scrollTop: offset.scrollTop + delta })
+        }
+      })
+    }, 120)
   },
 
   /* 在评论树中查找指定 ID 的评论 */
@@ -850,7 +891,12 @@ Page({
     const height = Number(detail.height)
     const keyboardHeight = Number.isFinite(height) && height > 0 ? height : 0
     if (keyboardHeight === this.data.keyboardHeight) return
-    this.setData({ keyboardHeight })
+    this.setData({ keyboardHeight }, () => {
+      /* 键盘弹起导致页面缩短后，重新检查目标评论是否被遮挡 */
+      if (keyboardHeight > 0 && this.data.replyTarget) {
+        this.ensureReplyTargetVisible(this.data.replyTarget.id)
+      }
+    })
   },
 
   /* 取消回复 */
@@ -1076,12 +1122,15 @@ Page({
     this.hideCommentOptions()
   },
 
-  /* 回复评论（从操作弹窗） */
+  /* 回复评论（从操作弹窗），同时聚焦输入框弹出键盘 */
   replyCommentAction() {
     const comment = this.data.selectedComment
     this.hideCommentOptions()
     if (comment) {
-      this.setData({ replyTarget: { id: comment.id, name: comment.name } })
+      this.setData({ replyTarget: { id: comment.id, name: comment.name }, commentInputFocus: false }, () => {
+        this.setData({ commentInputFocus: true })
+        this.ensureReplyTargetVisible(comment.id)
+      })
     }
   },
 

@@ -43,7 +43,7 @@
     </view>
   </view>
 
-  <scroll-view class="content" scroll-y scroll-into-view="{{scrollIntoView}}" scroll-with-animation bindscrolltolower="loadMoreComments">
+  <scroll-view class="content" scroll-y scroll-into-view="{{scrollIntoView}}" scroll-top="{{scrollTop}}" scroll-with-animation bindscrolltolower="loadMoreComments">
     <!-- 图片轮播 -->
     <view class="image-swiper-wrap" wx:if="{{post.images && post.images.length}}">
       <swiper class="image-swiper" indicator-dots="{{post.images.length > 1}}" indicator-color="rgba(255,255,255,0.5)" indicator-active-color="#FFFFFF" current="{{swiperCurrent}}" bindchange="onSwiperChange">
@@ -200,7 +200,9 @@
         <input class="bottom-comment-input"
                placeholder="{{replyTarget ? '回复 @' + replyTarget.name + '...' : '说点什么...'}}"
                value="{{commentInput}}"
+               focus="{{commentInputFocus}}"
                bindinput="onCommentInput"
+               bindblur="onCommentBlur"
                adjust-position="{{false}}"
                bindkeyboardheightchange="onCommentKeyboardHeightChange"
                placeholder-class="input-placeholder" />
