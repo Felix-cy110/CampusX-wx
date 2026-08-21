@@ -14,7 +14,7 @@
           <text class="top-bar-text-white">编辑</text>
         </view>
         <view class="top-settings-btn" bindtap="goToSettings">
-          <text class="icon-settings">⚙</text>
+          <image class="icon-settings" src="/images/SVG/设置.svg" mode="aspectFit"></image>
         </view>
       </view>
     </view>

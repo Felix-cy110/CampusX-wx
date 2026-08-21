@@ -89,8 +89,8 @@ image.icon-bag {
 }
 
 .icon-settings {
-  font-size: var(--font-xl);
-  color: #FFFFFF;
+  width: 36rpx;
+  height: 36rpx;
 }
 
 /* ========== 帖子列表滚动区域 ========== */
