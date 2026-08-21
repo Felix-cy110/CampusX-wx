@@ -23,8 +23,8 @@
   <!-- 关注提示 -->
   <view class="follow-notice" wx:if="{{!isFollowed}}">
     <text class="follow-text">你尚未关注对方，对话仅限当前话题</text>
-    <view class="follow-btn" bindtap="followUser">
-      <text class="follow-btn-text">关注</text>
+    <view class="follow-btn {{followPending ? 'btn-disabled' : ''}}" bindtap="followUser">
+      <text class="follow-btn-text">{{followPending ? '处理中...' : '关注'}}</text>
     </view>
   </view>
 

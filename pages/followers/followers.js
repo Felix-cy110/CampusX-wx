@@ -1,6 +1,7 @@
 const { request, toFullUrl } = require('../../utils/request')
 const { safeNavigate, safeSwitch } = require('../../utils/safeNavigate')
 const { markNotificationRead } = require('../../utils/unread')
+const { getKnownFollowStatus, requestFollowChange } = require('../../utils/follow')
 
 Page({
   data: {
@@ -30,6 +31,18 @@ Page({
     } catch (err) {
       console.error('[followers] onLoad error:', err)
     }
+  },
+
+  onShow() {
+    const followingList = this.data.followingList.map(item => ({
+      ...item,
+      isFollowed: getKnownFollowStatus(item.uid, item.isFollowed)
+    })).filter(item => item.isFollowed)
+    const followerList = this.data.followerList.map(item => ({
+      ...item,
+      isMutual: getKnownFollowStatus(item.uid, item.isMutual)
+    }))
+    this.setData({ followingList, followerList })
   },
 
   /** 加载关注列表 */
@@ -113,27 +126,20 @@ Page({
     const item = this.data.followingList[index]
     if (!item) return
 
-    if (item.isFollowed) {
-      // 取关
-      request({ url: `/api/v1/follow/${item.uid}`, method: 'DELETE' }).then(() => {
-        const list = this.data.followingList.slice()
-        list[index] = { ...list[index], isFollowed: false }
-        this.setData({ followingList: list })
-        wx.showToast({ title: '已取消关注', icon: 'none' })
-      }).catch(() => {
-        wx.showToast({ title: '操作失败', icon: 'none' })
-      })
-    } else {
-      // 关注
-      request({ url: `/api/v1/follow/${item.uid}`, method: 'POST' }).then(() => {
-        const list = this.data.followingList.slice()
+    const operation = requestFollowChange(item.uid, item.isFollowed)
+    if (!operation) return
+    operation.then(confirmedFollowed => {
+      const list = this.data.followingList.slice()
+      if (!confirmedFollowed) {
+        list.splice(index, 1)
+      } else {
         list[index] = { ...list[index], isFollowed: true }
-        this.setData({ followingList: list })
-        wx.showToast({ title: '已关注', icon: 'none' })
-      }).catch(() => {
-        wx.showToast({ title: '操作失败', icon: 'none' })
-      })
-    }
+      }
+      this.setData({ followingList: list })
+      wx.showToast({ title: confirmedFollowed ? '已关注' : '已取消关注', icon: 'none' })
+    }).catch(err => {
+      wx.showToast({ title: (err && err.message) || '操作失败', icon: 'none' })
+    })
   },
 
   /** 关注/取关（粉丝列表） */
@@ -142,27 +148,16 @@ Page({
     const item = this.data.followerList[index]
     if (!item) return
 
-    if (item.isMutual) {
-      // 取关（已是互关状态）
-      request({ url: `/api/v1/follow/${item.uid}`, method: 'DELETE' }).then(() => {
-        const list = this.data.followerList.slice()
-        list[index] = { ...list[index], isMutual: false }
-        this.setData({ followerList: list })
-        wx.showToast({ title: '已取消关注', icon: 'none' })
-      }).catch(() => {
-        wx.showToast({ title: '操作失败', icon: 'none' })
-      })
-    } else {
-      // 关注
-      request({ url: `/api/v1/follow/${item.uid}`, method: 'POST' }).then(() => {
-        const list = this.data.followerList.slice()
-        list[index] = { ...list[index], isMutual: true }
-        this.setData({ followerList: list })
-        wx.showToast({ title: '已关注', icon: 'none' })
-      }).catch(() => {
-        wx.showToast({ title: '操作失败', icon: 'none' })
-      })
-    }
+    const operation = requestFollowChange(item.uid, item.isMutual)
+    if (!operation) return
+    operation.then(confirmedFollowed => {
+      const list = this.data.followerList.slice()
+      list[index] = { ...list[index], isMutual: confirmedFollowed }
+      this.setData({ followerList: list })
+      wx.showToast({ title: confirmedFollowed ? '已关注' : '已取消关注', icon: 'none' })
+    }).catch(err => {
+      wx.showToast({ title: (err && err.message) || '操作失败', icon: 'none' })
+    })
   },
 
   goToUserProfile(e) {

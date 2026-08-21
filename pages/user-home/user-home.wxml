@@ -54,8 +54,8 @@
 
       <!-- 操作按钮 -->
       <view class="action-btns" wx:if="{{!isOwnProfile}}">
-        <view class="action-btn follow-btn {{isFollowed ? 'followed' : ''}}" bindtap="toggleFollow">
-          <text>{{isFollowed ? '已关注' : '+ 关注'}}</text>
+        <view class="action-btn follow-btn {{isFollowed ? 'followed' : ''}} {{followPending ? 'btn-disabled' : ''}}" bindtap="toggleFollow">
+          <text>{{followPending ? '处理中...' : (isFollowed ? '已关注' : '+ 关注')}}</text>
         </view>
         <view class="action-btn chat-btn" bindtap="goToChat">
           <text>私信</text>

@@ -4,6 +4,9 @@ var getBaseUrl = requestModule.getBaseUrl
 var handleAuthFailure = require('../../utils/auth').handleAuthFailure
 var unreadModule = require('../../utils/unread')
 var markChatConversationRead = unreadModule.markChatConversationRead
+var followModule = require('../../utils/follow')
+var refreshFollowStatus = followModule.refreshFollowStatus
+var requestFollowChange = followModule.requestFollowChange
 
 var createStompClient = null
 try {
@@ -24,6 +27,7 @@ Page({
     otherName: '聊天',
     myAvatar: '',
     isFollowed: false,
+    followPending: false,
     statusBarHeight: 0,
     navBarHeight: 0,
     showPanel: false,
@@ -523,11 +527,8 @@ Page({
     var otherUserId = this.data.otherUserId
     if (!otherUserId) return
 
-    request({
-      url: '/api/v1/follow/count/' + otherUserId,
-      method: 'GET'
-    }).then(function (data) {
-      that.setData({ isFollowed: data.followedByMe || false })
+    refreshFollowStatus(otherUserId).then(function (data) {
+      if (!data.stale) that.setData({ isFollowed: data.followedByMe })
     }).catch(function (err) {
       console.error('查询关注状态失败:', err)
     })
@@ -536,20 +537,21 @@ Page({
   followUser: function () {
     var that = this
     var otherUserId = this.data.otherUserId
-    if (!otherUserId) return
+    if (!otherUserId || this.data.followPending) return
 
     var isFollowed = this.data.isFollowed
-    var method = isFollowed ? 'DELETE' : 'POST'
+    var operation = requestFollowChange(otherUserId, isFollowed)
+    if (!operation) return
 
-    request({
-      url: '/api/v1/follow/' + otherUserId,
-      method: method
-    }).then(function () {
-      that.setData({ isFollowed: !isFollowed })
-      wx.showToast({ title: isFollowed ? '已取消关注' : '已关注', icon: 'none' })
+    this.setData({ followPending: true })
+    operation.then(function (confirmedFollowed) {
+      that.setData({ isFollowed: confirmedFollowed })
+      wx.showToast({ title: confirmedFollowed ? '已关注' : '已取消关注', icon: 'none' })
     }).catch(function (err) {
       console.error('关注操作失败:', err)
-      wx.showToast({ title: '操作失败，请重试', icon: 'none' })
+      wx.showToast({ title: (err && err.message) || '操作失败，请重试', icon: 'none' })
+    }).finally(function () {
+      that.setData({ followPending: false })
     })
   },
 

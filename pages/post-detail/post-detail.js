@@ -4,6 +4,14 @@ const { safeNavigate, safeSwitch } = require('../../utils/safeNavigate')
 const { request, getBaseUrl, toFullUrl } = require('../../utils/request')
 const { requestPostLikeChange, requestCommentLikeChange, reconcileLikeCount } = require('../../utils/like')
 const { handleAuthFailure } = require('../../utils/auth')
+const {
+  applyFollowSnapshot,
+  getFollowVersion,
+  getKnownFollowStatus,
+  hasKnownFollowStatus,
+  refreshFollowStatus,
+  requestFollowChange
+} = require('../../utils/follow')
 
 function buildShareTitle(value) {
   const text = String(value || '').replace(/\s+/g, ' ').trim()
@@ -52,7 +60,8 @@ Page({
     reportTargetId: '',
     reportSelectedReason: 0,
     reportRemark: '',
-    reportSubmitting: false
+    reportSubmitting: false,
+    followPending: false
   },
   onLoad(options) {
     const systemInfo = wx.getSystemInfoSync()
@@ -137,7 +146,22 @@ Page({
   loadPostDetail(id) {
     if (!id) return
     const userInfo = app.globalData.userInfo || {}
+    const expectedUserId = this.data.post && this.data.post.user && this.data.post.user.uid
+    const followVersion = expectedUserId ? getFollowVersion(expectedUserId) : null
     request({ url: '/api/post/' + id }).then(vo => {
+      let followedByMe = !!vo.followedByMe
+      if (expectedUserId && String(expectedUserId) === String(vo.userId)) {
+        const accepted = applyFollowSnapshot(vo.userId, followVersion, followedByMe)
+        if (!accepted) {
+          followedByMe = getKnownFollowStatus(vo.userId, this.data.post.isFollowed)
+        }
+      } else {
+        const currentVersion = getFollowVersion(vo.userId)
+        if (!hasKnownFollowStatus(vo.userId)) {
+          applyFollowSnapshot(vo.userId, currentVersion, followedByMe)
+        }
+        followedByMe = getKnownFollowStatus(vo.userId, followedByMe)
+      }
       const post = {
         id: vo.id,
         user: { uid: vo.userId, name: vo.nickname, avatar: toFullUrl(vo.avatarUrl) },
@@ -149,7 +173,7 @@ Page({
         liked: vo.liked || false,
         favorited: vo.favorited || false,
         isOwn: String(vo.userId) === String(userInfo.uid),
-        isFollowed: vo.followedByMe || false,
+        isFollowed: followedByMe,
         school: '',
         sourceType: vo.sourceType || '',
         sourceId: vo.sourceId || '',
@@ -523,16 +547,13 @@ Page({
     const post = this.data.post
     const userId = post.user && post.user.uid
     if (userId && !post.isOwn) {
-      request({
-        url: '/api/v1/follow/count/' + userId,
-        method: 'GET'
-      }).then(data => {
-        if (this.data.post.isFollowed !== (data.followedByMe || false)) {
-          const updatedPost = this.data.post
-          updatedPost.isFollowed = data.followedByMe || false
-          this.setData({ post: updatedPost })
+      refreshFollowStatus(userId).then(data => {
+        if (!data.stale && this.data.post.isFollowed !== data.followedByMe) {
+          this.setData({ 'post.isFollowed': data.followedByMe })
         }
-      }).catch(() => {})
+      }).catch(err => {
+        console.error('刷新关注状态失败:', err)
+      })
     }
   },
 
@@ -606,21 +627,21 @@ Page({
   toggleFollow() {
     const post = this.data.post
     const userId = post.user && post.user.uid
-    if (!userId || post.isOwn) return
+    if (!userId || post.isOwn || this.data.followPending) return
 
     const isFollowed = post.isFollowed
-    const method = isFollowed ? 'DELETE' : 'POST'
+    const operation = requestFollowChange(userId, isFollowed)
+    if (!operation) return
 
-    request({
-      url: '/api/v1/follow/' + userId,
-      method: method
-    }).then(() => {
-      post.isFollowed = !isFollowed
-      this.setData({ post })
-      wx.showToast({ title: isFollowed ? '已取消关注' : '已关注', icon: 'none' })
+    this.setData({ followPending: true })
+    operation.then(confirmedFollowed => {
+      this.setData({ 'post.isFollowed': confirmedFollowed })
+      wx.showToast({ title: confirmedFollowed ? '已关注' : '已取消关注', icon: 'none' })
     }).catch(err => {
       console.error('关注操作失败:', err)
-      wx.showToast({ title: '操作失败，请重试', icon: 'none' })
+      wx.showToast({ title: (err && err.message) || '操作失败，请重试', icon: 'none' })
+    }).finally(() => {
+      this.setData({ followPending: false })
     })
   },
 

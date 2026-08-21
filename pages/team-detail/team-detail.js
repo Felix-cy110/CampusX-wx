@@ -13,8 +13,7 @@ Page({
     teamId: '',
     isLiked: false,
     isFavorited: false,
-    hasJoined: false,
-    isFollowed: false
+    hasJoined: false
   },
 
   onLoad(options) {
@@ -124,11 +123,5 @@ Page({
 
   addComment() {
     wx.showToast({ title: '打开评论输入', icon: 'none' })
-  },
-
-  toggleFollow() {
-    const isFollowed = !this.data.isFollowed
-    this.setData({ isFollowed })
-    wx.showToast({ title: isFollowed ? '已关注' : '已取消关注', icon: 'none' })
   }
 })

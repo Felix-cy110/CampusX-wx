@@ -340,8 +340,10 @@
 .bottom-bar {
   display: flex;
   align-items: center;
+  width: 100%;
   height: 96rpx;
   padding: 0 20rpx;
+  box-sizing: border-box;
   background: var(--color-bg-white);
   border-top: 1rpx solid var(--color-border-light);
   flex-shrink: 0;
@@ -389,10 +391,14 @@
   flex-shrink: 0;
 }
 .share-native-button {
-  margin-right: 0;
+  width: 48rpx;
+  min-width: 48rpx;
+  margin: 0 12rpx;
   padding: 0;
   border: 0;
   background: transparent;
+  box-sizing: border-box;
+  flex: 0 0 48rpx;
   line-height: normal;
 }
 .share-native-button::after {

@@ -2,6 +2,13 @@ const app = getApp()
 const { safeNavigate } = require('../../utils/safeNavigate')
 const { request, toFullUrl } = require('../../utils/request')
 const { requestPostLikeChange, reconcileLikeCount } = require('../../utils/like')
+const {
+  applyFollowSnapshot,
+  getFollowVersion,
+  getKnownFollowStatus,
+  refreshFollowStatus,
+  requestFollowChange
+} = require('../../utils/follow')
 
 Page({
   data: {
@@ -23,6 +30,7 @@ Page({
       likes: 0
     },
     isFollowed: false,
+    followPending: false,
     posts: [],
     postsCursor: null,
     postsHasMore: true,
@@ -76,25 +84,28 @@ Page({
     this._syncPostLikeUpdate()
     // 从其他页面返回时刷新关注状态和粉丝数
     if (this.data.userId && !this.data.isOwnProfile) {
-      request({
-        url: '/api/v1/follow/count/' + this.data.userId,
-        method: 'GET'
-      }).then(data => {
-        const stats = this.data.stats
-        this.setData({
-          isFollowed: data.followedByMe || false,
-          stats: {
-            ...stats,
-            followers: data.followerCount || 0,
-            following: data.followingCount || 0
-          }
-        })
-      }).catch(() => {})
+      this.refreshFollowStatus()
     }
+  },
+
+  refreshFollowStatus() {
+    const userId = this.data.userId
+    if (!userId || this.data.isOwnProfile) return
+    refreshFollowStatus(userId).then(data => {
+      if (data.stale) return
+      this.setData({
+        isFollowed: data.followedByMe,
+        'stats.followers': data.followerCount,
+        'stats.following': data.followingCount
+      })
+    }).catch(err => {
+      console.error('刷新关注状态失败:', err)
+    })
   },
 
   /* ===== 获取用户公开资料 ===== */
   fetchUserProfile(userId) {
+    const followVersion = getFollowVersion(userId)
     request({
       url: '/api/v1/user/profile/' + userId,
       method: 'GET'
@@ -114,10 +125,17 @@ Page({
         followers: vo.followerCount || 0,
         likes: vo.likedCount || 0
       }
+      const followedByMe = !!vo.followedByMe
+      const accepted = applyFollowSnapshot(userId, followVersion, followedByMe)
+      if (!accepted) {
+        stats.followers = this.data.stats.followers
+      }
       this.setData({
         userInfo,
         stats,
-        isFollowed: vo.followedByMe || false
+        isFollowed: accepted
+          ? followedByMe
+          : getKnownFollowStatus(userId, this.data.isFollowed)
       })
     }).catch(err => {
       console.error('获取用户资料失败:', err)
@@ -214,35 +232,27 @@ Page({
   toggleFollow() {
     const userId = this.data.userId
     const isFollowed = this.data.isFollowed
-    if (isFollowed) {
-      request({
-        url: '/api/v1/follow/' + userId,
-        method: 'DELETE'
-      }).then(() => {
-        this.setData({ isFollowed: false })
-        const stats = this.data.stats
-        stats.followers = Math.max(0, stats.followers - 1)
-        this.setData({ stats })
-        wx.showToast({ title: '已取消关注', icon: 'none' })
-      }).catch(err => {
-        console.error('取消关注失败:', err)
-        wx.showToast({ title: '操作失败', icon: 'none' })
+    if (!userId || this.data.followPending) return
+    const operation = requestFollowChange(userId, isFollowed)
+    if (!operation) return
+
+    this.setData({ followPending: true })
+    operation.then(confirmedFollowed => {
+      const followerCount = Math.max(0,
+        (Number(this.data.stats.followers) || 0) +
+        (confirmedFollowed ? 1 : 0) - (isFollowed ? 1 : 0))
+      this.setData({
+        isFollowed: confirmedFollowed,
+        'stats.followers': followerCount
       })
-    } else {
-      request({
-        url: '/api/v1/follow/' + userId,
-        method: 'POST'
-      }).then(() => {
-        this.setData({ isFollowed: true })
-        const stats = this.data.stats
-        stats.followers = stats.followers + 1
-        this.setData({ stats })
-        wx.showToast({ title: '已关注', icon: 'none' })
-      }).catch(err => {
-        console.error('关注失败:', err)
-        wx.showToast({ title: '操作失败', icon: 'none' })
-      })
-    }
+      wx.showToast({ title: confirmedFollowed ? '已关注' : '已取消关注', icon: 'none' })
+      this.refreshFollowStatus()
+    }).catch(err => {
+      console.error('关注操作失败:', err)
+      wx.showToast({ title: (err && err.message) || '操作失败，请重试', icon: 'none' })
+    }).finally(() => {
+      this.setData({ followPending: false })
+    })
   },
 
   /* ===== 导航 ===== */

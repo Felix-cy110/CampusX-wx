@@ -63,6 +63,11 @@ function resetGlobalSession() {
   } catch (err) {
     console.warn('重置未读状态失败:', err)
   }
+  try {
+    require('./follow').resetFollowState()
+  } catch (err) {
+    console.warn('重置关注状态失败:', err)
+  }
 }
 
 function clearSession() {

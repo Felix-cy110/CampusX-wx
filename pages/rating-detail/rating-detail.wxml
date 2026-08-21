@@ -25,14 +25,6 @@
           </view>
         </view>
       </view>
-      <view class="user-info-right">
-        <view class="follow-btn" wx:if="{{!isFollowed}}" bindtap="toggleFollow">
-          <text>+关注</text>
-        </view>
-        <view class="follow-btn followed" wx:if="{{isFollowed}}" bindtap="toggleFollow">
-          <text>已关注</text>
-        </view>
-      </view>
     </view>
 
     <!-- 帖子标题 -->
