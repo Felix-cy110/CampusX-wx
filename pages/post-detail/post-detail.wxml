@@ -1,5 +1,5 @@
 <!-- 帖子详情页 -->
-<view class="page">
+<view class="page {{keyboardHeight > 0 ? 'keyboard-open' : ''}}" style="height: calc(100vh - {{keyboardHeight}}px);">
   <!-- 固定顶部：状态栏 + 导航栏 -->
   <view class="fixed-header">
     <view class="status-bar-placeholder" style="height: {{statusBarHeight}}px;"></view>
@@ -62,11 +62,11 @@
       </view>
       <view class="user-info-right">
         <block wx:if="{{!post.isOwn}}">
-          <view class="follow-btn" wx:if="{{!post.isFollowed}}" bindtap="toggleFollow">
-            <text>+关注</text>
+          <view class="follow-btn {{followPending ? 'btn-disabled' : ''}}" wx:if="{{!post.isFollowed}}" bindtap="toggleFollow">
+            <text>{{followPending ? '处理中...' : '+关注'}}</text>
           </view>
-          <view class="follow-btn followed" wx:if="{{post.isFollowed}}" bindtap="toggleFollow">
-            <text>已关注</text>
+          <view class="follow-btn followed {{followPending ? 'btn-disabled' : ''}}" wx:if="{{post.isFollowed}}" bindtap="toggleFollow">
+            <text>{{followPending ? '处理中...' : '已关注'}}</text>
           </view>
         </block>
         <view class="share-btn" bindtap="showShareSheet">
@@ -201,6 +201,8 @@
                placeholder="{{replyTarget ? '回复 @' + replyTarget.name + '...' : '说点什么...'}}"
                value="{{commentInput}}"
                bindinput="onCommentInput"
+               adjust-position="{{false}}"
+               bindkeyboardheightchange="onCommentKeyboardHeightChange"
                placeholder-class="input-placeholder" />
       </view>
       <view class="bottom-actions">

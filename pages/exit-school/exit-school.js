@@ -48,13 +48,17 @@ Page({
   /* 加载高校列表 */
   fetchCampusList() {
     const userInfo = app.globalData.userInfo || {}
-    this.setData({ currentCampusId: userInfo.campusId || null })
+    const currentCampusId = userInfo.campusId || null
+    this.setData({ currentCampusId })
 
     request({
       url: '/api/v1/campus/list',
       method: 'GET'
     }).then(list => {
-      this.setData({ campusList: list || [] })
+      const campusList = (list || []).map(item => Object.assign({}, item, {
+        isCurrent: currentCampusId !== null && String(item.id) === String(currentCampusId)
+      }))
+      this.setData({ campusList })
     }).catch(err => {
       console.error('获取高校列表失败:', err)
       wx.showToast({ title: '加载高校列表失败', icon: 'none' })

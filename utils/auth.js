@@ -57,13 +57,17 @@ function resetGlobalSession() {
     chatUnread: 0
   }
   app.globalData._notificationCountsLoaded = false
-  app.globalData._notificationReadSent = {
-    likes: false,
-    followers: false,
-    comments: false,
-    system: false
+  // 懒加载以避免 auth -> unread -> request -> auth 的模块初始化环。
+  try {
+    require('./unread').resetUnreadState()
+  } catch (err) {
+    console.warn('重置未读状态失败:', err)
   }
-  app.globalData._pendingChatDecrement = 0
+  try {
+    require('./follow').resetFollowState()
+  } catch (err) {
+    console.warn('重置关注状态失败:', err)
+  }
 }
 
 function clearSession() {

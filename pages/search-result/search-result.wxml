@@ -52,7 +52,7 @@
             <text class="user-school text-xs text-secondary">{{item.school}}</text>
           </view>
         </view>
-        <view class="follow-btn" bindtap="onFollow" data-user-id="{{item.userId}}">关注</view>
+        <view class="follow-btn {{item.isFollowed ? 'followed' : ''}}" wx:if="{{!item.isOwn}}" catchtap="onFollow" data-user-id="{{item.userId}}" data-index="{{index}}">{{item.isFollowed ? '已关注' : '关注'}}</view>
       </view>
     </view>
   </view>

@@ -57,8 +57,7 @@ CampusX 是一个校园社交微信小程序。数据来源混合：已对接后
 | `crossSchoolQuota` | 跨校发帖额度 |
 | `notificationCounts` | 收件箱各类型未读数量缓存（likes/followers/comments/system/chatUnread） |
 | `_notificationCountsLoaded` | 标记 notificationCounts 是否已被 API 填充（防止首次加载时用初始零值覆盖 badge） |
-| `_notificationReadSent` | 乐观更新追踪：记录本地已标记已读但后端可能尚未确认的类型 |
-| `_pendingChatDecrement` | 聊天未读的乐观扣减量 |
+| `utils/unread.js` | 统一协调未读统计单飞请求、乐观已读操作、旧响应丢弃与失败回查 |
 | `_tabBar` | 指向当前 tabBar 组件实例，供非 tab 页刷新 badge 使用 |
 
 页面间传递数据使用 `wx.setStorageSync`/`wx.getStorageSync`（如 `selectedSchool`、`selectedMajor`、`currentErrand`）。
@@ -86,7 +85,7 @@ if (typeof this.getTabBar === 'function' && this.getTabBar()) {
 
 **发布弹窗**：TabBar 中间的 "+" 按钮触发发布弹窗，提供四种内容类型入口（图文帖子、二手挂单、发布跑腿、发起评分）。弹窗通过 `togglePublishPopup()` 控制，会在打开时修改导航栏背景色以匹配遮罩，关闭时恢复。跳转使用 `safeNavigate`。
 
-**收件箱 Badge**：`loadInboxBadge()` 从 `/api/v1/notification/count` 拉取未读数，并与 globalData 中的乐观更新标记合并后设置到 tabBar 上。非 tab 页面也可以通过 `app.globalData._tabBar.updateBadgeFromGlobalData()` 刷新 badge。
+**收件箱 Badge**：`loadInboxBadge()` 通过 `utils/unread.js` 单飞拉取 `/api/v1/notification/count`，已读操作完成前不会接受旧统计响应。非 tab 页面也可以通过 `app.globalData._tabBar.updateBadgeFromGlobalData()` 刷新 badge。
 
 ### 自定义导航栏模式
 

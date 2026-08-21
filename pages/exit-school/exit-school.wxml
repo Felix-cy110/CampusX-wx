@@ -17,7 +17,7 @@
     </view>
 
     <view
-      class="campus-item {{String(item.id) === String(currentCampusId) ? 'current' : ''}}"
+      class="campus-item {{item.isCurrent ? 'current' : ''}}"
       wx:for="{{campusList}}"
       wx:key="id"
       bindtap="onTapCampus"
@@ -26,9 +26,9 @@
     >
       <view class="campus-info">
         <text class="campus-name">{{item.name}}</text>
-        <text class="campus-badge" wx:if="{{String(item.id) === String(currentCampusId)}}">当前学校</text>
+        <text class="campus-badge" wx:if="{{item.isCurrent}}">当前学校</text>
       </view>
-      <image class="campus-arrow" src="/images/SVG/返回.svg" mode="aspectFit" wx:if="{{String(item.id) !== String(currentCampusId)}}"></image>
+      <image class="campus-arrow" src="/images/SVG/返回.svg" mode="aspectFit" wx:if="{{!item.isCurrent}}"></image>
     </view>
 
     <view class="empty-state" wx:if="{{campusList.length === 0}}">

@@ -2,7 +2,16 @@ const app = getApp()
 const mock = require('../../utils/mock.js')
 const { safeNavigate, safeSwitch } = require('../../utils/safeNavigate')
 const { request, getBaseUrl, toFullUrl } = require('../../utils/request')
+const { requestPostLikeChange, requestCommentLikeChange, reconcileLikeCount } = require('../../utils/like')
 const { handleAuthFailure } = require('../../utils/auth')
+const {
+  applyFollowSnapshot,
+  getFollowVersion,
+  getKnownFollowStatus,
+  hasKnownFollowStatus,
+  refreshFollowStatus,
+  requestFollowChange
+} = require('../../utils/follow')
 
 function buildShareTitle(value) {
   const text = String(value || '').replace(/\s+/g, ' ').trim()
@@ -31,6 +40,7 @@ Page({
     commentSubmitting: false,
     currentUserAvatar: '',
     replyTarget: null,
+    keyboardHeight: 0,
     commentCursor: null,
     commentHasMore: true,
     commentLoading: false,
@@ -50,7 +60,8 @@ Page({
     reportTargetId: '',
     reportSelectedReason: 0,
     reportRemark: '',
-    reportSubmitting: false
+    reportSubmitting: false,
+    followPending: false
   },
   onLoad(options) {
     const systemInfo = wx.getSystemInfoSync()
@@ -135,7 +146,22 @@ Page({
   loadPostDetail(id) {
     if (!id) return
     const userInfo = app.globalData.userInfo || {}
+    const expectedUserId = this.data.post && this.data.post.user && this.data.post.user.uid
+    const followVersion = expectedUserId ? getFollowVersion(expectedUserId) : null
     request({ url: '/api/post/' + id }).then(vo => {
+      let followedByMe = !!vo.followedByMe
+      if (expectedUserId && String(expectedUserId) === String(vo.userId)) {
+        const accepted = applyFollowSnapshot(vo.userId, followVersion, followedByMe)
+        if (!accepted) {
+          followedByMe = getKnownFollowStatus(vo.userId, this.data.post.isFollowed)
+        }
+      } else {
+        const currentVersion = getFollowVersion(vo.userId)
+        if (!hasKnownFollowStatus(vo.userId)) {
+          applyFollowSnapshot(vo.userId, currentVersion, followedByMe)
+        }
+        followedByMe = getKnownFollowStatus(vo.userId, followedByMe)
+      }
       const post = {
         id: vo.id,
         user: { uid: vo.userId, name: vo.nickname, avatar: toFullUrl(vo.avatarUrl) },
@@ -147,7 +173,7 @@ Page({
         liked: vo.liked || false,
         favorited: vo.favorited || false,
         isOwn: String(vo.userId) === String(userInfo.uid),
-        isFollowed: vo.followedByMe || false,
+        isFollowed: followedByMe,
         school: '',
         sourceType: vo.sourceType || '',
         sourceId: vo.sourceId || '',
@@ -521,16 +547,13 @@ Page({
     const post = this.data.post
     const userId = post.user && post.user.uid
     if (userId && !post.isOwn) {
-      request({
-        url: '/api/v1/follow/count/' + userId,
-        method: 'GET'
-      }).then(data => {
-        if (this.data.post.isFollowed !== (data.followedByMe || false)) {
-          const updatedPost = this.data.post
-          updatedPost.isFollowed = data.followedByMe || false
-          this.setData({ post: updatedPost })
+      refreshFollowStatus(userId).then(data => {
+        if (!data.stale && this.data.post.isFollowed !== data.followedByMe) {
+          this.setData({ 'post.isFollowed': data.followedByMe })
         }
-      }).catch(() => {})
+      }).catch(err => {
+        console.error('刷新关注状态失败:', err)
+      })
     }
   },
 
@@ -540,9 +563,11 @@ Page({
   toggleLike() {
     const post = this.data.post
     const isLiked = post.liked
+    const oldLikes = Number(post.stats.likes) || 0
     const newLiked = !isLiked
-    const newLikes = Math.max(0, post.stats.likes + (newLiked ? 1 : -1))
-    const url = isLiked ? '/api/post/unlike/' + post.id : '/api/post/like/' + post.id
+    const newLikes = reconcileLikeCount(isLiked, oldLikes, newLiked)
+    const operation = requestPostLikeChange(post.id, isLiked)
+    if (!operation) return
 
     // 乐观更新：精准 setData，不传整个 post 对象
     this.setData({
@@ -550,21 +575,23 @@ Page({
       'post.stats.likes': newLikes
     })
 
-    request({
-      url: url,
-      method: 'POST'
-    }).then(() => {
-      if (newLiked) {
+    operation.then(confirmedLiked => {
+      const confirmedLikes = reconcileLikeCount(isLiked, oldLikes, confirmedLiked)
+      this.setData({
+        'post.liked': confirmedLiked,
+        'post.stats.likes': confirmedLikes
+      })
+      if (confirmedLiked) {
         wx.showToast({ title: '点赞成功', icon: 'success' })
       }
       // 将点赞状态同步到 storage，供浏览页 onShow 读取
-      wx.setStorageSync('postLikeUpdate', { id: post.id, liked: newLiked, likeCount: newLikes })
+      wx.setStorageSync('postLikeUpdate', { id: post.id, liked: confirmedLiked, likeCount: confirmedLikes })
     }).catch(err => {
       console.error('点赞操作失败:', err)
       // 精准回滚
       this.setData({
         'post.liked': isLiked,
-        'post.stats.likes': post.stats.likes
+        'post.stats.likes': oldLikes
       })
       wx.showToast({ title: (err && err.message) || '操作失败，请重试', icon: 'none' })
     })
@@ -600,21 +627,21 @@ Page({
   toggleFollow() {
     const post = this.data.post
     const userId = post.user && post.user.uid
-    if (!userId || post.isOwn) return
+    if (!userId || post.isOwn || this.data.followPending) return
 
     const isFollowed = post.isFollowed
-    const method = isFollowed ? 'DELETE' : 'POST'
+    const operation = requestFollowChange(userId, isFollowed)
+    if (!operation) return
 
-    request({
-      url: '/api/v1/follow/' + userId,
-      method: method
-    }).then(() => {
-      post.isFollowed = !isFollowed
-      this.setData({ post })
-      wx.showToast({ title: isFollowed ? '已取消关注' : '已关注', icon: 'none' })
+    this.setData({ followPending: true })
+    operation.then(confirmedFollowed => {
+      this.setData({ 'post.isFollowed': confirmedFollowed })
+      wx.showToast({ title: confirmedFollowed ? '已关注' : '已取消关注', icon: 'none' })
     }).catch(err => {
       console.error('关注操作失败:', err)
-      wx.showToast({ title: '操作失败，请重试', icon: 'none' })
+      wx.showToast({ title: (err && err.message) || '操作失败，请重试', icon: 'none' })
+    }).finally(() => {
+      this.setData({ followPending: false })
     })
   },
 
@@ -641,79 +668,56 @@ Page({
 
   toggleCommentLike(e) {
     const commentId = e.currentTarget.dataset.id
-    const path = this.findCommentPath(commentId)
-    if (!path) return
+    const initialPath = this.findCommentPath(commentId)
+    if (!initialPath) return
 
-    const comment = this.getByPath(path)
+    const comment = this.getByPath(initialPath)
     const isLiked = comment.liked
+    const oldLikes = Number(comment.likes) || 0
     const newLiked = !isLiked
-    const newLikes = Math.max(0, (comment.likes || 0) + (newLiked ? 1 : -1))
-    const url = isLiked ? '/api/post/comment/unlike/' + commentId : '/api/post/comment/like/' + commentId
+    const newLikes = reconcileLikeCount(isLiked, oldLikes, newLiked)
+    const operation = requestCommentLikeChange(commentId, isLiked)
+    if (!operation) return
 
-    // 在 flatComments 中找到对应评论的索引
-    const flatIndex = this.data.flatComments.findIndex(c => String(c.id) === String(commentId))
+    const applyState = (liked, likes) => {
+      const path = this.findCommentPath(commentId)
+      if (!path) return
 
-    // 在 groupedComments 中定位（root 或 replies）
-    let groupIndex = -1
-    let replyIndex = -1
-    for (let i = 0; i < this.data.groupedComments.length; i++) {
-      const g = this.data.groupedComments[i]
-      if (String(g.root.id) === String(commentId)) {
-        groupIndex = i
-        break
+      const updates = {
+        [path + '.liked']: liked,
+        [path + '.likes']: likes
       }
-      const rIdx = g.replies.findIndex(r => String(r.id) === String(commentId))
-      if (rIdx >= 0) {
-        groupIndex = i
-        replyIndex = rIdx
-        break
+      const flatIndex = this.data.flatComments.findIndex(c => String(c.id) === String(commentId))
+      if (flatIndex >= 0) {
+        updates[`flatComments[${flatIndex}].liked`] = liked
+        updates[`flatComments[${flatIndex}].likes`] = likes
       }
+
+      for (let groupIndex = 0; groupIndex < this.data.groupedComments.length; groupIndex++) {
+        const group = this.data.groupedComments[groupIndex]
+        if (String(group.root.id) === String(commentId)) {
+          updates[`groupedComments[${groupIndex}].root.liked`] = liked
+          updates[`groupedComments[${groupIndex}].root.likes`] = likes
+          break
+        }
+        const replyIndex = group.replies.findIndex(reply => String(reply.id) === String(commentId))
+        if (replyIndex >= 0) {
+          updates[`groupedComments[${groupIndex}].replies[${replyIndex}].liked`] = liked
+          updates[`groupedComments[${groupIndex}].replies[${replyIndex}].likes`] = likes
+          break
+        }
+      }
+      this.setData(updates)
     }
 
     // 乐观更新：精准更新 comments 树、flatComments 列表和 groupedComments 列表
-    const updates = {
-      [path + '.liked']: newLiked,
-      [path + '.likes']: newLikes
-    }
-    if (flatIndex >= 0) {
-      updates[`flatComments[${flatIndex}].liked`] = newLiked
-      updates[`flatComments[${flatIndex}].likes`] = newLikes
-    }
-    if (groupIndex >= 0) {
-      if (replyIndex >= 0) {
-        updates[`groupedComments[${groupIndex}].replies[${replyIndex}].liked`] = newLiked
-        updates[`groupedComments[${groupIndex}].replies[${replyIndex}].likes`] = newLikes
-      } else {
-        updates[`groupedComments[${groupIndex}].root.liked`] = newLiked
-        updates[`groupedComments[${groupIndex}].root.likes`] = newLikes
-      }
-    }
-    this.setData(updates)
+    applyState(newLiked, newLikes)
 
-    request({
-      url: url,
-      method: 'POST'
+    operation.then(confirmedLiked => {
+      applyState(confirmedLiked, reconcileLikeCount(isLiked, oldLikes, confirmedLiked))
     }).catch(err => {
       console.error('评论点赞操作失败:', err)
-      // 精准回滚
-      const rollback = {
-        [path + '.liked']: isLiked,
-        [path + '.likes']: comment.likes
-      }
-      if (flatIndex >= 0) {
-        rollback[`flatComments[${flatIndex}].liked`] = isLiked
-        rollback[`flatComments[${flatIndex}].likes`] = comment.likes
-      }
-      if (groupIndex >= 0) {
-        if (replyIndex >= 0) {
-          rollback[`groupedComments[${groupIndex}].replies[${replyIndex}].liked`] = isLiked
-          rollback[`groupedComments[${groupIndex}].replies[${replyIndex}].likes`] = comment.likes
-        } else {
-          rollback[`groupedComments[${groupIndex}].root.liked`] = isLiked
-          rollback[`groupedComments[${groupIndex}].root.likes`] = comment.likes
-        }
-      }
-      this.setData(rollback)
+      applyState(isLiked, oldLikes)
       wx.showToast({ title: (err && err.message) || '操作失败，请重试', icon: 'none' })
     })
   },
@@ -838,6 +842,15 @@ Page({
   /* 评论输入框内容变化 */
   onCommentInput(e) {
     this.setData({ commentInput: e.detail.value })
+  },
+
+  /* 由键盘高度直接缩小页面，避免部分设备的系统自动顶起失效 */
+  onCommentKeyboardHeightChange(e) {
+    const detail = (e && e.detail) || {}
+    const height = Number(detail.height)
+    const keyboardHeight = Number.isFinite(height) && height > 0 ? height : 0
+    if (keyboardHeight === this.data.keyboardHeight) return
+    this.setData({ keyboardHeight })
   },
 
   /* 取消回复 */

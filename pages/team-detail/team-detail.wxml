@@ -14,12 +14,6 @@
         </view>
       </view>
       <view class="post-header-right">
-        <view class="header-follow-btn" wx:if="{{!isFollowed}}" bindtap="toggleFollow">
-          <text>+关注</text>
-        </view>
-        <view class="header-follow-btn followed" wx:if="{{isFollowed}}" bindtap="toggleFollow">
-          <text>已关注</text>
-        </view>
         <view class="header-more-btn" bindtap="showMoreOptions">
           <text class="more-icon">···</text>
         </view>

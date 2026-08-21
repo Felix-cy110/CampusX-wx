@@ -1,6 +1,6 @@
 const { safeNavigate, safeSwitch } = require('../utils/safeNavigate')
-const { request } = require('../utils/request')
 const { canAccessCampusFeatures, requireAuth } = require('../utils/auth')
+const { getUnreadTotal, refreshUnreadCounts, subscribeUnreadCounts } = require('../utils/unread')
 
 Component({
   data: {
@@ -51,9 +51,22 @@ Component({
     attached() {
       const systemInfo = wx.getSystemInfoSync()
       this.setData({ statusBarHeight: systemInfo.statusBarHeight })
+      // 每个 tab 页都有独立的自定义 TabBar 实例，必须各自订阅，不能只更新全局记录的一个实例。
+      this._unsubscribeUnreadCounts = subscribeUnreadCounts(counts => {
+        this.updateBadge(counts)
+      })
       this.loadInboxBadge()
       // 将 tabBar 实例保存到全局，方便非 tab 页刷新 badge
       getApp().globalData._tabBar = this
+    },
+
+    detached() {
+      if (this._unsubscribeUnreadCounts) {
+        this._unsubscribeUnreadCounts()
+        this._unsubscribeUnreadCounts = null
+      }
+      const globalData = getApp().globalData
+      if (globalData._tabBar === this) globalData._tabBar = null
     }
   },
 
@@ -77,47 +90,7 @@ Component({
         that.setData({ 'list[2].badge': 0 })
         return Promise.resolve()
       }
-      return request({ url: '/api/v1/notification/count' }).then(data => {
-        // 使用实时 globalData（非快照），防止并发请求中较旧回调覆盖子页面刚做的乐观更新
-        const app = getApp()
-        const localCounts = app.globalData.notificationCounts || {}
-        const readSent = app.globalData._notificationReadSent || {}
-        const pendingChat = app.globalData._pendingChatDecrement || 0
-
-        // 对于通知类型：如果本地已标记已读（值为0且已发送API），不接受 API 返回的更大值
-        const mergeLikes = readSent.likes && localCounts.likes === 0 && (data.likes || 0) > 0
-          ? 0 : (data.likes || 0)
-        const mergeFollowers = readSent.followers && localCounts.followers === 0 && (data.followers || 0) > 0
-          ? 0 : (data.followers || 0)
-        const mergeComments = readSent.comments && localCounts.comments === 0 && (data.comments || 0) > 0
-          ? 0 : (data.comments || 0)
-        const mergeSystem = readSent.system && localCounts.system === 0 && (data.system || 0) > 0
-          ? 0 : (data.system || 0)
-
-        // 当 API 返回值已确认归零，清除乐观标记
-        if (readSent.likes && (data.likes || 0) === 0) app.globalData._notificationReadSent.likes = false
-        if (readSent.followers && (data.followers || 0) === 0) app.globalData._notificationReadSent.followers = false
-        if (readSent.comments && (data.comments || 0) === 0) app.globalData._notificationReadSent.comments = false
-        if (readSent.system && (data.system || 0) === 0) app.globalData._notificationReadSent.system = false
-
-        // 对于聊天未读：用 pendingChat 调整 API 返回值
-        const apiChat = data.chatUnread || 0
-        let mergeChat
-        if (apiChat <= localCounts.chatUnread) {
-          app.globalData._pendingChatDecrement = 0
-          mergeChat = apiChat
-        } else {
-          mergeChat = Math.max(0, apiChat - pendingChat)
-        }
-
-        app.globalData.notificationCounts = {
-          likes: mergeLikes,
-          followers: mergeFollowers,
-          comments: mergeComments,
-          system: mergeSystem,
-          chatUnread: mergeChat
-        }
-        app.globalData._notificationCountsLoaded = true
+      return refreshUnreadCounts().then(() => {
         that.updateBadgeFromGlobalData()
       }).catch(() => {
         // 请求失败用现有缓存兜底
@@ -128,8 +101,12 @@ Component({
     /** 直接从 globalData 计算并更新 badge（子页面进入时立即调用） */
     updateBadgeFromGlobalData() {
       const counts = getApp().globalData.notificationCounts || {}
-      const total = (counts.likes || 0) + (counts.followers || 0) + (counts.comments || 0) + (counts.system || 0) + (counts.chatUnread || 0)
-      this.setData({ 'list[2].badge': total })
+      this.updateBadge(counts)
+    },
+
+    updateBadge(counts) {
+      const badge = canAccessCampusFeatures() ? getUnreadTotal(counts) : 0
+      this.setData({ 'list[2].badge': badge })
     },
 
     switchTab(e) {

@@ -1,5 +1,7 @@
 const { request, toFullUrl } = require('../../utils/request')
 const { safeNavigate, safeSwitch } = require('../../utils/safeNavigate')
+const { markNotificationRead } = require('../../utils/unread')
+const { getKnownFollowStatus, requestFollowChange } = require('../../utils/follow')
 
 Page({
   data: {
@@ -26,10 +28,21 @@ Page({
       })
       this.loadFollowers()
       this.loadFollowing()
-      this.markFollowersRead()
     } catch (err) {
       console.error('[followers] onLoad error:', err)
     }
+  },
+
+  onShow() {
+    const followingList = this.data.followingList.map(item => ({
+      ...item,
+      isFollowed: getKnownFollowStatus(item.uid, item.isFollowed)
+    })).filter(item => item.isFollowed)
+    const followerList = this.data.followerList.map(item => ({
+      ...item,
+      isMutual: getKnownFollowStatus(item.uid, item.isMutual)
+    }))
+    this.setData({ followingList, followerList })
   },
 
   /** 加载关注列表 */
@@ -69,8 +82,10 @@ Page({
       params.cursor = this.data.followerCursor
     }
 
-    request({ url: '/api/v1/follow/followers', data: params }).then(data => {
-      const list = (data.list || []).map(mapFollowItem)
+    const isFirstPage = !this.data.followerCursor
+    return request({ url: '/api/v1/follow/followers', data: params }).then(data => {
+      const rawList = data.list || []
+      const list = rawList.map(mapFollowItem)
       const followerList = this.data.followerCursor
         ? this.data.followerList.concat(list)
         : list
@@ -80,6 +95,10 @@ Page({
         followerHasMore: data.hasMore !== undefined ? data.hasMore : list.length >= 20,
         followerCursor: data.nextCursor || null
       })
+      if (isFirstPage) {
+        const readThrough = rawList.length > 0 ? rawList[0].createdAt : null
+        if (readThrough) this.markFollowersRead(readThrough)
+      }
     }).catch((err) => {
       console.error('[followers] loadFollowers fail:', err)
       this.setData({ followerLoading: false })
@@ -107,27 +126,20 @@ Page({
     const item = this.data.followingList[index]
     if (!item) return
 
-    if (item.isFollowed) {
-      // 取关
-      request({ url: `/api/v1/follow/${item.uid}`, method: 'DELETE' }).then(() => {
-        const list = this.data.followingList.slice()
-        list[index] = { ...list[index], isFollowed: false }
-        this.setData({ followingList: list })
-        wx.showToast({ title: '已取消关注', icon: 'none' })
-      }).catch(() => {
-        wx.showToast({ title: '操作失败', icon: 'none' })
-      })
-    } else {
-      // 关注
-      request({ url: `/api/v1/follow/${item.uid}`, method: 'POST' }).then(() => {
-        const list = this.data.followingList.slice()
+    const operation = requestFollowChange(item.uid, item.isFollowed)
+    if (!operation) return
+    operation.then(confirmedFollowed => {
+      const list = this.data.followingList.slice()
+      if (!confirmedFollowed) {
+        list.splice(index, 1)
+      } else {
         list[index] = { ...list[index], isFollowed: true }
-        this.setData({ followingList: list })
-        wx.showToast({ title: '已关注', icon: 'none' })
-      }).catch(() => {
-        wx.showToast({ title: '操作失败', icon: 'none' })
-      })
-    }
+      }
+      this.setData({ followingList: list })
+      wx.showToast({ title: confirmedFollowed ? '已关注' : '已取消关注', icon: 'none' })
+    }).catch(err => {
+      wx.showToast({ title: (err && err.message) || '操作失败', icon: 'none' })
+    })
   },
 
   /** 关注/取关（粉丝列表） */
@@ -136,27 +148,16 @@ Page({
     const item = this.data.followerList[index]
     if (!item) return
 
-    if (item.isMutual) {
-      // 取关（已是互关状态）
-      request({ url: `/api/v1/follow/${item.uid}`, method: 'DELETE' }).then(() => {
-        const list = this.data.followerList.slice()
-        list[index] = { ...list[index], isMutual: false }
-        this.setData({ followerList: list })
-        wx.showToast({ title: '已取消关注', icon: 'none' })
-      }).catch(() => {
-        wx.showToast({ title: '操作失败', icon: 'none' })
-      })
-    } else {
-      // 关注
-      request({ url: `/api/v1/follow/${item.uid}`, method: 'POST' }).then(() => {
-        const list = this.data.followerList.slice()
-        list[index] = { ...list[index], isMutual: true }
-        this.setData({ followerList: list })
-        wx.showToast({ title: '已关注', icon: 'none' })
-      }).catch(() => {
-        wx.showToast({ title: '操作失败', icon: 'none' })
-      })
-    }
+    const operation = requestFollowChange(item.uid, item.isMutual)
+    if (!operation) return
+    operation.then(confirmedFollowed => {
+      const list = this.data.followerList.slice()
+      list[index] = { ...list[index], isMutual: confirmedFollowed }
+      this.setData({ followerList: list })
+      wx.showToast({ title: confirmedFollowed ? '已关注' : '已取消关注', icon: 'none' })
+    }).catch(err => {
+      wx.showToast({ title: (err && err.message) || '操作失败', icon: 'none' })
+    })
   },
 
   goToUserProfile(e) {
@@ -176,18 +177,10 @@ Page({
   },
 
   /** 标记粉丝通知为已读，并立即刷新 tabBar badge */
-  markFollowersRead() {
-    const app = getApp()
-    app.globalData.notificationCounts.followers = 0
-    app.globalData._notificationReadSent.followers = true
-    const tabBar = app.globalData._tabBar
-    if (tabBar) tabBar.updateBadgeFromGlobalData()
-    request({ url: '/api/v1/notification/read/followers', method: 'POST' }).catch(() => {})
-    // 30秒安全兜底清除乐观标记（正常流程由 count API 确认归零后清除）
-    if (app.globalData._followersReadTimer) clearTimeout(app.globalData._followersReadTimer)
-    app.globalData._followersReadTimer = setTimeout(() => {
-      app.globalData._notificationReadSent.followers = false
-    }, 30000)
+  markFollowersRead(readThrough) {
+    markNotificationRead('followers', readThrough).catch(err => {
+      console.error('标记粉丝通知已读失败:', err)
+    })
   }
 })
 
@@ -197,6 +190,7 @@ function mapFollowItem(item) {
     avatar: toFullUrl(item.avatarUrl || ''),
     name: item.nickname || '',
     campusName: item.campusName || '',
+    createdAt: item.createdAt || null,
     isFollowed: item.followedByMe !== undefined ? item.followedByMe : false,
     isMutual: item.followedByMe !== undefined ? item.followedByMe : false
   }

@@ -1,4 +1,5 @@
 const { request, toFullUrl } = require('../../utils/request')
+const { refreshFollowStatus, requestFollowChange } = require('../../utils/follow')
 const app = getApp()
 
 function buildShareTitle(value) {
@@ -15,6 +16,7 @@ Page({
     isLiked: false,
     isFavorited: false,
     isFollowed: false,
+    followPending: false,
     isOwnerClosing: false,
     statusBarHeight: 0,
     navBarHeight: 0,
@@ -38,6 +40,12 @@ Page({
     const type = options.type || 'book'
     this.setData({ itemId: id })
     this.loadProductDetail(id, type)
+  },
+
+  onShow() {
+    const item = this.data.item || {}
+    const followeeId = item.user && item.user.uid
+    if (followeeId && !item.isOwn) this.checkFollowStatus(followeeId)
   },
 
   onShareAppMessage() {
@@ -72,6 +80,7 @@ Page({
       const item = this.mapBookDetail(vo)
       this.setData({ item, loading: false })
       this.checkFavoriteStatus(id)
+      this.checkFollowStatus(item.user && item.user.uid)
     }).catch(err => {
       console.warn('二手书详情加载失败，尝试作为闲置物品加载:', err)
       this.loadItemDetail(id)
@@ -87,6 +96,7 @@ Page({
       const item = this.mapItemDetail(vo)
       this.setData({ item, loading: false })
       this.checkFavoriteStatus(id)
+      this.checkFollowStatus(item.user && item.user.uid)
     }).catch(() => {
       // item API 也失败，降级到列表查找
       this.fallbackLoadItem(id)
@@ -118,6 +128,7 @@ Page({
           ? this.mapBookDetail(vo)
           : this.mapItemDetail(vo)
         this.setData({ item, loading: false })
+        this.checkFollowStatus(item.user && item.user.uid)
       } else {
         wx.showToast({ title: '商品不存在', icon: 'none' })
         this.setData({ loading: false })
@@ -139,6 +150,15 @@ Page({
       const faved = list.some(f => String(f.targetId || f.itemId) === String(id))
       this.setData({ isFavorited: faved })
     }).catch(() => {})
+  },
+
+  checkFollowStatus(followeeId) {
+    if (!followeeId || (this.data.item && this.data.item.isOwn)) return
+    refreshFollowStatus(followeeId).then(data => {
+      if (!data.stale) this.setData({ isFollowed: data.followedByMe })
+    }).catch(err => {
+      console.error('查询关注状态失败:', err)
+    })
   },
 
   /** 映射二手书详情 VO → 前端展示格式 */
@@ -329,24 +349,20 @@ Page({
   toggleFollow() {
     const item = this.data.item
     const followeeId = item.user && item.user.uid
-    if (!followeeId) return
+    if (!followeeId || item.isOwn || this.data.followPending) return
 
-    const isFollowed = !this.data.isFollowed
-    const url = isFollowed
-      ? '/api/v1/follow/' + followeeId
-      : null
-
-    if (isFollowed) {
-      request({ url, method: 'POST' }).then(() => {
-        this.setData({ isFollowed: true })
-        wx.showToast({ title: '已关注', icon: 'none' })
-      }).catch(() => {})
-    } else {
-      request({ url: '/api/v1/follow/' + followeeId, method: 'DELETE' }).then(() => {
-        this.setData({ isFollowed: false })
-        wx.showToast({ title: '已取消关注', icon: 'none' })
-      }).catch(() => {})
-    }
+    const operation = requestFollowChange(followeeId, this.data.isFollowed)
+    if (!operation) return
+    this.setData({ followPending: true })
+    operation.then(confirmedFollowed => {
+      this.setData({ isFollowed: confirmedFollowed })
+      wx.showToast({ title: confirmedFollowed ? '已关注' : '已取消关注', icon: 'none' })
+    }).catch(err => {
+      console.error('关注操作失败:', err)
+      wx.showToast({ title: (err && err.message) || '操作失败，请重试', icon: 'none' })
+    }).finally(() => {
+      this.setData({ followPending: false })
+    })
   },
 
   showMoreOptions() {

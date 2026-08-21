@@ -1,5 +1,6 @@
 const { request, toFullUrl } = require('../../utils/request')
 const { safeNavigate, safeSwitch } = require('../../utils/safeNavigate')
+const { getKnownFollowStatus, requestFollowChange } = require('../../utils/follow')
 
 Page({
   data: {
@@ -27,6 +28,18 @@ Page({
     })
     this.loadFollowing()
     this.loadFollowers()
+  },
+
+  onShow() {
+    const followingList = this.data.followingList.map(item => ({
+      ...item,
+      isFollowed: getKnownFollowStatus(item.uid, item.isFollowed)
+    })).filter(item => item.isFollowed)
+    const followerList = this.data.followerList.map(item => ({
+      ...item,
+      isMutual: getKnownFollowStatus(item.uid, item.isMutual)
+    }))
+    this.setData({ followingList, followerList })
   },
 
   /* ====== 关注列表 ====== */
@@ -115,14 +128,12 @@ Page({
     if (!item) return
 
     const isFollowed = item.isFollowed
-    const method = isFollowed ? 'DELETE' : 'POST'
-    request({
-      url: '/api/v1/follow/' + item.uid,
-      method: method
-    }).then(() => {
+    const operation = requestFollowChange(item.uid, isFollowed)
+    if (!operation) return
+    operation.then(confirmedFollowed => {
       const list = this.data.followingList.slice()
       // 取关后从列表移除；关注后更新状态
-      if (isFollowed) {
+      if (!confirmedFollowed) {
         list.splice(index, 1)
         wx.showToast({ title: '已取消关注', icon: 'none' })
       } else {
@@ -143,16 +154,14 @@ Page({
     if (!item) return
 
     const isMutual = item.isMutual
-    const method = isMutual ? 'DELETE' : 'POST'
-    request({
-      url: '/api/v1/follow/' + item.uid,
-      method: method
-    }).then(() => {
+    const operation = requestFollowChange(item.uid, isMutual)
+    if (!operation) return
+    operation.then(confirmedFollowed => {
       const list = this.data.followerList.slice()
-      list[index] = { ...list[index], isMutual: !isMutual }
+      list[index] = { ...list[index], isMutual: confirmedFollowed }
       this.setData({ followerList: list })
       wx.showToast({
-        title: isMutual ? '已取消关注' : '已关注',
+        title: confirmedFollowed ? '已关注' : '已取消关注',
         icon: 'none'
       })
     }).catch(err => {

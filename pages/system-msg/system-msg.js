@@ -1,5 +1,4 @@
-var requestModule = require('../../utils/request')
-var request = requestModule.request
+var markNotificationRead = require('../../utils/unread').markNotificationRead
 
 Page({
   data: {
@@ -57,16 +56,8 @@ Page({
 
   /** 标记系统消息为已读，并立即刷新 tabBar badge */
   markSystemRead() {
-    var app = getApp()
-    app.globalData.notificationCounts.system = 0
-    app.globalData._notificationReadSent.system = true
-    var tabBar = app.globalData._tabBar
-    if (tabBar) tabBar.updateBadgeFromGlobalData()
-    request({ url: '/api/v1/notification/read/system', method: 'POST' }).catch(() => {})
-    // 30秒安全兜底清除乐观标记（正常流程由 count API 确认归零后清除）
-    if (app.globalData._systemReadTimer) clearTimeout(app.globalData._systemReadTimer)
-    app.globalData._systemReadTimer = setTimeout(function () {
-      app.globalData._notificationReadSent.system = false
-    }, 30000)
+    markNotificationRead('system').catch(function (err) {
+      console.error('标记系统消息已读失败:', err)
+    })
   }
 })

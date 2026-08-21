@@ -2,17 +2,14 @@
 const app = getApp()
 const { safeNavigate, safeSwitch } = require('../../utils/safeNavigate')
 const { request, toFullUrl } = require('../../utils/request')
+const { requestPostLikeChange, reconcileLikeCount } = require('../../utils/like')
 const { canAccessCampusFeatures, requireAuth } = require('../../utils/auth')
 const { getActivities } = require('../../utils/api/lottery')
+const { getUnreadCounts, getUnreadTotal, refreshUnreadCounts, subscribeUnreadCounts } = require('../../utils/unread')
 
 function pad2(value) {
   const text = String(value == null ? 0 : value)
   return text.length < 2 ? '0' + text : text
-}
-
-function readObjectStorage(key) {
-  const value = wx.getStorageSync(key)
-  return value && typeof value === 'object' && !Array.isArray(value) ? value : {}
 }
 
 function getErrorMessage(error) {
@@ -29,6 +26,7 @@ Page({
   data: {
     isLoggedIn: false,
     isJoinedSchool: false,
+    hasInboxUnread: false,
     feedType: 'recommend',
     currentTab: 'feed',
     feedSwiperIndex: 0,
@@ -58,6 +56,9 @@ Page({
     /* 当前浏览学校 id，空表示本校 */
     browsingCampusId: '',
     feedList: [],
+    feedCursor: null,
+    feedHasMore: true,
+    feedLoading: false,
     marketList: [],
     errandList: [],
     errandPage: 1,
@@ -150,6 +151,10 @@ Page({
   },
 
   onLoad() {
+    this._unsubscribeUnreadCounts = subscribeUnreadCounts(counts => {
+      this.updateInboxUnreadIndicator(counts)
+    })
+
     /* 计算自定义导航栏尺寸，与胶囊按钮对齐 */
     const systemInfo = wx.getSystemInfoSync()
     const menuButton = wx.getMenuButtonBoundingClientRect()
@@ -246,14 +251,28 @@ Page({
     safeNavigate({ url: `/pages/invite-detail/invite-detail?id=${banner.id}` })
   },
 
-  loadFeed() {
-    // 读取本地点赞记录，合并到 feed 数据中（feed API 不返回 liked 字段）
-    const likedIds = readObjectStorage('likedPostIds')
+  loadFeed(cursor = null) {
+    const isLoadMore = cursor !== null && cursor !== undefined
+    if (isLoadMore && (this.data.feedLoading || !this.data.feedHasMore)) {
+      return Promise.resolve(false)
+    }
+
+    // 首次加载/下拉刷新允许覆盖仍在途的翻页请求，旧响应通过 requestId 丢弃。
+    const requestId = (this._feedRequestId || 0) + 1
+    this._feedRequestId = requestId
+    this.setData({ feedLoading: true })
+
     const browsingCampusId = this.data.browsingCampusId
+    const requestData = browsingCampusId
+      ? { targetCampusId: browsingCampusId, pageSize: 20 }
+      : { pageSize: 20 }
+    if (isLoadMore) requestData.cursor = cursor
+
     const reqOptions = browsingCampusId
-      ? { url: '/api/post/list', method: 'GET', data: { targetCampusId: browsingCampusId, pageSize: 20 } }
-      : { url: '/api/post/feed', method: 'GET', data: { pageSize: 20 } }
+      ? { url: '/api/post/list', method: 'GET', data: requestData }
+      : { url: '/api/post/feed', method: 'GET', data: requestData }
     return request(reqOptions).then(data => {
+      if (requestId !== this._feedRequestId) return false
       try {
         console.log('feed API 返回:', JSON.stringify(data))
         if (!data || !Array.isArray(data.list)) {
@@ -278,28 +297,46 @@ Page({
             content: vo.content || '',
             images: vo.coverImage ? [toFullUrl(vo.coverImage)] : [],
             stats: { likes: vo.likeCount || 0, comments: vo.commentCount || 0 },
-            liked: vo.liked || !!likedIds[vo.id],
+            liked: vo.liked === true,
             time: timeStr,
             school: vo.schoolName || '',
             sourceType: vo.sourceType || '',
             sourceId: vo.sourceId || ''
           }
         })
-        this.setData({ feedList: list, currentList: list })
+        const feedList = isLoadMore ? this.data.feedList.concat(list) : list
+        const nextCursor = data.nextCursor === undefined ? null : data.nextCursor
+        const feedHasMore = nextCursor !== null && data.hasMore !== false
+        this.setData({
+          feedList,
+          currentList: feedList,
+          feedCursor: nextCursor,
+          feedHasMore,
+          feedLoading: false
+        })
         wx.removeStorageSync('lastFeedRenderError')
         return true
       } catch (err) {
         const message = getErrorMessage(err)
         console.error('处理帖子数据失败:', err)
+        this.setData({ feedLoading: false })
         wx.setStorageSync('lastFeedRenderError', message)
         wx.showToast({ title: '帖子数据处理失败：' + message, icon: 'none', duration: 3500 })
         return false
       }
     }, err => {
+      if (requestId !== this._feedRequestId) return false
       console.error('帖子接口请求失败:', err)
+      this.setData({ feedLoading: false })
       wx.showToast({ title: '帖子网络请求失败，请下拉刷新', icon: 'none', duration: 2000 })
       return false
     })
+  },
+
+  loadMoreFeed() {
+    if (this.data.feedLoading || !this.data.feedHasMore) return Promise.resolve(false)
+    if (this.data.feedCursor === null || this.data.feedCursor === undefined) return Promise.resolve(false)
+    return this.loadFeed(this.data.feedCursor)
   },
 
   onShow() {
@@ -312,6 +349,11 @@ Page({
       isLoggedIn: app.globalData.isLoggedIn,
       isJoinedSchool
     })
+    this.updateInboxUnreadIndicator(getUnreadCounts())
+    if (isJoinedSchool) {
+      // 与 TabBar 共享单飞请求；页面重新可见时确保红点使用服务端最新未读状态。
+      refreshUnreadCounts().catch(() => {})
+    }
 
     // 完善资料后 switchTab 回到已存在的首页实例，onLoad 不会重跑，需在这里补加载校园数据。
     if (!previouslyJoined && isJoinedSchool) this.loadCampusData()
@@ -351,6 +393,20 @@ Page({
 
     // 同步详情页的点赞/取消赞操作到列表
     this._syncPostLikeUpdate()
+  },
+
+  onUnload() {
+    if (this._unsubscribeUnreadCounts) {
+      this._unsubscribeUnreadCounts()
+      this._unsubscribeUnreadCounts = null
+    }
+  },
+
+  updateInboxUnreadIndicator(counts) {
+    const hasInboxUnread = canAccessCampusFeatures() && getUnreadTotal(counts) > 0
+    if (this.data.hasInboxUnread !== hasInboxUnread) {
+      this.setData({ hasInboxUnread })
+    }
   },
 
   /* 加载教师评分（真实 API） */
@@ -572,32 +628,33 @@ Page({
     if (String(item.id) !== String(id)) return
 
     const isLiked = item.liked
+    const oldLikes = Number(item.stats.likes) || 0
     const newLiked = !isLiked
-    const newLikes = Math.max(0, (item.stats.likes || 0) + (newLiked ? 1 : -1))
-    const apiUrl = isLiked ? '/api/post/unlike/' + id : '/api/post/like/' + id
+    const newLikes = reconcileLikeCount(isLiked, oldLikes, newLiked)
+    const operation = requestPostLikeChange(id, isLiked)
+    if (!operation) return
+
+    const applyState = (liked, likes) => {
+      const latestList = this.data[listKey] || []
+      const latestIndex = latestList.findIndex(post => String(post.id) === String(id))
+      if (latestIndex < 0) return
+      this.setData({
+        [listKey + '[' + latestIndex + '].liked']: liked,
+        [listKey + '[' + latestIndex + '].stats.likes']: likes
+      })
+    }
 
     // 乐观更新
-    this.setData({
-      [listKey + '[' + index + '].liked']: newLiked,
-      [listKey + '[' + index + '].stats.likes']: newLikes
-    })
+    applyState(newLiked, newLikes)
 
-    request({ url: apiUrl, method: 'POST' }).then(() => {
-      // 持久化点赞状态到本地，解决 feed API 不返回 liked 字段的问题
-      const likedIds = wx.getStorageSync('likedPostIds') || {}
-      if (newLiked) {
-        likedIds[id] = true
-      } else {
-        delete likedIds[id]
-      }
-      wx.setStorageSync('likedPostIds', likedIds)
+    operation.then(confirmedLiked => {
+      const confirmedLikes = reconcileLikeCount(isLiked, oldLikes, confirmedLiked)
+      applyState(confirmedLiked, confirmedLikes)
+      wx.setStorageSync('postLikeUpdate', { id, liked: confirmedLiked, likeCount: confirmedLikes })
     }).catch(err => {
       console.error('[toggleFeedLike] 请求失败:', JSON.stringify(err))
       // 回滚
-      this.setData({
-        [listKey + '[' + index + '].liked']: isLiked,
-        [listKey + '[' + index + '].stats.likes']: item.stats.likes
-      })
+      applyState(isLiked, oldLikes)
       wx.showToast({ title: (err && err.message) || '操作失败，请重试', icon: 'none', duration: 2000 })
     })
   },
@@ -1088,7 +1145,6 @@ Page({
 
   /** 将 feed API 返回的 PostListVO 映射为前端展示格式 */
   _mapFeedItem(vo) {
-    const likedIds = wx.getStorageSync('likedPostIds') || {}
     let timeStr = ''
     let ts = 0
     if (vo.createdAt) {
@@ -1108,7 +1164,7 @@ Page({
       content: vo.content || '',
       images: vo.coverImage ? [toFullUrl(vo.coverImage)] : [],
       stats: { likes: vo.likeCount || 0, comments: vo.commentCount || 0 },
-      liked: vo.liked || !!likedIds[vo.id],
+      liked: vo.liked === true,
       time: timeStr,
       _ts: ts,
       school: vo.schoolName || '',
@@ -1168,28 +1224,31 @@ Page({
     if (idx < 0) return
     const item = this.data.followingPosts[idx]
     const isLiked = item.liked
+    const oldLikes = Number(item.stats.likes) || 0
     const newLiked = !isLiked
-    const newLikes = Math.max(0, (item.stats.likes || 0) + (newLiked ? 1 : -1))
-    const apiUrl = isLiked ? '/api/post/unlike/' + id : '/api/post/like/' + id
+    const newLikes = reconcileLikeCount(isLiked, oldLikes, newLiked)
+    const operation = requestPostLikeChange(id, isLiked)
+    if (!operation) return
 
-    this.setData({
-      ['followingPosts[' + idx + '].liked']: newLiked,
-      ['followingPosts[' + idx + '].stats.likes']: newLikes
-    })
-    this._buildFollowFeedLists()
-
-    request({ url: apiUrl, method: 'POST' }).then(() => {
-      const likedIds = wx.getStorageSync('likedPostIds') || {}
-      if (newLiked) likedIds[id] = true
-      else delete likedIds[id]
-      wx.setStorageSync('likedPostIds', likedIds)
-    }).catch(err => {
-      console.error('[toggleFollowFeedLike] 请求失败:', JSON.stringify(err))
+    const applyState = (liked, likes) => {
+      const latestIndex = this.data.followingPosts.findIndex(post => String(post.id) === String(id))
+      if (latestIndex < 0) return
       this.setData({
-        ['followingPosts[' + idx + '].liked']: isLiked,
-        ['followingPosts[' + idx + '].stats.likes']: item.stats.likes
+        ['followingPosts[' + latestIndex + '].liked']: liked,
+        ['followingPosts[' + latestIndex + '].stats.likes']: likes
       })
       this._buildFollowFeedLists()
+    }
+
+    applyState(newLiked, newLikes)
+
+    operation.then(confirmedLiked => {
+      const confirmedLikes = reconcileLikeCount(isLiked, oldLikes, confirmedLiked)
+      applyState(confirmedLiked, confirmedLikes)
+      wx.setStorageSync('postLikeUpdate', { id, liked: confirmedLiked, likeCount: confirmedLikes })
+    }).catch(err => {
+      console.error('[toggleFollowFeedLike] 请求失败:', JSON.stringify(err))
+      applyState(isLiked, oldLikes)
       wx.showToast({ title: (err && err.message) || '操作失败，请重试', icon: 'none', duration: 2000 })
     })
   },

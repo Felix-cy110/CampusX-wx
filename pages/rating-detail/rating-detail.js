@@ -14,7 +14,6 @@ Page({
     isLiked: false,
     isFavorited: false,
     starArray: [1, 2, 3, 4, 5],
-    isFollowed: false,
     statusBarHeight: 0,
     navBarHeight: 0
   },
@@ -133,11 +132,5 @@ Page({
 
   addComment() {
     wx.showToast({ title: '打开评论输入', icon: 'none' })
-  },
-
-  toggleFollow() {
-    const isFollowed = !this.data.isFollowed
-    this.setData({ isFollowed })
-    wx.showToast({ title: isFollowed ? '已关注' : '已取消关注', icon: 'none' })
   }
 })

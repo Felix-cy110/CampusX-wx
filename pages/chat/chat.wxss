@@ -84,9 +84,11 @@
 /* 消息列表 */
 .msg-list {
   flex: 1;
-  padding: 16rpx 0rpx 140rpx 20rpx;
+  height: 0;
+  padding: 16rpx 0 20rpx 20rpx;
   overflow: hidden;
   background-color: var(--color-bg);
+  box-sizing: border-box;
 }
 
 /* 加载中 / 空状态 */
@@ -369,13 +371,14 @@
 
 /* 底部区域 */
 .bottom-section {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
   background: var(--color-bg-white);
   border-top: 1rpx solid var(--color-border-light);
   z-index: 100;
+  flex-shrink: 0;
+}
+
+.page.keyboard-open .bottom-section {
+  padding-bottom: 0;
 }
 
 /* 底部弹出面板 */

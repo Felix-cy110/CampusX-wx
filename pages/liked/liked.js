@@ -1,5 +1,6 @@
 const { request, toFullUrl } = require('../../utils/request')
 const { safeNavigate } = require('../../utils/safeNavigate')
+const { markNotificationRead } = require('../../utils/unread')
 
 Page({
   data: {
@@ -18,8 +19,6 @@ Page({
     const navBarHeight = (menuButton.top - statusBarHeight) * 2 + menuButton.height
     this.setData({ statusBarHeight, navBarHeight })
     this.loadLikes()
-    // 标记点赞通知已读
-    this.markLikesRead()
   },
 
   loadLikes() {
@@ -31,8 +30,10 @@ Page({
       params.cursor = this.data.nextCursor
     }
 
-    request({ url: '/api/v1/notification/likes', data: params }).then(data => {
-      const list = (data.list || []).map(mapLikeItem)
+    const isFirstPage = !this.data.nextCursor
+    return request({ url: '/api/v1/notification/likes', data: params }).then(data => {
+      const rawList = data.list || []
+      const list = rawList.map(mapLikeItem)
       const likedList = this.data.nextCursor
         ? this.data.likedList.concat(list)
         : list
@@ -42,6 +43,10 @@ Page({
         hasMore: data.hasMore !== undefined ? data.hasMore : list.length >= 20,
         nextCursor: data.nextCursor || null
       })
+      if (isFirstPage) {
+        const readThrough = rawList.length > 0 ? rawList[0].createdAt : null
+        if (readThrough) this.markLikesRead(readThrough)
+      }
     }).catch(() => {
       this.setData({ loading: false })
     })
@@ -64,22 +69,10 @@ Page({
   },
 
   /** 标记点赞通知为已读，并立即刷新 tabBar badge */
-  markLikesRead() {
-    const app = getApp()
-    // 1. 立即清零前端计数，确保 badge 即时更新
-    app.globalData.notificationCounts.likes = 0
-    // 2. 标记乐观更新，防止 loadNotificationCounts 用过期API数据覆盖
-    app.globalData._notificationReadSent.likes = true
-    // 3. 刷新 tabBar badge（从前端缓存计算，无延迟）
-    const tabBar = app.globalData._tabBar
-    if (tabBar) tabBar.updateBadgeFromGlobalData()
-    // 4. 异步通知后端（最终一致性，不影响 UI）
-    request({ url: '/api/v1/notification/read/likes', method: 'POST' }).catch(() => {})
-    // 5. 30秒安全兜底清除乐观标记（正常流程由 count API 确认归零后清除）
-    if (app.globalData._likesReadTimer) clearTimeout(app.globalData._likesReadTimer)
-    app.globalData._likesReadTimer = setTimeout(() => {
-      app.globalData._notificationReadSent.likes = false
-    }, 30000)
+  markLikesRead(readThrough) {
+    markNotificationRead('likes', readThrough).catch(err => {
+      console.error('标记点赞通知已读失败:', err)
+    })
   }
 })
 

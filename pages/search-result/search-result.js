@@ -1,5 +1,13 @@
 const { request, toFullUrl } = require('../../utils/request.js')
 const { safeNavigate } = require('../../utils/safeNavigate')
+const { requestPostLikeChange, reconcileLikeCount } = require('../../utils/like')
+const {
+  applyFollowSnapshot,
+  getFollowVersion,
+  getKnownFollowStatus,
+  hasKnownFollowStatus,
+  requestFollowChange
+} = require('../../utils/follow')
 
 // 帖子状态映射
 const POST_STATUS_MAP = { 1: '可联系', 2: '已关闭', 3: '违规删除' }
@@ -48,6 +56,15 @@ Page({
     wx.navigateBack({ delta: 1 })
   },
 
+  onShow() {
+    if (!this.data.searchUsers.length) return
+    const searchUsers = this.data.searchUsers.map(item => ({
+      ...item,
+      isFollowed: getKnownFollowStatus(item.userId, item.isFollowed)
+    }))
+    this.setData({ searchUsers })
+  },
+
   /**
    * 执行搜索请求
    */
@@ -83,7 +100,15 @@ Page({
       const searchPosts = (res.posts && res.posts.list) ? res.posts.list.map(normalizePost) : []
       const rentalPosts = (res.rentalProducts && res.rentalProducts.list) ? res.rentalProducts.list.map(normalizeRental) : []
       const idlePosts = (res.idleProducts && res.idleProducts.list) ? res.idleProducts.list.map(normalizeIdle) : []
-      const searchUsers = (res.users && res.users.list) ? res.users.list.map(normalizeUser) : []
+      const searchUsers = (res.users && res.users.list) ? res.users.list.map(vo => {
+        const item = normalizeUser(vo)
+        const version = getFollowVersion(item.userId)
+        if (!hasKnownFollowStatus(item.userId)) {
+          applyFollowSnapshot(item.userId, version, item.isFollowed)
+        }
+        item.isFollowed = getKnownFollowStatus(item.userId, item.isFollowed)
+        return item
+      }) : []
 
       this.setData({
         searchPosts: searchPosts,
@@ -166,15 +191,20 @@ Page({
 
   onFollow(e) {
     const userId = e.currentTarget.dataset.userId
+    const index = e.currentTarget.dataset.index
+    const item = this.data.searchUsers[index]
     if (!userId) {
       wx.showToast({ title: '用户信息不完整', icon: 'none' })
       return
     }
-    request({
-      url: '/api/v1/follow/' + userId,
-      method: 'POST'
-    }).then(() => {
-      wx.showToast({ title: '已关注', icon: 'success' })
+    if (!item || item.isOwn) return
+    const operation = requestFollowChange(userId, item.isFollowed)
+    if (!operation) return
+    operation.then(confirmedFollowed => {
+      const searchUsers = this.data.searchUsers.slice()
+      searchUsers[index] = { ...searchUsers[index], isFollowed: confirmedFollowed }
+      this.setData({ searchUsers })
+      wx.showToast({ title: confirmedFollowed ? '已关注' : '已取消关注', icon: 'success' })
     }).catch(err => {
       console.error('关注失败:', err)
       wx.showToast({ title: (err && err.message) || '操作失败', icon: 'none' })
@@ -208,26 +238,33 @@ Page({
     if (String(item.id) !== String(id)) return
 
     const isLiked = item.liked
+    const oldLikes = Number(item.stats.likes) || 0
     const newLiked = !isLiked
-    const newLikes = Math.max(0, (item.stats.likes || 0) + (newLiked ? 1 : -1))
-    const apiUrl = isLiked ? '/api/post/unlike/' + id : '/api/post/like/' + id
+    const newLikes = reconcileLikeCount(isLiked, oldLikes, newLiked)
+    const operation = requestPostLikeChange(id, isLiked)
+    if (!operation) return
+
+    const applyState = (liked, likes) => {
+      const latestIndex = this.data.filteredPosts.findIndex(post => String(post.id) === String(id))
+      if (latestIndex < 0) return
+      this.setData({
+        ['filteredPosts[' + latestIndex + '].liked']: liked,
+        ['filteredPosts[' + latestIndex + '].stats.likes']: likes
+      })
+    }
 
     // 乐观更新
-    this.setData({
-      ['filteredPosts[' + index + '].liked']: newLiked,
-      ['filteredPosts[' + index + '].stats.likes']: newLikes
-    })
+    applyState(newLiked, newLikes)
 
-    request({ url: apiUrl, method: 'POST' }).then(() => {
+    operation.then(confirmedLiked => {
+      const confirmedLikes = reconcileLikeCount(isLiked, oldLikes, confirmedLiked)
+      applyState(confirmedLiked, confirmedLikes)
       // 同步点赞状态，供其他页面读取
-      wx.setStorageSync('postLikeUpdate', { id: id, liked: newLiked, likeCount: newLikes })
+      wx.setStorageSync('postLikeUpdate', { id, liked: confirmedLiked, likeCount: confirmedLikes })
     }).catch(err => {
       console.error('点赞操作失败:', err)
       // 回滚
-      this.setData({
-        ['filteredPosts[' + index + '].liked']: isLiked,
-        ['filteredPosts[' + index + '].stats.likes']: item.stats.likes
-      })
+      applyState(isLiked, oldLikes)
       wx.showToast({ title: (err && err.message) || '操作失败', icon: 'none' })
     })
   },
@@ -330,11 +367,14 @@ function normalizeIdle(product) {
  * 将 UserProfileVO 转为页面展示格式
  */
 function normalizeUser(vo) {
+  const currentUid = (getApp().globalData.userInfo || {}).uid
   return {
     userId: vo.userId,
     name: vo.nickname || '匿名用户',
     avatar: toFullUrl(vo.avatarUrl) || '/images/avatars/default.png',
-    school: vo.campusName || ''
+    school: vo.campusName || '',
+    isFollowed: !!vo.followedByMe,
+    isOwn: String(vo.userId) === String(currentUid)
   }
 }
 
