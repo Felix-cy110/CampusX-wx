@@ -1,4 +1,4 @@
-const mock = require('../../utils/mock.js')
+  const mock = require('../../utils/mock.js')
 const app = getApp()
 const { safeNavigate, safeSwitch } = require('../../utils/safeNavigate')
 const { request, toFullUrl } = require('../../utils/request')
