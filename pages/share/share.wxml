@@ -58,27 +58,6 @@
       </view>
     </view>
 
-    <!-- 底部分享操作 -->
-    <view class="share-section">
-      <text class="share-section-title">分享到其他平台</text>
-      <view class="share-actions">
-        <block wx:for="{{shareActions}}" wx:key="id">
-          <button wx:if="{{item.name === '微信好友'}}" class="action-item share-native-button" open-type="share">
-            <view class="action-icon-wrap">
-              <text class="action-icon">{{item.icon}}</text>
-            </view>
-            <text class="action-name">{{item.name}}</text>
-          </button>
-          <view wx:else class="action-item" data-name="{{item.name}}" bindtap="onShareAction">
-            <view class="action-icon-wrap">
-              <text class="action-icon">{{item.icon}}</text>
-            </view>
-            <text class="action-name">{{item.name}}</text>
-          </view>
-        </block>
-      </view>
-    </view>
-
     <!-- 取消按钮 -->
     <view class="cancel-btn" bindtap="onCancel">
       <text>取消</text>

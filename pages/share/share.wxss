@@ -117,62 +117,6 @@
   font-weight: 500;
 }
 
-/* 分享操作 */
-.share-section {
-  margin-bottom: 20rpx;
-}
-
-.share-section-title {
-  font-size: var(--font-sm);
-  color: var(--color-text-secondary);
-  margin-bottom: 24rpx;
-  display: block;
-}
-
-.share-actions {
-  display: flex;
-  justify-content: space-around;
-  padding: 8rpx 0;
-}
-
-.action-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12rpx;
-}
-
-.share-native-button {
-  margin: 0;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  line-height: normal;
-}
-
-.share-native-button::after {
-  border: 0;
-}
-
-.action-icon-wrap {
-  width: 96rpx;
-  height: 96rpx;
-  border-radius: 24rpx;
-  background-color: var(--color-bg);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.action-icon {
-  font-size: 40rpx;
-}
-
-.action-name {
-  font-size: var(--font-xs);
-  color: var(--color-text-secondary);
-}
-
 /* 取消按钮 */
 .cancel-btn {
   display: flex;
