@@ -37,7 +37,11 @@ Page({
 
     /* 自定义导航栏尺寸 */
     statusBarHeight: 0,
-    navBarHeight: 0
+    navBarHeight: 0,
+    /* 右上角按钮组与胶囊按钮之间的安全间距（px），根据胶囊实际位置动态计算 */
+    capsuleGap: 0,
+    /* 胶囊按钮高度（px），顶部按钮与之等高 */
+    capsuleHeight: 0
   },
 
   onLoad() {
@@ -45,11 +49,16 @@ Page({
     const menuButton = wx.getMenuButtonBoundingClientRect()
     const statusBarHeight = systemInfo.statusBarHeight
     const navBarHeight = (menuButton.top - statusBarHeight) * 2 + menuButton.height
+    // 微信官方安全区方案：getMenuButtonBoundingClientRect() 返回胶囊按钮的真实坐标，
+    // 按钮组右缘到胶囊左缘留出 8px 间距，适配所有机型（iOS/Android/不同分辨率）
+    const capsuleGap = systemInfo.windowWidth - menuButton.left + 8
 
     const isLoggedIn = !!wx.getStorageSync('token')
     this.setData({
       statusBarHeight: statusBarHeight,
       navBarHeight: navBarHeight,
+      capsuleGap: capsuleGap,
+      capsuleHeight: menuButton.height,
       isLoggedIn
     })
 

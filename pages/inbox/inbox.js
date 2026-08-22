@@ -23,6 +23,10 @@ Page({
     filteredConversations: [],
     statusBarHeight: 0,
     navBarHeight: 0,
+    // 右上角按钮与胶囊按钮的安全间距（px），根据胶囊实际位置动态计算
+    capsuleGap: 0,
+    // 胶囊按钮高度（px），导航按钮与之等高
+    capsuleHeight: 0,
 
     // swipe state
     swipeIndex: -1,
@@ -48,11 +52,15 @@ Page({
     const menuButton = wx.getMenuButtonBoundingClientRect()
     const statusBarHeight = systemInfo.statusBarHeight
     const navBarHeight = (menuButton.top - statusBarHeight) * 2 + menuButton.height
+    // 与资料页一致：按胶囊真实坐标计算安全间距，按钮与胶囊等高，适配所有机型
+    const capsuleGap = systemInfo.windowWidth - menuButton.left + 8
 
     this.setData({
       isJoinedSchool: app.globalData.isJoinedSchool,
       statusBarHeight,
-      navBarHeight
+      navBarHeight,
+      capsuleGap,
+      capsuleHeight: menuButton.height
     })
     this.loadData()
   },

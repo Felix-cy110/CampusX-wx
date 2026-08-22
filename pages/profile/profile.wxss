@@ -30,9 +30,10 @@
 .top-bar-left {
   display: flex;
   align-items: center;
-  padding: 10rpx 20rpx;
+  padding: 0 20rpx;
+  box-sizing: border-box;
   background: rgba(255, 255, 255, 0.6);
-  border-radius: 32rpx;
+  /* 高度与圆角由 JS 按胶囊按钮实际高度内联设置 */
 }
 
 .top-bar-text {
@@ -42,13 +43,8 @@
 }
 
 image.icon-bag {
-  width: 28rpx;
-  height: 28rpx;
-  margin-right: 6rpx;
-}
-
-.icon-bag {
-  font-size: var(--font-sm);
+  width: 32rpx;
+  height: 32rpx;
   margin-right: 6rpx;
 }
 
@@ -56,20 +52,20 @@ image.icon-bag {
   display: flex;
   align-items: center;
   gap: 16rpx;
-  /* 右侧增加边距，避开小程序胶囊按钮（宽度约 174rpx + 间距） */
-  margin-right: 180rpx;
+  /* 右边距由 JS 根据胶囊按钮实际位置动态计算（capsuleGap），避开右上角胶囊 */
 }
 
 .top-edit-btn {
   display: flex;
   align-items: center;
-  padding: 10rpx 20rpx;
+  padding: 0 20rpx;
+  box-sizing: border-box;
   background: rgba(255, 255, 255, 0.6);
-  border-radius: 32rpx;
+  /* 高度与圆角由 JS 按胶囊按钮实际高度内联设置 */
 }
 
 .top-edit-btn .icon-edit {
-  font-size: var(--font-sm);
+  font-size: 30rpx;
   margin-right: 6rpx;
 }
 
@@ -79,18 +75,17 @@ image.icon-bag {
 }
 
 .top-settings-btn {
-  width: 60rpx;
-  height: 60rpx;
   display: flex;
   align-items: center;
   justify-content: center;
   background: rgba(255, 255, 255, 0.6);
   border-radius: 50%;
+  /* 宽高由 JS 按胶囊按钮实际高度内联设置 */
 }
 
 .icon-settings {
-  width: 36rpx;
-  height: 36rpx;
+  width: 32rpx;
+  height: 32rpx;
 }
 
 /* ========== 帖子列表滚动区域 ========== */
