@@ -19,7 +19,6 @@
 .detail-nav-bar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   padding: 0 30rpx;
   background-color: #FFFFFF;
 }
@@ -41,6 +40,7 @@
 .nav-more {
   width: 80rpx;
   height: 100%;
+  margin-left: auto;
   display: flex;
   align-items: center;
   justify-content: flex-end;
