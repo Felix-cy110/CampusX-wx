@@ -7,7 +7,7 @@
         <image class="nav-back-icon" src="/images/SVG/返回.svg" mode="aspectFit"></image>
       </view>
       <text class="detail-title">商品详情</text>
-      <view class="nav-more" bindtap="showMoreOptions">
+      <view class="nav-more" style="margin-right: {{capsuleGap}}px;" bindtap="showMoreOptions">
         <text class="nav-more-icon">⋮</text>
       </view>
     </view>

@@ -29,6 +29,7 @@ Page({
     swiperCurrent: 0,
     statusBarHeight: 0,
     navBarHeight: 0,
+    capsuleGap: 0,
     showActionSheet: false,
     showShareModal: false,
     showCommentOptionsModal: false,
@@ -70,6 +71,8 @@ Page({
     const menuButton = wx.getMenuButtonBoundingClientRect()
     const statusBarHeight = systemInfo.statusBarHeight
     const navBarHeight = (menuButton.top - statusBarHeight) * 2 + menuButton.height
+    // 右上角「更多」按钮按胶囊真实坐标动态避让，适配所有机型
+    const capsuleGap = systemInfo.windowWidth - menuButton.left + 8
     const rawId = options.id || ''
     const sharedCommentId = options.commentId || ''
     const numericId = Number(rawId)
@@ -102,7 +105,8 @@ Page({
         sharedCommentId,
         currentUserAvatar,
         statusBarHeight,
-        navBarHeight
+        navBarHeight,
+        capsuleGap
       })
     } else {
       this.setData({
@@ -111,7 +115,8 @@ Page({
         sharedCommentId,
         currentUserAvatar,
         statusBarHeight,
-        navBarHeight
+        navBarHeight,
+        capsuleGap
       })
     }
     this.loadPostDetail(rawId)

@@ -20,6 +20,8 @@ Page({
     isOwnerClosing: false,
     statusBarHeight: 0,
     navBarHeight: 0,
+    /* 右上角「更多」按钮与胶囊按钮的安全间距（px），按胶囊实际位置动态计算 */
+    capsuleGap: 0,
     loading: true
   },
 
@@ -28,7 +30,9 @@ Page({
     const menuButton = wx.getMenuButtonBoundingClientRect()
     const statusBarHeight = systemInfo.statusBarHeight
     const navBarHeight = (menuButton.top - statusBarHeight) * 2 + menuButton.height
-    this.setData({ statusBarHeight, navBarHeight })
+    // 与资料页/收件箱页一致：按胶囊真实坐标计算安全间距，适配所有机型
+    const capsuleGap = systemInfo.windowWidth - menuButton.left + 8
+    this.setData({ statusBarHeight, navBarHeight, capsuleGap })
 
     const id = options.id
     if (!id) {

@@ -4,16 +4,16 @@
   <view class="fixed-header">
     <view class="status-bar-placeholder" style="height: {{statusBarHeight}}px;"></view>
     <view class="top-bar" style="height: {{navBarHeight}}px;">
-      <view class="top-bar-left" bindtap="goToOrders">
+      <view class="top-bar-left" style="height: {{capsuleHeight}}px; border-radius: {{capsuleHeight / 2}}px;" bindtap="goToOrders">
         <image class="icon-bag" src="/images/SVG/订单购物车.svg" mode="aspectFit"></image>
         <text class="top-bar-text">订单</text>
       </view>
-      <view class="top-bar-right">
-        <view class="top-edit-btn" bindtap="goToEditProfile">
+      <view class="top-bar-right" style="margin-right: {{capsuleGap}}px;">
+        <view class="top-edit-btn" style="height: {{capsuleHeight}}px; border-radius: {{capsuleHeight / 2}}px;" bindtap="goToEditProfile">
           <text class="icon-edit">✎</text>
           <text class="top-bar-text-white">编辑</text>
         </view>
-        <view class="top-settings-btn" bindtap="goToSettings">
+        <view class="top-settings-btn" style="width: {{capsuleHeight}}px; height: {{capsuleHeight}}px;" bindtap="goToSettings">
           <image class="icon-settings" src="/images/SVG/设置.svg" mode="aspectFit"></image>
         </view>
       </view>

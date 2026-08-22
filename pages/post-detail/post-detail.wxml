@@ -8,7 +8,7 @@
         <image class="nav-back-icon" src="/images/SVG/返回.svg" mode="aspectFit"></image>
       </view>
       <text class="detail-title">帖子详情</text>
-      <view class="nav-more" bindtap="showActionSheet" wx:if="{{post.isOwn}}">
+      <view class="nav-more" style="margin-right: {{capsuleGap}}px;" bindtap="showActionSheet" wx:if="{{post.isOwn}}">
         <text class="nav-more-icon">⋮</text>
       </view>
       <view class="nav-placeholder" wx:else></view>

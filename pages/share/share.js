@@ -11,10 +11,6 @@ function buildShareTitle(value, fallback) {
 Page({
   data: {
     shareUsers: [],
-    shareActions: [
-      { id: 1, name: '微信好友', icon: '💬' },
-      { id: 4, name: '复制链接', icon: '🔗' }
-    ],
     targetId: null,
     targetType: 'post',  // 'post' | 'idle' | 'proxy_demand' | 'proxy_supply'
     shareTitle: '',
@@ -178,24 +174,6 @@ Page({
       wx.hideLoading()
       wx.showToast({ title: err.message || '分享失败', icon: 'none' })
     })
-  },
-
-  /** 分享到其他平台 */
-  onShareAction(e) {
-    var name = e.currentTarget.dataset.name
-
-    if (name === '复制链接') {
-      var path = this.getSharePath()
-      wx.setClipboardData({
-        data: path,
-        success: function () {
-          wx.showToast({ title: '链接已复制', icon: 'success' })
-        },
-        fail: function () {
-          wx.showToast({ title: '复制失败', icon: 'none' })
-        }
-      })
-    }
   },
 
   onCancel() {

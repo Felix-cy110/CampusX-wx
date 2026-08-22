@@ -271,9 +271,14 @@
   border: 0;
   background: transparent;
   line-height: normal;
+  min-height: 0;
 }
 .share-native-button::after {
   border: 0;
+}
+/* 防止微信 button 默认样式让文字换行竖排、撑高底部栏 */
+.share-native-button .bottom-action-count {
+  white-space: nowrap;
 }
 .share-action-icon {
   width: 32rpx;
