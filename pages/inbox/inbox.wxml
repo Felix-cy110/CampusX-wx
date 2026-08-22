@@ -5,14 +5,6 @@
     <view class="status-bar-placeholder" style="height: {{statusBarHeight}}px;"></view>
     <view class="inbox-nav-bar" style="height: {{navBarHeight}}px;">
       <text class="inbox-title">收件箱</text>
-      <view class="nav-actions">
-        <view class="nav-btn" bindtap="onMoreTap" hover-class="nav-btn-hover" hover-stay-time="80">
-          <text class="nav-btn-text">···</text>
-        </view>
-        <view class="nav-btn" bindtap="onSettingsTap" hover-class="nav-btn-hover" hover-stay-time="80">
-          <view class="nav-icon-target"></view>
-        </view>
-      </view>
     </view>
   </view>
 
