@@ -43,7 +43,7 @@
 
 .nav-title {
   flex: 1;
-  text-align: center;
+  text-align: left;
   font-size: var(--font-lg, 32rpx);
   font-weight: 600;
   color: var(--color-text-primary, #1A1A1A);
