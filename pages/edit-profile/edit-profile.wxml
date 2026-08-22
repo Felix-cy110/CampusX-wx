@@ -58,7 +58,7 @@
     <!-- 手机号 -->
     <view class="form-item">
       <text class="form-label">手机号</text>
-      <input class="form-input" value="{{phone}}" type="number" placeholder="请输入手机号" bindinput="onInputPhone" />
+      <input class="form-input" value="{{phone}}" type="number" maxlength="11" placeholder="请输入手机号" bindinput="onInputPhone" />
     </view>
   </view>
 
