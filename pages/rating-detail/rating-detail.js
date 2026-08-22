@@ -15,7 +15,8 @@ Page({
     isFavorited: false,
     starArray: [1, 2, 3, 4, 5],
     statusBarHeight: 0,
-    navBarHeight: 0
+    navBarHeight: 0,
+    capsuleGap: 0
   },
 
   onLoad(options) {
@@ -23,7 +24,9 @@ Page({
     const menuButton = wx.getMenuButtonBoundingClientRect()
     const statusBarHeight = systemInfo.statusBarHeight
     const navBarHeight = (menuButton.top - statusBarHeight) * 2 + menuButton.height
-    this.setData({ statusBarHeight, navBarHeight })
+    // 右上角「更多」按钮按胶囊真实坐标动态避让，适配所有机型
+    const capsuleGap = systemInfo.windowWidth - menuButton.left + 8
+    this.setData({ statusBarHeight, navBarHeight, capsuleGap })
     const id = parseInt(options.id) || 301
     const rating = mock.ratings.find(r => r.id === id) || mock.ratings[0]
     rating.totalRaters = '3248'
