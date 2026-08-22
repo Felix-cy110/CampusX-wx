@@ -10,7 +10,6 @@ Page({
     activityId: null,
     myTickets: [],
     inviteCode: '',
-    safeAreaBottom: 0,
     statusBarHeight: 0,
     navBarHeight: 0,
     loading: true
@@ -23,7 +22,6 @@ Page({
     this.setData({
       statusBarHeight: systemInfo.statusBarHeight,
       navBarHeight: (menuButton.top - systemInfo.statusBarHeight) * 2 + menuButton.height,
-      safeAreaBottom: systemInfo.safeArea ? systemInfo.screenHeight - systemInfo.safeArea.bottom : 0,
       inviteCode: app.globalData.userInfo ? app.globalData.userInfo.inviteCode || '' : ''
     })
 

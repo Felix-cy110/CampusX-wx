@@ -341,8 +341,8 @@
   display: flex;
   align-items: center;
   width: 100%;
-  height: 96rpx;
-  padding: 0 20rpx;
+  height: calc(96rpx + env(safe-area-inset-bottom));
+  padding: 0 20rpx env(safe-area-inset-bottom);
   box-sizing: border-box;
   background: var(--color-bg-white);
   border-top: 1rpx solid var(--color-border-light);
