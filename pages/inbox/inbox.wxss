@@ -32,57 +32,6 @@
   color: var(--color-text);
 }
 
-.nav-actions {
-  display: flex;
-  align-items: center;
-  gap: 16rpx;
-  /* 右边距由 JS 根据胶囊按钮实际位置动态计算（capsuleGap），避开右上角胶囊 */
-}
-
-.nav-btn {
-  border-radius: 50%;
-  background: var(--color-bg);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: transform 0.15s ease;
-  flex-shrink: 0;
-  /* 宽高由 JS 按胶囊按钮实际高度内联设置 */
-}
-
-.nav-btn-hover {
-  transform: scale(0.88);
-  background: var(--color-border-light);
-}
-
-.nav-btn-text {
-  font-size: 32rpx;
-  font-weight: 700;
-  color: var(--color-text);
-  letter-spacing: 4rpx;
-  line-height: 1;
-  margin-top: -2rpx;
-}
-
-.nav-icon-target {
-  width: 28rpx;
-  height: 28rpx;
-  border-radius: 50%;
-  border: 4rpx solid var(--color-text);
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.nav-icon-target::after {
-  content: '';
-  width: 10rpx;
-  height: 10rpx;
-  border-radius: 50%;
-  background: var(--color-text);
-}
-
 /* ========== 可滚动内容 ========== */
 .page-content {
   flex: 1;

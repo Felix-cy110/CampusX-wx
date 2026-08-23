@@ -23,10 +23,6 @@ Page({
     filteredConversations: [],
     statusBarHeight: 0,
     navBarHeight: 0,
-    // 右上角按钮与胶囊按钮的安全间距（px），根据胶囊实际位置动态计算
-    capsuleGap: 0,
-    // 胶囊按钮高度（px），导航按钮与之等高
-    capsuleHeight: 0,
 
     // swipe state
     swipeIndex: -1,
@@ -52,15 +48,11 @@ Page({
     const menuButton = wx.getMenuButtonBoundingClientRect()
     const statusBarHeight = systemInfo.statusBarHeight
     const navBarHeight = (menuButton.top - statusBarHeight) * 2 + menuButton.height
-    // 与资料页一致：按胶囊真实坐标计算安全间距，按钮与胶囊等高，适配所有机型
-    const capsuleGap = systemInfo.windowWidth - menuButton.left + 8
 
     this.setData({
       isJoinedSchool: app.globalData.isJoinedSchool,
       statusBarHeight,
-      navBarHeight,
-      capsuleGap,
-      capsuleHeight: menuButton.height
+      navBarHeight
     })
     this.loadData()
   },
@@ -337,71 +329,6 @@ Page({
   scrollToTop() {
     wx.pageScrollTo({ scrollTop: 0, duration: 300 })
     this.setData({ _scrollTop: 0 })
-  },
-
-  /* ========== 导航栏操作 ========== */
-
-  onMoreTap() {
-    wx.showActionSheet({
-      itemList: ['全部已读', '清空会话'],
-      success: (res) => {
-        if (res.tapIndex === 0) {
-          this.markAllRead()
-        } else if (res.tapIndex === 1) {
-          wx.showModal({
-            title: '清空会话',
-            content: '确定清空所有会话吗？此操作不可撤销。',
-            success: (r) => {
-              if (r.confirm) {
-                this.setData({
-                  conversations: [],
-                  filteredConversations: [],
-                  friendHasUnread: false,
-                  tempHasUnread: false
-                })
-                wx.showToast({ title: '已清空', icon: 'none' })
-              }
-            }
-          })
-        }
-      }
-    })
-  },
-
-  markAllRead() {
-    const that = this
-    // 收集所有有未读消息的会话
-    const unreadConvs = this.data.conversations.filter(c => c.unread > 0)
-    if (unreadConvs.length === 0) {
-      wx.showToast({ title: '没有未读消息', icon: 'none' })
-      return
-    }
-    // 先乐观清零会话列表，再由统一协调器并发提交并最终回查权威结果。
-    const conversations = that.data.conversations.map(function (c) { return { ...c, unread: 0 } })
-    that.setData({
-      conversations,
-      friendHasUnread: false,
-      tempHasUnread: false
-    }, function () { that.filterConversations() })
-    const promises = unreadConvs.map(function (conv) {
-      return markChatConversationRead({
-        otherUserId: conv.otherUserId,
-        orderId: conv.orderId,
-        unreadCount: conv.unread
-      }).then(function () { return true }, function () { return false })
-    })
-    Promise.all(promises).then(function (results) {
-      const failed = results.filter(function (ok) { return !ok }).length
-      that.loadConversations()
-      wx.showToast({
-        title: failed > 0 ? failed + '个会话标记失败' : '已全部已读',
-        icon: 'none'
-      })
-    })
-  },
-
-  onSettingsTap() {
-    wx.showToast({ title: '设置', icon: 'none' })
   },
 
   /** 从 globalData 缓存立即同步通知数量到页面（零延迟，不等 API） */
