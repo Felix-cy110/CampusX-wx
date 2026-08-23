@@ -30,9 +30,14 @@
 
 /* 推荐页 wrapper */
 .recommend-wrapper {
+  /* 实际高度在内联 style 中设为 calc(100% + 导航栏高)，
+     收起时整体 translateY 上移，导航栏滑出 swiper-item 顶部被裁剪，
+     纯 transform 动画，不触发列表重排 */
   height: 100%;
   display: flex;
   flex-direction: column;
+  will-change: transform;
+  transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 /* 内层 swiper：分类面板 */

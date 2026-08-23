@@ -44,7 +44,7 @@
     <swiper class="feed-swiper" current="{{feedSwiperIndex}}" bindchange="onFeedSwiperChange" easing-function="easeInOutCubic">
       <!-- 推荐页 -->
       <swiper-item>
-        <view class="recommend-wrapper">
+        <view class="recommend-wrapper" style="height: calc(100% + {{navCollapseH}}px); transform: translateY(-{{categoryCollapsed ? navCollapseH : 0}}px);">
           <!-- 分类方块 -->
           <view class="category-squares">
             <view
@@ -87,7 +87,7 @@
           <swiper class="inner-swiper" current="{{innerSwiperIndex}}" bindchange="onInnerSwiperChange" easing-function="easeInOutCubic">
             <!-- 帖子 -->
             <swiper-item>
-              <scroll-view class="panel-scroll" scroll-y enhanced show-scrollbar="{{false}}" enable-back-to-top refresher-enabled refresher-triggered="{{feedRefreshing}}" bindrefresherrefresh="refreshFeed" bindscrolltolower="loadMoreFeed" lower-threshold="200">
+              <scroll-view class="panel-scroll" scroll-y enhanced show-scrollbar="{{false}}" enable-back-to-top refresher-enabled refresher-triggered="{{feedRefreshing}}" bindrefresherrefresh="refreshFeed" bindscrolltolower="loadMoreFeed" lower-threshold="200" bindscroll="onPanelScroll">
                 <view class="content-list">
                   <view class="feed-card" wx:for="{{feedList}}" wx:key="id" bindtap="goToPostDetail" data-id="{{item.id}}">
                     <view class="feed-card-header">
@@ -146,6 +146,7 @@
                     refresher-triggered="{{bookRefreshing}}"
                     bindrefresherrefresh="refreshBookList"
                     bindscrolltolower="loadMoreBooks"
+                    bindscroll="onPanelScroll"
                     lower-threshold="200"
                   >
                   <view class="book-waterfall" wx:if="{{bookDisplayList.length > 0}}">
@@ -282,6 +283,7 @@
                   refresher-triggered="{{otherRefreshing}}"
                   bindrefresherrefresh="refreshOtherList"
                   bindscrolltolower="loadMoreOther"
+                  bindscroll="onPanelScroll"
                   lower-threshold="200"
                 >
                 <view class="book-waterfall" wx:if="{{otherDisplayList.length > 0}}">
@@ -382,7 +384,7 @@
                   <text>供给</text>
                 </view>
               </view>
-              <scroll-view class="panel-scroll" scroll-y enhanced show-scrollbar="{{false}}" enable-back-to-top refresher-enabled refresher-triggered="{{errandRefreshing}}" bindrefresherrefresh="refreshErrands" bindscrolltolower="loadMoreErrands" lower-threshold="200">
+              <scroll-view class="panel-scroll" scroll-y enhanced show-scrollbar="{{false}}" enable-back-to-top refresher-enabled refresher-triggered="{{errandRefreshing}}" bindrefresherrefresh="refreshErrands" bindscrolltolower="loadMoreErrands" lower-threshold="200" bindscroll="onPanelScroll">
                 <view class="content-list">
                   <!-- 需求列表 -->
                   <block wx:if="{{errandSubTab === 'demand'}}">
@@ -480,7 +482,7 @@
 
             <!-- 评分 -->
             <swiper-item>
-              <scroll-view class="panel-scroll" scroll-y enhanced show-scrollbar="{{false}}" enable-back-to-top refresher-enabled refresher-triggered="{{teacherRefreshing}}" bindrefresherrefresh="refreshTeacherRatings">
+              <scroll-view class="panel-scroll" scroll-y enhanced show-scrollbar="{{false}}" enable-back-to-top refresher-enabled refresher-triggered="{{teacherRefreshing}}" bindrefresherrefresh="refreshTeacherRatings" bindscroll="onPanelScroll">
                 <view class="content-list">
                   <view
                     class="rating-teacher-card"

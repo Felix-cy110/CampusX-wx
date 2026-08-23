@@ -47,6 +47,10 @@ Page({
       { key: 'errand', label: '跑腿', icon: '/images/SVG/跑腿.svg' },
       { key: 'rating', label: '评分', icon: '/images/SVG/评分.svg' }
     ],
+    /* 分类导航栏收起状态：上滑浏览收起，下滑弹出 */
+    categoryCollapsed: false,
+    /* 分类导航栏实测高度(px)，onReady 中测量，用于 transform 收起动画 */
+    navCollapseH: 0,
 
     /* 数据 */
     userInfo: {},
@@ -402,6 +406,19 @@ Page({
     }
   },
 
+  onReady() {
+    /* 实测分类导航栏高度，作为收起位移量（兼容不同设备字体缩放） */
+    wx.createSelectorQuery()
+      .in(this)
+      .select('.category-squares')
+      .boundingClientRect(rect => {
+        if (rect && rect.height > 0) {
+          this.setData({ navCollapseH: Math.ceil(rect.height) })
+        }
+      })
+      .exec()
+  },
+
   updateInboxUnreadIndicator(counts) {
     const hasInboxUnread = canAccessCampusFeatures() && getUnreadTotal(counts) > 0
     if (this.data.hasInboxUnread !== hasInboxUnread) {
@@ -520,11 +537,13 @@ Page({
     if (tab !== 'feed' && !requireAuth()) return
     const map = { feed: 0, market: 1, errand: 3, rating: 4 }
     const index = map[tab] || 0
+    this._lastPanelScrollTop = 0
     this.setData({
       currentTab: tab,
       innerSwiperIndex: index,
       marketSubTab: tab === 'market' ? 'book' : this.data.marketSubTab,
-      marketIndicatorRatio: tab === 'market' ? 0.25 : this.data.marketIndicatorRatio
+      marketIndicatorRatio: tab === 'market' ? 0.25 : this.data.marketIndicatorRatio,
+      categoryCollapsed: false
     })
     if (tab === 'rating') {
       this.loadTeacherRatings()
@@ -541,14 +560,34 @@ Page({
       return
     }
     const subTab = index === 1 ? 'book' : (index === 2 ? 'other' : this.data.marketSubTab)
+    this._lastPanelScrollTop = 0
     this.setData({
       innerSwiperIndex: index,
       currentTab: tab,
       marketSubTab: subTab,
-      marketIndicatorRatio: subTab === 'book' ? 0.25 : 0.75
+      marketIndicatorRatio: subTab === 'book' ? 0.25 : 0.75,
+      categoryCollapsed: false
     })
     if (tab === 'rating') {
       this.loadTeacherRatings()
+    }
+  },
+
+  /* 推荐流各面板滚动：上滑（内容下翻）收起分类导航栏，下滑（内容上翻）弹出 */
+  onPanelScroll(e) {
+    const scrollTop = e.detail.scrollTop
+    const last = this._lastPanelScrollTop || 0
+    this._lastPanelScrollTop = scrollTop
+    /* 回到顶部附近时始终展示 */
+    if (scrollTop <= 10) {
+      if (this.data.categoryCollapsed) this.setData({ categoryCollapsed: false })
+      return
+    }
+    const delta = scrollTop - last
+    if (delta > 8 && !this.data.categoryCollapsed) {
+      this.setData({ categoryCollapsed: true })
+    } else if (delta < -8 && this.data.categoryCollapsed) {
+      this.setData({ categoryCollapsed: false })
     }
   },
 
