@@ -564,6 +564,10 @@ Page({
     }
   },
 
+  onHide() {
+    this.resetCommentKeyboardLayout()
+  },
+
   onSwiperChange(e) {
     this.setData({ swiperCurrent: e.detail.current })
   },
@@ -771,11 +775,19 @@ Page({
     }
   },
 
-  /* 输入框失焦后复位 focus 标记，保证下次点击回复能重新聚焦 */
+  /*
+   * 部分安卓机会在点击空白处收起键盘时漏发 height=0 事件。
+   * 输入框已经失焦就可以确定键盘不再占位，主动恢复页面高度，避免底栏悬空。
+   */
   onCommentBlur() {
-    if (this.data.commentInputFocus) {
-      this.setData({ commentInputFocus: false })
-    }
+    this.resetCommentKeyboardLayout()
+  },
+
+  resetCommentKeyboardLayout() {
+    const updates = {}
+    if (this.data.commentInputFocus) updates.commentInputFocus = false
+    if (this.data.keyboardHeight) updates.keyboardHeight = 0
+    if (Object.keys(updates).length > 0) this.setData(updates)
   },
 
   /* 键盘弹出或切换回复目标后，如目标评论被底部输入框/键盘遮挡则滚动到可见位置 */
