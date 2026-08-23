@@ -19,7 +19,6 @@
 .detail-nav-bar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   padding: 0 30rpx;
   background-color: #FFFFFF;
 }
@@ -41,6 +40,7 @@
 .nav-more {
   width: 80rpx;
   height: 100%;
+  margin-left: auto;
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -279,8 +279,9 @@
 .bottom-bar {
   display: flex;
   align-items: center;
-  height: 96rpx;
-  padding: 0 20rpx;
+  height: calc(96rpx + env(safe-area-inset-bottom));
+  padding: 0 20rpx env(safe-area-inset-bottom);
+  box-sizing: border-box;
   background: var(--color-bg-white);
   border-top: 1rpx solid var(--color-border-light);
   flex-shrink: 0;

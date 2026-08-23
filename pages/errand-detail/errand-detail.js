@@ -26,6 +26,8 @@ Page({
   data: {
     statusBarHeight: 0,
     navBarHeight: 0,
+    /* 导航栏右侧分享按钮与胶囊按钮的安全间距（px），按胶囊实际位置动态计算 */
+    capsuleGap: 0,
 
     demand: null,
     detailType: 'demand',
@@ -41,12 +43,15 @@ Page({
     const menuButton = wx.getMenuButtonBoundingClientRect()
     const statusBarHeight = systemInfo.statusBarHeight
     const navBarHeight = (menuButton.top - statusBarHeight) * 2 + menuButton.height
+    // 与其他详情页一致：按胶囊真实坐标计算安全间距，适配所有机型
+    const capsuleGap = systemInfo.windowWidth - menuButton.left + 8
 
     const id = options.id || ''
     const detailType = options.type === 'supply' ? 'supply' : 'demand'
     this.setData({
       statusBarHeight,
       navBarHeight,
+      capsuleGap,
       detailType,
       isLoggedIn: app.globalData.isLoggedIn
     })

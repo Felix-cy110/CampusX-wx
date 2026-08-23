@@ -88,7 +88,7 @@
   </scroll-view>
 
   <!-- 底部下单栏（无订单且活动进行中） -->
-  <view wx:if="{{!myOrder && presale.status === 1}}" class="bottom-bar" style="padding-bottom: calc({{safeAreaBottom}}px + 20rpx);">
+  <view wx:if="{{!myOrder && presale.status === 1}}" class="bottom-bar">
     <view class="quantity-row">
       <text class="quantity-label">数量</text>
       <view class="quantity-ctrl">

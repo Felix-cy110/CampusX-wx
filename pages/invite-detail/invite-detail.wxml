@@ -81,7 +81,7 @@
   </scroll-view>
 
   <!-- 底部邀请按钮（活动进行中） -->
-  <view wx:if="{{activity.status === 0}}" class="bottom-bar" style="padding-bottom: calc({{safeAreaBottom}}px + 20rpx);">
+  <view wx:if="{{activity.status === 0}}" class="bottom-bar">
     <view class="invite-code-row">
       <text class="invite-label">我的邀请码</text>
       <text class="invite-code">{{inviteCode}}</text>

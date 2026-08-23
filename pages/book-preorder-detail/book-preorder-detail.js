@@ -68,7 +68,6 @@ Page({
     quantity: 1,
     totalPrice: '0.00',
     depositPrice: '0.00',
-    safeAreaBottom: 0,
     statusBarHeight: 0,
     navBarHeight: 0,
     submitting: false,
@@ -80,8 +79,7 @@ Page({
     const menuButton = wx.getMenuButtonBoundingClientRect()
     this.setData({
       statusBarHeight: systemInfo.statusBarHeight,
-      navBarHeight: (menuButton.top - systemInfo.statusBarHeight) * 2 + menuButton.height,
-      safeAreaBottom: systemInfo.safeArea ? systemInfo.screenHeight - systemInfo.safeArea.bottom : 0
+      navBarHeight: (menuButton.top - systemInfo.statusBarHeight) * 2 + menuButton.height
     })
 
     const id = parseInt(options.id)

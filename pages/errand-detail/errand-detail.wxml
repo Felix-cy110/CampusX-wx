@@ -7,7 +7,7 @@
         <image class="nav-back-icon" src="/images/SVG/返回.svg" mode="aspectFit"></image>
       </view>
       <text class="nav-title">跑腿详情</text>
-      <button class="nav-placeholder share-nav-button" open-type="share">
+      <button class="nav-placeholder share-nav-button" style="margin-right: {{capsuleGap}}px;" open-type="share">
         <image class="share-nav-icon" src="/images/SVG/转发.svg" mode="aspectFit"></image>
       </button>
     </view>

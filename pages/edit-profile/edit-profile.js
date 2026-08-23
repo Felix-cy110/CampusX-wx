@@ -199,6 +199,11 @@ Page({
       return
     }
 
+    if (phone && !/^\d{11}$/.test(phone)) {
+      wx.showToast({ title: '请输入11位手机号', icon: 'none' })
+      return
+    }
+
     this._saving = true
     wx.showLoading({ title: '保存中...' })
 

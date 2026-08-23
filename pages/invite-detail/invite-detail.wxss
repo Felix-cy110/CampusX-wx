@@ -182,7 +182,7 @@
 
 .bottom-bar {
   background-color: var(--color-bg-white);
-  padding: 20rpx 24rpx;
+  padding: 20rpx 24rpx calc(20rpx + env(safe-area-inset-bottom));
   border-top: 1rpx solid var(--color-border-light);
   flex-shrink: 0;
 }
