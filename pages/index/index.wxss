@@ -56,6 +56,42 @@
   height: 100%;
 }
 
+/* 帖子面板：分类胶囊栏 + 列表纵向布局 */
+.post-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.post-feed-scroll {
+  flex: 1;
+  height: auto;
+}
+
+.post-category-bar {
+  flex-shrink: 0;
+  white-space: nowrap;
+  padding: 12rpx 24rpx 8rpx;
+  box-sizing: border-box;
+}
+
+.post-category-chip {
+  display: inline-block;
+  padding: 12rpx 28rpx;
+  margin-right: 16rpx;
+  border-radius: 999rpx;
+  background: #F0F2F5;
+  color: var(--color-text-secondary, #3B3B3B);
+  font-size: var(--font-base, 28rpx);
+  line-height: 1.4;
+}
+
+.post-category-chip.active {
+  background: var(--color-primary);
+  color: #FFFFFF;
+  font-weight: 600;
+}
+
 /* ========== 未加入学校横幅 ========== */
 .not-joined-banner {
   display: flex;

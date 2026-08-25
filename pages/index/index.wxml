@@ -87,7 +87,13 @@
           <swiper class="inner-swiper" current="{{innerSwiperIndex}}" bindchange="onInnerSwiperChange" easing-function="easeInOutCubic">
             <!-- 帖子 -->
             <swiper-item>
-              <scroll-view class="panel-scroll" scroll-y enhanced show-scrollbar="{{false}}" enable-back-to-top refresher-enabled refresher-triggered="{{feedRefreshing}}" bindrefresherrefresh="refreshFeed" bindscrolltolower="loadMoreFeed" lower-threshold="200" bindscroll="onPanelScroll">
+              <view class="post-panel">
+                <scroll-view class="post-category-bar" scroll-x enhanced show-scrollbar="{{false}}">
+                  <view class="post-category-chip {{activePostCategory === item.id ? 'active' : ''}}"
+                        wx:for="{{postCategories}}" wx:key="index"
+                        data-id="{{item.id}}" bindtap="onPostCategoryTap">{{item.label}}</view>
+                </scroll-view>
+              <scroll-view class="panel-scroll post-feed-scroll" scroll-y enhanced show-scrollbar="{{false}}" enable-back-to-top refresher-enabled refresher-triggered="{{feedRefreshing}}" bindrefresherrefresh="refreshFeed" bindscrolltolower="loadMoreFeed" lower-threshold="200" bindscroll="onPanelScroll">
                 <view class="content-list">
                   <view class="feed-card" wx:for="{{feedList}}" wx:key="id" bindtap="goToPostDetail" data-id="{{item.id}}">
                     <view class="feed-card-header">
@@ -130,6 +136,7 @@
                   </view>
                 </view>
               </scroll-view>
+              </view>
             </swiper-item>
 
             <!-- 二手-书籍 -->

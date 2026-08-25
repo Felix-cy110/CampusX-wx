@@ -63,6 +63,20 @@ Page({
     feedCursor: null,
     feedHasMore: true,
     feedLoading: false,
+
+    /* 帖子分类筛选（AI 分类，id 对应后端 category 表；null=推荐流） */
+    postCategories: [
+      { id: null, label: '推荐' },
+      { id: 1, label: '学习考研' },
+      { id: 2, label: '校园生活' },
+      { id: 3, label: '表白墙' },
+      { id: 4, label: '问答求助' },
+      { id: 5, label: '活动组队' },
+      { id: 6, label: '吐槽树洞' },
+      { id: 7, label: '失物招领' },
+      { id: 8, label: '二手交易' }
+    ],
+    activePostCategory: null,
     marketList: [],
     errandList: [],
     errandPage: 1,
@@ -271,6 +285,7 @@ Page({
       ? { targetCampusId: browsingCampusId, pageSize: 20 }
       : { pageSize: 20 }
     if (isLoadMore) requestData.cursor = cursor
+    if (this.data.activePostCategory) requestData.categoryId = this.data.activePostCategory
 
     const reqOptions = browsingCampusId
       ? { url: '/api/post/list', method: 'GET', data: requestData }
@@ -341,6 +356,21 @@ Page({
     if (this.data.feedLoading || !this.data.feedHasMore) return Promise.resolve(false)
     if (this.data.feedCursor === null || this.data.feedCursor === undefined) return Promise.resolve(false)
     return this.loadFeed(this.data.feedCursor)
+  },
+
+  /* 帖子分类胶囊点击：dataset 传 '' 表示「推荐」(null) */
+  onPostCategoryTap(e) {
+    const raw = e.currentTarget.dataset.id
+    const id = raw === '' || raw === null || raw === undefined ? null : Number(raw)
+    if (id === this.data.activePostCategory) return
+    this.setData({
+      activePostCategory: id,
+      feedList: [],
+      currentList: [],
+      feedCursor: null,
+      feedHasMore: true
+    })
+    this.loadFeed()
   },
 
   onShow() {
