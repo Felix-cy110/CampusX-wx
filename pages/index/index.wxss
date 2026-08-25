@@ -73,18 +73,18 @@
 .post-category-bar {
   flex-shrink: 0;
   white-space: nowrap;
-  padding: 12rpx 24rpx 8rpx;
+  padding: 0 24rpx 8rpx;
   box-sizing: border-box;
 }
 
 .post-category-chip {
   display: inline-block;
-  padding: 12rpx 28rpx;
-  margin-right: 16rpx;
+  padding: 8rpx 20rpx;
+  margin-right: 12rpx;
   border-radius: 12rpx;
   background: #F0F2F5;
   color: var(--color-text-secondary, #3B3B3B);
-  font-size: var(--font-base, 28rpx);
+  font-size: var(--font-sm, 22rpx);
   line-height: 1.4;
 }
 
