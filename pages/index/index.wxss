@@ -81,7 +81,7 @@
   display: inline-block;
   padding: 12rpx 28rpx;
   margin-right: 16rpx;
-  border-radius: 999rpx;
+  border-radius: 12rpx;
   background: #F0F2F5;
   color: var(--color-text-secondary, #3B3B3B);
   font-size: var(--font-base, 28rpx);
