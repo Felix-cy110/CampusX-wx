@@ -1,6 +1,7 @@
 const { safeNavigate, safeSwitch } = require('../utils/safeNavigate')
 const { canAccessCampusFeatures, requireAuth } = require('../utils/auth')
 const { getUnreadTotal, refreshUnreadCounts, subscribeUnreadCounts } = require('../utils/unread')
+const { ensureSettlementAccountActive } = require('../utils/settlementAccount')
 
 Component({
   data: {
@@ -181,7 +182,7 @@ Component({
       // 阻止冒泡，点击内容区不关闭
     },
 
-    selectCategory(e) {
+    async selectCategory(e) {
       const key = e.currentTarget.dataset.key
       const urlMap = {
         post: '/pages/publish-post/publish-post',
@@ -191,6 +192,15 @@ Component({
       }
       const url = urlMap[key]
       if (url) {
+        if (key === 'secondhand' || key === 'errand') {
+          this.setData({ publishLoading: true })
+          const active = await ensureSettlementAccountActive(url)
+          if (!active) {
+            this.setData({ publishLoading: false })
+            this.closePublishPopup()
+            return
+          }
+        }
         safeNavigate({
           url,
           success: () => {

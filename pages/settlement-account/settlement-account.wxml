@@ -1,0 +1,91 @@
+<view class="page">
+  <view style="height: {{statusBarHeight}}px; background: #fff;"></view>
+  <view class="nav-bar" style="height: {{navBarHeight}}px;">
+    <image class="nav-back" src="/images/SVG/返回.svg" mode="aspectFit" bindtap="onBack"></image>
+    <text class="nav-title">结算账户</text>
+    <view class="nav-placeholder"></view>
+  </view>
+
+  <view class="status-card {{statusClass}}" wx:if="{{!checking}}">
+    <text class="status-title">{{statusTitle}}</text>
+    <text class="status-desc">{{statusReason}}</text>
+    <view class="status-actions" wx:if="{{accountStatus === 'PENDING' || accountStatus === 'REGISTERED'}}">
+      <button class="status-btn secondary" bindtap="refreshStatus">刷新审核状态</button>
+    </view>
+    <view class="status-actions" wx:if="{{canPublish && returnUrl}}">
+      <button class="status-btn" bindtap="continuePublishing">继续发布</button>
+    </view>
+  </view>
+
+  <view class="notice">
+    <text>联调阶段卖家最多分得订单金额的 30%；正式比例获批并切换后为 98%。</text>
+  </view>
+
+  <block wx:if="{{showForm}}">
+  <view class="form-section">
+    <view class="form-item">
+      <text class="label">真实姓名</text>
+      <input class="input" data-field="realName" value="{{form.realName}}" bindinput="onInput" placeholder="请输入银行卡持卡人姓名" />
+    </view>
+    <view class="form-item">
+      <text class="label">身份证号</text>
+      <input class="input" data-field="certificateNo" value="{{form.certificateNo}}" bindinput="onInput" placeholder="请输入本人身份证号" maxlength="18" />
+    </view>
+    <view class="form-item">
+      <text class="label">身份证有效期类型</text>
+      <picker range="{{validityOptions}}" value="{{validityIndex}}" bindchange="onValidityChange">
+        <view class="picker">{{validityOptions[validityIndex]}}<text>›</text></view>
+      </picker>
+    </view>
+    <view class="form-item">
+      <text class="label">身份证有效期开始</text>
+      <picker mode="date" value="{{form.certBeginDate}}" bindchange="onBeginDateChange">
+        <view class="picker {{form.certBeginDate ? '' : 'placeholder'}}">{{form.certBeginDate || '请选择日期'}}<text>›</text></view>
+      </picker>
+    </view>
+    <view class="form-item" wx:if="{{form.certValidityType === '0'}}">
+      <text class="label">身份证有效期截止</text>
+      <picker mode="date" value="{{form.certEndDate}}" bindchange="onEndDateChange">
+        <view class="picker {{form.certEndDate ? '' : 'placeholder'}}">{{form.certEndDate || '请选择日期'}}<text>›</text></view>
+      </picker>
+    </view>
+    <view class="form-item">
+      <text class="label">银行预留手机号</text>
+      <input class="input" type="number" data-field="mobileNo" value="{{form.mobileNo}}" bindinput="onInput" placeholder="请输入 11 位手机号" maxlength="11" />
+    </view>
+    <view class="form-item">
+      <text class="label">银行卡号</text>
+      <input class="input" type="number" data-field="bankCardNo" value="{{form.bankCardNo}}" bindinput="onInput" placeholder="请输入本人银行卡号" maxlength="32" />
+    </view>
+    <view class="form-item">
+      <text class="label">银行名称</text>
+      <input class="input" data-field="bankName" value="{{form.bankName}}" bindinput="onInput" placeholder="例如：中国工商银行" />
+    </view>
+    <view class="form-item">
+      <text class="label">银行所在地区</text>
+      <picker mode="region" value="{{bankRegion}}" bindchange="onRegionChange">
+        <view class="picker {{bankRegion.length ? '' : 'placeholder'}}">{{bankRegion.length ? bankRegionText : '请选择省市'}}<text>›</text></view>
+      </picker>
+    </view>
+    <view class="form-item">
+      <text class="label">自动结算周期</text>
+      <picker range="{{settleOptions}}" value="{{settleIndex}}" bindchange="onSettleChange">
+        <view class="picker">{{settleOptions[settleIndex]}}<text>›</text></view>
+      </picker>
+    </view>
+  </view>
+
+  <checkbox-group class="agreement" bindchange="onAgreementChange">
+    <label>
+      <checkbox value="agreed" checked="{{agreed}}" color="#255AC5" />
+      <text>我确认资料属于本人，并同意将实名及银行卡资料发送给汇付用于开户、分账和结算。平台数据库仅保存汇付公钥加密后的卡号和证件号。</text>
+    </label>
+  </checkbox-group>
+
+  <view class="submit-area">
+    <button class="submit-btn" disabled="{{!canSubmit || submitting}}" loading="{{submitting}}" bindtap="submit">
+      {{isBound ? '更新结算账户' : '开通结算账户'}}
+    </button>
+  </view>
+  </block>
+</view>

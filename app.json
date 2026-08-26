@@ -85,6 +85,10 @@
       "pages": ["edit-profile"]
     },
     {
+      "root": "pages/settlement-account",
+      "pages": ["settlement-account"]
+    },
+    {
       "root": "pages/system-msg",
       "pages": ["system-msg"]
     },

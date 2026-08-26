@@ -1,0 +1,159 @@
+.page {
+  min-height: 100vh;
+  padding-bottom: calc(48rpx + env(safe-area-inset-bottom));
+  background: var(--color-bg);
+}
+
+.nav-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24rpx;
+  background: #fff;
+}
+
+.nav-back,
+.nav-placeholder {
+  width: 44rpx;
+  height: 44rpx;
+}
+
+.nav-title {
+  font-size: var(--font-lg);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.status-card,
+.notice,
+.agreement {
+  margin: 24rpx;
+  padding: 24rpx;
+  border-radius: var(--radius-md);
+  background: #fff7e6;
+}
+
+.status-card.success {
+  background: #ebf8f0;
+}
+
+.status-card.pending {
+  background: #fff7e6;
+}
+
+.status-card.failed {
+  background: #fff0f0;
+}
+
+.status-title,
+.status-desc {
+  display: block;
+}
+
+.status-title {
+  margin-bottom: 8rpx;
+  font-size: var(--font-md);
+  font-weight: 600;
+}
+
+.status-desc,
+.notice,
+.agreement text {
+  font-size: var(--font-sm);
+  line-height: 1.6;
+  color: var(--color-text-secondary);
+}
+
+.notice {
+  background: #edf3ff;
+  color: #255ac5;
+}
+
+.status-actions {
+  margin-top: 20rpx;
+}
+
+.status-btn {
+  color: #fff;
+  background: #255ac5;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-sm);
+}
+
+.status-btn.secondary {
+  color: #255ac5;
+  background: #fff;
+  border: 1rpx solid #255ac5;
+}
+
+.form-section {
+  margin: 24rpx;
+  padding: 0 28rpx;
+  border-radius: var(--radius-md);
+  background: #fff;
+}
+
+.form-item {
+  padding: 24rpx 0;
+  border-bottom: 1rpx solid var(--color-border-light);
+}
+
+.form-item:last-child {
+  border-bottom: 0;
+}
+
+.label {
+  display: block;
+  margin-bottom: 14rpx;
+  font-size: var(--font-base);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.input,
+.picker {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 76rpx;
+  padding: 18rpx 20rpx;
+  border-radius: var(--radius-sm);
+  background: var(--color-bg);
+  font-size: var(--font-base);
+  color: var(--color-text);
+}
+
+.picker {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.placeholder {
+  color: var(--color-text-secondary);
+}
+
+.agreement label {
+  display: flex;
+  align-items: flex-start;
+  gap: 12rpx;
+}
+
+.agreement checkbox {
+  flex: none;
+  transform: scale(.82);
+}
+
+.submit-area {
+  padding: 0 24rpx;
+}
+
+.submit-btn {
+  color: #fff;
+  background: #255ac5;
+  border-radius: var(--radius-md);
+}
+
+.submit-btn[disabled] {
+  color: #fff;
+  background: #aebfe4;
+}

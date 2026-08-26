@@ -1,5 +1,6 @@
 const { safeNavigate } = require('../../utils/safeNavigate')
 const { request } = require('../../utils/request')
+const { ensureSettlementAccountActive } = require('../../utils/settlementAccount')
 
 Page({
   onLoad() {
@@ -8,6 +9,7 @@ Page({
     const statusBarHeight = systemInfo.statusBarHeight
     const navBarHeight = (menuButton.top - statusBarHeight) * 2 + menuButton.height
     this.setData({ statusBarHeight, navBarHeight })
+    setTimeout(() => this.guardErrandPublishing(), 0)
   },
 
   data: {
@@ -46,6 +48,10 @@ Page({
 
   goBack() {
     wx.navigateBack()
+  },
+
+  guardErrandPublishing() {
+    return ensureSettlementAccountActive('/pages/publish-errand/publish-errand')
   },
 
   onCourseNameInput(e) {
@@ -93,6 +99,7 @@ Page({
 
   async onSubmit() {
     if (this.data.publishing) return
+    if (!(await this.guardErrandPublishing())) return
 
     const { courseName, classDate, classTime, locationCampus, locationBuilding, locationRoom, fee, remark, onlySameSchool } = this.data
 

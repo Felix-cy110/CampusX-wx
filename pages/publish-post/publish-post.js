@@ -1,6 +1,7 @@
 const { safeNavigate } = require('../../utils/safeNavigate')
 const { request, getBaseUrl } = require('../../utils/request')
 const { handleAuthFailure } = require('../../utils/auth')
+const { ensureSettlementAccountActive } = require('../../utils/settlementAccount')
 const {
   requestPayment,
   waitForPaymentResult,
@@ -39,6 +40,9 @@ Page({
 
     // 初次加载时判断是否跨校
     this.checkCrossSchool()
+    if (options.mode === 'secondhand') {
+      setTimeout(() => this.guardSecondhandPublishing(), 0)
+    }
   },
 
   /* 加载编辑数据 */
@@ -178,19 +182,25 @@ Page({
     publishing: false
   },
 
-  switchMode(e) {
+  async switchMode(e) {
     const mode = e.currentTarget.dataset.mode
+    if (mode === 'secondhand' && !(await this.guardSecondhandPublishing())) return
     this.setData({
       mode,
       tabIndicatorRatio: mode === 'feed' ? 0.25 : 0.75
     })
   },
 
-  switchToSecondhand() {
+  async switchToSecondhand() {
+    if (!(await this.guardSecondhandPublishing())) return
     this.setData({
       mode: 'secondhand',
       tabIndicatorRatio: 0.75
     })
+  },
+
+  guardSecondhandPublishing() {
+    return ensureSettlementAccountActive('/pages/publish-post/publish-post?mode=secondhand')
   },
 
   // ===== 图文帖子 handlers =====
@@ -680,6 +690,7 @@ Page({
    * 发布二手挂单
    */
   async publishIdle() {
+    if (!(await this.guardSecondhandPublishing())) return
     const {
       selectedIdleType, selectedItemCategory,
       title, bookAuthor, bookPublisher, bookEdition, hasNotes,

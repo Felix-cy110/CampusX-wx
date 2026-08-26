@@ -10,9 +10,10 @@ Page({
     menuItems: [
       { id: 1, name: '联系客服', icon: '/images/SVG/kefu.svg', arrow: true },
       { id: 2, name: '跨校发帖付费额度充值', icon: '/images/SVG/fufei.svg', arrow: true },
-      { id: 3, name: '修改学校申诉', icon: '/images/SVG/xiugai.svg', arrow: true },
-      { id: 4, name: '退出学校', icon: '/images/SVG/xuexiao_xuexiaoxinxi.svg', arrow: true },
-      { id: 5, name: '退出登录', icon: '/images/SVG/dengchu.svg', arrow: false, danger: true }
+      { id: 3, name: '结算账户', icon: '/images/SVG/fufei.svg', arrow: true },
+      { id: 4, name: '修改学校申诉', icon: '/images/SVG/xiugai.svg', arrow: true },
+      { id: 5, name: '退出学校', icon: '/images/SVG/xuexiao_xuexiaoxinxi.svg', arrow: true },
+      { id: 6, name: '退出登录', icon: '/images/SVG/dengchu.svg', arrow: false, danger: true }
     ],
     version: 'V1.0.0'
   },
@@ -34,6 +35,8 @@ Page({
       wx.showToast({ title: '正在联系客服...', icon: 'none' })
     } else if (name === '跨校发帖付费额度充值') {
       safeNavigate({ url: '/pages/recharge/recharge' })
+    } else if (name === '结算账户') {
+      safeNavigate({ url: '/pages/settlement-account/settlement-account' })
     } else if (name === '修改学校申诉') {
       safeNavigate({ url: '/pages/school-appeal/school-appeal' })
     } else if (name === '退出学校') {

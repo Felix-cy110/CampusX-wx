@@ -1,5 +1,6 @@
 const { safeNavigate } = require('../../utils/safeNavigate')
 const { request } = require('../../utils/request')
+const { ensureSettlementAccountActive } = require('../../utils/settlementAccount')
 
 Page({
   data: {
@@ -26,10 +27,15 @@ Page({
     const statusBarHeight = systemInfo.statusBarHeight
     const navBarHeight = (menuButton.top - statusBarHeight) * 2 + menuButton.height
     this.setData({ statusBarHeight, navBarHeight })
+    setTimeout(() => this.guardSupplyPublishing(), 0)
   },
 
   goBack() {
     wx.navigateBack()
+  },
+
+  guardSupplyPublishing() {
+    return ensureSettlementAccountActive('/pages/publish-supply/publish-supply')
   },
 
   onSubjectRangeInput(e) {
@@ -47,6 +53,7 @@ Page({
   // ===== 提交 =====
   async onSubmit() {
     if (this.data.publishing) return
+    if (!(await this.guardSupplyPublishing())) return
 
     const { subjectRange, availableTime, expectedFee } = this.data
 
