@@ -162,12 +162,12 @@ Page({
       status: statusDesc,
       statusBg: statusBgMap[statusDesc] || '#999999',
       remark: '',
-      showConfirmBtn: vo.status === 3 && side === 'buy',
-      showCancelBtn: vo.status === 1,
-      showPayBtn: vo.status === 1 && side === 'buy',
-      showRefundBtn: vo.status === 3 && side === 'buy',
-      showRefundAgreeBtn: vo.status === 6 && side === 'sell',
-      showRefundRejectBtn: vo.status === 6 && side === 'sell',
+      showConfirmBtn: vo.status === 2 && side === 'buy',
+      showCancelBtn: vo.status === 0,
+      showPayBtn: vo.status === 0 && side === 'buy',
+      showRefundBtn: vo.status === 2 && side === 'buy',
+      showRefundAgreeBtn: vo.status === 5 && side === 'sell',
+      showRefundRejectBtn: vo.status === 5 && side === 'sell',
       targetId: vo.productId,
       targetType: 'market'
     }

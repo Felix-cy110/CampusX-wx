@@ -470,6 +470,9 @@
   color: #FFFFFF;
   line-height: 68rpx;
 }
+.btn-buy.disabled {
+  background: var(--color-text-placeholder);
+}
 /* 下架商品：红底 */
 .btn-off-shelf {
   background: var(--color-red);
