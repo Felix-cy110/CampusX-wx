@@ -25,9 +25,6 @@
       <view class="action-sheet-item" bindtap="togglePinned">
         <text>置顶</text>
       </view>
-      <view class="action-sheet-item" bindtap="setPrivate">
-        <text>设置为私密</text>
-      </view>
       <view class="action-sheet-item" bindtap="shareToFriends">
         <text>分享给互关好友</text>
       </view>

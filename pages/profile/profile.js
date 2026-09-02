@@ -21,7 +21,6 @@ Page({
     filteredContentList: [],       // 根据Tab筛选后的列表
     showPostOptionsModal: false,   // 帖子选项弹窗
     selectedPostId: null,          // 当前选中的帖子ID
-    selectedPostIsPrivate: false,  // 当前选中帖子是否私密
     selectedPostIsPinned: false,   // 当前选中帖子是否置顶
     _scrollTop: 0,
 
@@ -375,7 +374,6 @@ Page({
       id: String(vo.id),
       type: 'posts',
       pinned: vo.isTop === 1,
-      isPrivate: vo.status !== 1,
       user: {
         uid: String(vo.userId || userInfo.uid),
         name: vo.nickname || userInfo.nickname || '',
@@ -400,7 +398,6 @@ Page({
       id: 'idle_' + vo.productId,
       type: 'market',
       pinned: false,
-      isPrivate: false,
       user: {
         uid: userInfo.uid || '',
         name: userInfo.nickname || '',
@@ -431,7 +428,6 @@ Page({
       id: 'demand_' + vo.id,
       type: 'errand',
       pinned: false,
-      isPrivate: false,
       user: {
         uid: userInfo.uid || '',
         name: userInfo.nickname || '',
@@ -456,7 +452,6 @@ Page({
       id: 'supply_' + vo.id,
       type: 'errand',
       pinned: false,
-      isPrivate: false,
       user: {
         uid: userInfo.uid || '',
         name: userInfo.nickname || '',
@@ -481,7 +476,6 @@ Page({
       id: 'fav_' + vo.favoriteId,
       type: type,
       pinned: false,
-      isPrivate: false,
       user: {
         uid: String(vo.userId || ''),
         name: vo.nickname || '',
@@ -588,7 +582,6 @@ Page({
     this.setData({
       showPostOptionsModal: true,
       selectedPostId: id,
-      selectedPostIsPrivate: post ? post.isPrivate : false,
       selectedPostIsPinned: post ? post.pinned : false,
       selectedPostBackendType: post ? post._backendType : ''
     })
@@ -600,7 +593,6 @@ Page({
     this.setData({
       showPostOptionsModal: false,
       selectedPostId: null,
-      selectedPostIsPrivate: false,
       selectedPostIsPinned: false
     })
   },
@@ -626,21 +618,6 @@ Page({
       wx.setStorageSync('editPostData', JSON.stringify(post))
     }
     safeNavigate({ url: '/pages/publish-post/publish-post?editId=' + id })
-  },
-
-  /* 切换私密状态（暂为本地状态，后端无对应 API） */
-  onSetPrivate() {
-    const id = this.data.selectedPostId
-    this.hidePostOptions()
-    const list = this.data.filteredContentList.map(item => {
-      if (String(item.id) === String(id)) {
-        return { ...item, isPrivate: !item.isPrivate }
-      }
-      return item
-    })
-    this.setData({ filteredContentList: list })
-    const post = list.find(item => String(item.id) === String(id))
-    wx.showToast({ title: post && post.isPrivate ? '已设置为私密' : '已取消私密', icon: 'success' })
   },
 
   /* 切换置顶状态（仅为管理员提供，暂为本地状态） */

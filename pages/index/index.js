@@ -247,6 +247,26 @@ Page({
     return campusId ? { campusId } : {}
   },
 
+  /** 是否正在浏览其他学校（跨校） */
+  isBrowsingOtherSchool() {
+    const browsingId = this.data.browsingCampusId
+    if (!browsingId) return false
+    const ownCampusId = (app.globalData.userInfo || {}).campusId
+    return String(browsingId) !== String(ownCampusId || '')
+  },
+
+  /** 跨校浏览时拦截二手商品点击，提示无法跨校购买 */
+  blockCrossSchoolMarket() {
+    if (!this.isBrowsingOtherSchool()) return false
+    wx.showModal({
+      title: '提示',
+      content: '暂不支持跨校购买二手商品',
+      showCancel: false,
+      confirmText: '知道了'
+    })
+    return true
+  },
+
   /* 加载首页活动横幅：取进行中的活动名，改名后自动跟随 */
   loadActivityBanner() {
     getActivities(null, 20).then(res => {
@@ -766,6 +786,7 @@ Page({
 
   /* 跳转集市详情 */
   goToMarketDetail(e) {
+    if (this.blockCrossSchoolMarket()) return
     const id = e.currentTarget.dataset.id
     safeNavigate({ url: `/pages/market-detail/market-detail?id=${id}` })
   },
@@ -1138,6 +1159,7 @@ Page({
   },
 
   goToBookDetail(e) {
+    if (this.blockCrossSchoolMarket()) return
     const id = e.currentTarget.dataset.id
     safeNavigate({ url: `/pages/market-detail/market-detail?id=${id}` })
   },

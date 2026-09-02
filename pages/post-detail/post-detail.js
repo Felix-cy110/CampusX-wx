@@ -184,6 +184,7 @@ Page({
         school: '',
         sourceType: vo.sourceType || '',
         sourceId: vo.sourceId || '',
+        publisherCampusId: vo.publisherCampusId || '',
         time: vo.createdAt ? vo.createdAt.replace('T', ' ').slice(0, 16) : ''
       }
       this.setData({ post })
@@ -196,9 +197,21 @@ Page({
   },
   /* 二手商品关联帖：跳转商品详情购买 */
   goBuy() {
-    const sourceId = this.data.post.sourceId
+    const post = this.data.post
+    const sourceId = post.sourceId
     if (!sourceId) {
       wx.showToast({ title: '商品信息不可用', icon: 'none' })
+      return
+    }
+    // 发布者非本校时，关联商品属于跨校二手，按规定不允许购买
+    const ownCampusId = (app.globalData.userInfo || {}).campusId
+    if (post.publisherCampusId && ownCampusId && String(post.publisherCampusId) !== String(ownCampusId)) {
+      wx.showModal({
+        title: '提示',
+        content: '暂不支持跨校购买二手商品',
+        showCancel: false,
+        confirmText: '知道了'
+      })
       return
     }
     safeNavigate({ url: '/pages/market-detail/market-detail?id=' + sourceId })
@@ -1017,12 +1030,6 @@ Page({
     safeNavigate({
       url: `/pages/publish-post/publish-post?editId=${post.id}`
     })
-  },
-
-  /* 设置为私密 */
-  setPrivate() {
-    this.setData({ showActionSheet: false })
-    wx.showToast({ title: '已设置为私密', icon: 'success' })
   },
 
   /* 置顶帖子 */
