@@ -100,8 +100,8 @@
       <view class="bottom-btn btn-contact" bindtap="contactSeller">
         <text>联系卖家</text>
       </view>
-      <view class="bottom-btn btn-buy" bindtap="createOrder">
-        <text>立即购买</text>
+      <view class="bottom-btn btn-buy {{purchasePending ? 'disabled' : ''}}" bindtap="createOrder">
+        <text>{{purchasePending ? '支付中...' : '立即购买'}}</text>
       </view>
     </block>
     <block wx:if="{{item.isOwn && !isOwnerClosing}}">

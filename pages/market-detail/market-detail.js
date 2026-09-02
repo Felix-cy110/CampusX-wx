@@ -1,5 +1,12 @@
 const { request, toFullUrl } = require('../../utils/request')
 const { refreshFollowStatus, requestFollowChange } = require('../../utils/follow')
+const {
+  createPaymentOrder,
+  requestPayment,
+  waitForPaymentResult,
+  isPaymentProcessingError,
+  isPaymentCancelledError
+} = require('../../utils/payment')
 const app = getApp()
 
 function buildShareTitle(value) {
@@ -17,6 +24,7 @@ Page({
     isFavorited: false,
     isFollowed: false,
     followPending: false,
+    purchasePending: false,
     isOwnerClosing: false,
     statusBarHeight: 0,
     navBarHeight: 0,
@@ -306,26 +314,65 @@ Page({
   /** 创建订单 */
   createOrder() {
     const item = this.data.item
-    if (!item.id) return
+    if (!item.id || this.data.purchasePending) return
 
     wx.showModal({
       title: '确认下单',
-      content: '确认购买「' + item.title + '」？',
+      content: '确认购买「' + item.title + '」并支付？',
       success: (res) => {
         if (res.confirm) {
-          request({
-            url: '/api/v1/idle/order',
-            method: 'POST',
-            data: { productId: Number(item.id) }
-          }).then(vo => {
-            wx.showToast({ title: '下单成功', icon: 'success' })
-            // 跳转到支付页面或订单列表
-          }).catch(err => {
-            wx.showToast({ title: (err && err.message) || '下单失败', icon: 'none' })
-          })
+          this.purchaseItem(item)
         }
       }
     })
+  },
+
+  /** 创建业务订单后立即拉起微信支付，并以服务端查单结果为准。 */
+  async purchaseItem(item) {
+    if (this.data.purchasePending) return
+    this.setData({ purchasePending: true })
+
+    try {
+      wx.showLoading({ title: '创建订单...', mask: true })
+      const order = await request({
+        url: '/api/v1/idle/order',
+        method: 'POST',
+        data: { productId: Number(item.id) }
+      })
+      if (!order || !order.id) {
+        throw new Error('后端未返回有效订单')
+      }
+
+      const paymentOrder = await createPaymentOrder({
+        url: `/api/v1/idle/order/${order.id}/pay`,
+        data: {}
+      })
+      wx.hideLoading()
+
+      await requestPayment(paymentOrder.payParams)
+
+      wx.showLoading({ title: '确认支付结果...', mask: true })
+      await waitForPaymentResult(paymentOrder.paymentNo)
+      wx.hideLoading()
+      wx.showToast({ title: '支付成功', icon: 'success' })
+    } catch (err) {
+      wx.hideLoading()
+      console.error('商品支付失败:', err)
+      if (isPaymentCancelledError(err)) {
+        wx.showToast({ title: '已取消支付，可重新购买', icon: 'none' })
+      } else if (isPaymentProcessingError(err)) {
+        wx.showModal({
+          title: err.paymentSucceeded ? '支付成功' : '支付结果确认中',
+          content: err.message,
+          showCancel: false,
+          confirmText: '知道了'
+        })
+      } else {
+        wx.showToast({ title: (err && err.message) || '支付失败', icon: 'none' })
+      }
+    } finally {
+      this.setData({ purchasePending: false })
+    }
   },
 
   /** 关闭交易 */
