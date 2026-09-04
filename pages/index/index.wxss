@@ -1603,7 +1603,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 40rpx 0;
+  /* 底部预留自定义 tabBar 高度 + 各机型安全区，保证最后一条内容能完整滑出 */
+  padding: 40rpx 0 calc(160rpx + env(safe-area-inset-bottom));
 }
 
 .book-load-tip text {
