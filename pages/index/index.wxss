@@ -1272,6 +1272,8 @@
 .book-list-scroll {
   flex: 1;
   height: 0;
+  /* flex 子项默认 min-height:auto 会被内容撑高导致 scroll-view 失去内部滚动，必须为 0 */
+  min-height: 0;
 }
 
 /* 搜索栏 */
