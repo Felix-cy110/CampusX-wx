@@ -146,7 +146,7 @@
             </view>
             <!-- 商品状态标签（集市/二手类） -->
             <view class="item-status-tag status-{{item.itemStatus}}" wx:if="{{item.itemStatus}}">
-              <text>{{item.itemStatus === 'available' ? '在售' : (item.itemStatus === 'taken' ? '已售出' : (item.itemStatus === 'completed' ? '已完成' : (item.itemStatus === 'closed' ? '已关闭' : (item.itemStatus === 'pending' ? '待审核' : (item.itemStatus === 'rejected' ? '审核驳回' : item.itemStatus)))))}}</text>
+              <text>{{item.itemStatus === 'available' ? '在售' : (item.itemStatus === 'off-shelf' ? '已下架' : (item.itemStatus === 'sold' ? '已售出' : (item.itemStatus === 'taken' ? '已接单' : (item.itemStatus === 'completed' ? '已完成' : (item.itemStatus === 'closed' ? '已关闭' : (item.itemStatus === 'pending' ? '待审核' : (item.itemStatus === 'rejected' ? '审核驳回' : item.itemStatus)))))))}}</text>
             </view>
           </view>
         </view>
@@ -198,7 +198,7 @@
             <image class="option-icon" src="/images/SVG/微信.svg" mode="aspectFit"></image>
             <text class="option-text">分享给微信好友</text>
           </button>
-          <view class="post-option-btn btn-red" bindtap="onDeletePost">
+          <view class="post-option-btn btn-red" wx:if="{{selectedPostBackendType !== 'idle' || selectedPostBackendStatus === 1}}" bindtap="onDeletePost">
             <image class="option-icon" src="/images/SVG/删除.svg" mode="aspectFit"></image>
             <text class="option-text">{{selectedPostBackendType === 'idle' ? '下架商品' : '删除帖子'}}</text>
           </view>

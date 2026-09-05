@@ -22,6 +22,8 @@ Page({
     showPostOptionsModal: false,   // 帖子选项弹窗
     selectedPostId: null,          // 当前选中的帖子ID
     selectedPostIsPinned: false,   // 当前选中帖子是否置顶
+    selectedPostBackendType: '',   // 当前选中内容的后端类型
+    selectedPostBackendStatus: null, // 当前选中商品的后端状态
     _scrollTop: 0,
 
     /* 内容分页 */
@@ -301,8 +303,12 @@ Page({
       data: { pageNum, pageSize: 20 }
     }).then(result => {
       const totalPages = result.pages || 1
+      const records = result.list || result.records || []
       return {
-        list: (result.list || result.records || []).map(vo => this._mapIdleToCard(vo)),
+        // “我发布的”是公开内容视图，已下架商品留在“我的二手”中管理，不在这里重新展示。
+        list: records
+          .filter(vo => Number(vo.status) !== 2)
+          .map(vo => this._mapIdleToCard(vo)),
         hasMore: pageNum < totalPages
       }
     })
@@ -393,7 +399,14 @@ Page({
   /* ===== 数据映射：IdleSellerProductVO → 前端卡片 ===== */
   _mapIdleToCard(vo) {
     const userInfo = this.data.userInfo || {}
-    const statusMap = { 0: 'available', 1: 'available', 2: 'taken', 3: 'taken' }
+    const statusMap = {
+      0: 'pending',
+      1: 'available',
+      2: 'off-shelf',
+      3: 'sold',
+      4: 'rejected',
+      5: 'pending'
+    }
     return {
       id: 'idle_' + vo.productId,
       type: 'market',
@@ -410,6 +423,7 @@ Page({
       itemStatus: statusMap[vo.status] || '',
       _backendId: vo.productId,
       _backendType: 'idle',
+      _backendStatus: Number(vo.status),
       _createdAt: _parseTime(vo.createdAt)
     }
   },
@@ -583,7 +597,8 @@ Page({
       showPostOptionsModal: true,
       selectedPostId: id,
       selectedPostIsPinned: post ? post.pinned : false,
-      selectedPostBackendType: post ? post._backendType : ''
+      selectedPostBackendType: post ? post._backendType : '',
+      selectedPostBackendStatus: post && post._backendType === 'idle' ? post._backendStatus : null
     })
   },
 
@@ -593,7 +608,9 @@ Page({
     this.setData({
       showPostOptionsModal: false,
       selectedPostId: null,
-      selectedPostIsPinned: false
+      selectedPostIsPinned: false,
+      selectedPostBackendType: '',
+      selectedPostBackendStatus: null
     })
   },
 
@@ -685,11 +702,9 @@ Page({
     if (backendType === 'post') {
       deletePromise = request({ url: '/api/post/' + backendId, method: 'DELETE' })
     } else if (backendType === 'idle') {
-      // 已下架商品：后端 off-shelf 会报「当前状态不允许下架」，直接本地移除
-      if (item.itemStatus === 'taken') {
-        const list = this.data.filteredContentList.filter(i => String(i.id) !== String(cardId))
-        this.setData({ filteredContentList: list })
-        wx.showToast({ title: '已下架', icon: 'success' })
+      // 只有上架中的商品可以下架，不能用本地删卡片冒充后端操作成功。
+      if (Number(item._backendStatus) !== 1) {
+        wx.showToast({ title: '当前商品不可下架', icon: 'none' })
         return
       }
       deletePromise = request({ url: '/api/v1/idle/product/' + backendId + '/off-shelf', method: 'PUT' })
@@ -705,7 +720,7 @@ Page({
       return
     }
 
-    wx.showLoading({ title: '删除中...' })
+    wx.showLoading({ title: backendType === 'idle' ? '下架中...' : '删除中...' })
     deletePromise.then(() => {
       wx.hideLoading()
       const list = this.data.filteredContentList.filter(i => String(i.id) !== String(cardId))

@@ -532,7 +532,9 @@ image.func-icon {
   background: rgba(20, 181, 84, 0.1);
 }
 
-.status-taken {
+.status-taken,
+.status-sold,
+.status-off-shelf {
   color: var(--color-text-secondary);
   background: var(--color-bg);
 }
