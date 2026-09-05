@@ -10,7 +10,7 @@
             <text class="post-type-tag">{{item.type === 'book' ? '二手书' : '闲置'}}</text>
           </view>
         </view>
-        <view class="post-more" catchtap="onDelete" data-id="{{item.id}}">
+        <view class="post-more" wx:if="{{item.statusVal === 1}}" catchtap="onDelete" data-id="{{item.id}}">
           <text class="delete-text">下架</text>
         </view>
       </view>
@@ -33,7 +33,7 @@
       <!-- 状态标签 -->
       <view class="post-status-row">
         <text class="item-status-tag status-{{item.statusVal}}">{{item.status}}</text>
-        <view class="relist-btn" wx:if="{{item.statusVal !== 1}}" catchtap="onRelist" data-id="{{item.id}}">
+        <view class="relist-btn" wx:if="{{item.statusVal === 2}}" catchtap="onRelist" data-id="{{item.id}}">
           <text>重新上架</text>
         </view>
       </view>

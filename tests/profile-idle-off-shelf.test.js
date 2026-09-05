@@ -55,7 +55,8 @@ test('个人页刷新时不会重新展示已下架商品', async function () {
     list: [
       { productId: 11, status: 1, title: '在售商品' },
       { productId: 12, status: 2, title: '已下架商品' },
-      { productId: 13, status: 3, title: '已售出商品' }
+      { productId: 13, status: 3, title: '已售出商品' },
+      { productId: 14, status: 6, title: '交易中商品' }
     ],
     pages: 1
   })

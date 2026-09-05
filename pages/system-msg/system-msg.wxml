@@ -9,7 +9,7 @@
   </view>
 
   <!-- 消息列表 -->
-  <scroll-view class="msg-scroll" scroll-y enhanced show-scrollbar="{{false}}" wx:if="{{messages.length > 0}}">
+  <scroll-view class="msg-scroll" scroll-y enhanced show-scrollbar="{{false}}" bindscrolltolower="onScrollToLower" lower-threshold="120" wx:if="{{messages.length > 0}}">
     <view class="msg-list">
       <view
         class="msg-item"
@@ -31,6 +31,9 @@
         <view class="msg-item-bottom">
           <text class="msg-preview ellipsis-2">{{item.brief}}</text>
         </view>
+      </view>
+      <view class="load-more-hint" wx:if="{{loading || hasMore}}">
+        <text>{{loading ? '加载中...' : '上拉加载更多'}}</text>
       </view>
     </view>
   </scroll-view>
@@ -61,6 +64,7 @@
       <text class="detail-time">{{detail.time}}</text>
       <view class="detail-divider"></view>
       <text class="detail-content">{{detail.msg}}</text>
+      <view class="detail-order-btn" bindtap="goToOrder">查看我卖出的订单</view>
     </scroll-view>
   </view>
 </view>

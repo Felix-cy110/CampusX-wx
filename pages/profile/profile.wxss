@@ -549,7 +549,8 @@ image.func-icon {
 
 .status-taken,
 .status-sold,
-.status-off-shelf {
+.status-off-shelf,
+.status-reserved {
   color: var(--color-text-secondary);
   background: var(--color-bg);
 }

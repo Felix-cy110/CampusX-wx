@@ -135,6 +135,13 @@
   line-height: 1.5;
 }
 
+.load-more-hint {
+  padding: 12rpx 0 32rpx;
+  text-align: center;
+  font-size: var(--font-xs);
+  color: var(--color-text-secondary);
+}
+
 /* ========== 空状态 ========== */
 .empty-state {
   display: flex;
@@ -251,6 +258,16 @@
   display: block;
   margin-bottom: 16rpx;
   line-height: 1.4;
+}
+
+.detail-order-btn {
+  margin-top: 40rpx;
+  padding: 24rpx;
+  border-radius: var(--radius-md);
+  background: var(--color-primary);
+  color: #fff;
+  text-align: center;
+  font-size: var(--font-base);
 }
 
 .detail-time {

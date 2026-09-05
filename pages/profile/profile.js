@@ -328,7 +328,7 @@ Page({
       return {
         // “我发布的”是公开内容视图，已下架商品留在“我的二手”中管理，不在这里重新展示。
         list: records
-          .filter(vo => Number(vo.status) !== 2)
+          .filter(vo => ![2, 6].includes(Number(vo.status)))
           .map(vo => this._mapIdleToCard(vo)),
         hasMore: pageNum < totalPages
       }
@@ -426,7 +426,8 @@ Page({
       2: 'off-shelf',
       3: 'sold',
       4: 'rejected',
-      5: 'pending'
+      5: 'pending',
+      6: 'reserved'
     }
     return {
       id: 'idle_' + vo.productId,

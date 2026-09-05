@@ -26,12 +26,19 @@ Page({
     payingOrderKey: ''
   },
 
-  onLoad() {
+  onLoad(options) {
     const systemInfo = wx.getSystemInfoSync()
     const menuButton = wx.getMenuButtonBoundingClientRect()
     const statusBarHeight = systemInfo.statusBarHeight
     const navBarHeight = (menuButton.top - statusBarHeight) * 2 + menuButton.height
-    this.setData({ statusBarHeight, navBarHeight })
+    const initialTab = options && options.tab
+    const initialSide = options && options.side
+    this.setData({
+      statusBarHeight,
+      navBarHeight,
+      currentTab: this.data.tabs.some(item => item.key === initialTab) ? initialTab : this.data.currentTab,
+      currentSide: initialSide === 'sell' ? 'sell' : 'buy'
+    })
     this.loadOrders()
   },
 
