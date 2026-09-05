@@ -88,6 +88,21 @@ image.icon-bag {
   height: 32rpx;
 }
 
+/* ========== 可收起的个人资料头部 ========== */
+/* 浏览列表下滑时整体收起，回到顶部时展开。max-height 需大于头部实际高度 */
+.collapsible-header {
+  overflow: hidden;
+  max-height: 900rpx;
+  opacity: 1;
+  transition: max-height 0.3s ease, opacity 0.25s ease;
+}
+
+.collapsible-header.collapsed {
+  max-height: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
 /* ========== 帖子列表滚动区域 ========== */
 .post-list-scroll {
   flex: 1;

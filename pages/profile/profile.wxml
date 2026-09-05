@@ -20,7 +20,8 @@
     </view>
   </view>
 
-  <!-- 顶部渐变背景区域 -->
+  <!-- 顶部渐变背景区域（滚动浏览列表时整体向上收起） -->
+  <view class="collapsible-header {{headerCollapsed ? 'collapsed' : ''}}">
   <view class="profile-header-bg">
       <!-- 头像 + 名称 + UID + 学校 + 操作按钮 -->
       <view class="avatar-section">
@@ -89,6 +90,7 @@
         </view>
       </view>
     </view>
+  </view>
 
   <!-- 子Tab切换：我发布的 / 我的收藏 -->
   <view class="sub-tabs">
@@ -102,7 +104,7 @@
   </view>
 
   <!-- 帖子列表区域（可滚动 + 下拉刷新） -->
-  <scroll-view class="post-list-scroll" scroll-y enhanced scroll-top="{{_scrollTop}}" show-scrollbar="{{false}}" enable-back-to-top refresher-enabled refresher-triggered="{{refreshing}}" bindrefresherrefresh="onRefresh" bindscrolltolower="onContentLoadMore" lower-threshold="150">
+  <scroll-view class="post-list-scroll" scroll-y enhanced scroll-top="{{_scrollTop}}" show-scrollbar="{{false}}" enable-back-to-top refresher-enabled refresher-triggered="{{refreshing}}" bindrefresherrefresh="onRefresh" bindscroll="onListScroll" bindscrolltoupper="onScrollToUpper" upper-threshold="10" bindscrolltolower="onContentLoadMore" lower-threshold="150">
     <!-- 帖子列表 -->
     <view class="post-list">
       <block wx:if="{{filteredContentList.length > 0}}">

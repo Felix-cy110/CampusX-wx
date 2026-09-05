@@ -36,6 +36,9 @@ Page({
     /* 下拉刷新 */
     refreshing: false,
 
+    /* 个人资料头部是否已收起（下滑浏览列表时收起，回到顶部时展开） */
+    headerCollapsed: false,
+
     /* 自定义导航栏尺寸 */
     statusBarHeight: 0,
     navBarHeight: 0,
@@ -225,6 +228,24 @@ Page({
       this.setData({ refreshing: false })
       wx.showToast({ title: '刷新成功', icon: 'none' })
     })
+  },
+
+  /* 列表滚动：下滑超过阈值收起个人资料头部 */
+  onListScroll(e) {
+    const scrollTop = e.detail.scrollTop
+    if (!this.data.headerCollapsed && scrollTop > 60) {
+      this.setData({ headerCollapsed: true })
+    } else if (this.data.headerCollapsed && scrollTop <= 5) {
+      // 兜底：scrollTop 可能停在小数值（高分屏），接近顶部即展开
+      this.setData({ headerCollapsed: false })
+    }
+  },
+
+  /* 滚回顶部（第一条内容）时重新展开个人资料头部 */
+  onScrollToUpper() {
+    if (this.data.headerCollapsed) {
+      this.setData({ headerCollapsed: false })
+    }
   },
 
   /* 加载更多（滚动到底部） */
