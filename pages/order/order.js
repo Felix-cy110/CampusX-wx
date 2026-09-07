@@ -23,7 +23,8 @@ Page({
     orders: [],
     filteredOrders: [],
     loading: false,
-    payingOrderKey: ''
+    payingOrderKey: '',
+    shippingOrderId: ''
   },
 
   onLoad(options) {
@@ -143,6 +144,19 @@ Page({
   /* 映射二手订单为统一格式 */
   mapIdleOrder(vo, side) {
     const statusDesc = vo.statusDesc || ''
+    let remark = ''
+    if (vo.status === 1) {
+      const deadline = vo.sellerConfirmExpireTime
+        ? String(vo.sellerConfirmExpireTime).replace('T', ' ')
+        : ''
+      remark = side === 'sell'
+        ? `${deadline ? '请在' + deadline + '前' : '请在买家付款后48小时内'}确认发货或当面交付，超时将自动退款。`
+        : '等待卖家发货，付款后48小时内卖家未确认发货将自动退款。'
+    } else if (vo.status === 2) {
+      remark = side === 'buy'
+        ? '卖家已确认发货，请在实际收到商品后确认收货。'
+        : '已确认发货，等待买家确认收货。'
+    }
     const statusBgMap = {
       '待付款': '#FF4D4F',
       '待发货': '#FF9500',
@@ -168,7 +182,8 @@ Page({
       price: Number(vo.actualPaid || vo.price || 0),
       status: statusDesc,
       statusBg: statusBgMap[statusDesc] || '#999999',
-      remark: '',
+      remark,
+      showShipBtn: vo.status === 1 && side === 'sell',
       showConfirmBtn: vo.status === 2 && side === 'buy',
       showCancelBtn: vo.status === 0,
       showPayBtn: vo.status === 0 && side === 'buy',
@@ -285,6 +300,46 @@ Page({
     const url = urlMap[targettype]
     if (url) {
       safeNavigate({ url })
+    }
+  },
+
+  /* 卖家确认发货或当面交付 */
+  async onShipOrder(e) {
+    if (this.data.shippingOrderId) return
+    const { id, type } = e.currentTarget.dataset
+    const order = this.data.filteredOrders.find(item =>
+      item.type === 'secondhand' && String(item.id) === String(id) && item.showShipBtn
+    )
+    if (type !== 'secondhand' || !order) return
+
+    this.setData({ shippingOrderId: String(id) })
+    try {
+      const result = await new Promise((resolve, reject) => {
+        wx.showModal({
+          title: '确认发货/交付',
+          content: '请确认商品已经发出，或已当面交给买家。确认后订单进入待收货，请买家实际收到商品后确认收货。',
+          confirmText: '已发货',
+          cancelText: '尚未发货',
+          confirmColor: '#255AC5',
+          success: resolve,
+          fail: reject
+        })
+      })
+      if (!result.confirm) return
+
+      wx.showLoading({ title: '确认发货中...', mask: true })
+      try {
+        await request({ url: `/api/v1/idle/order/${id}/ship`, method: 'PUT' })
+      } finally {
+        wx.hideLoading()
+      }
+      wx.showToast({ title: '已确认发货', icon: 'success' })
+      await this.loadOrders()
+    } catch (err) {
+      console.error('确认发货失败:', err)
+      wx.showToast({ title: (err && err.message) || '确认发货失败，请重试', icon: 'none' })
+    } finally {
+      this.setData({ shippingOrderId: '' })
     }
   },
 

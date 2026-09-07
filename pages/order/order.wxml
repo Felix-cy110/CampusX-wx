@@ -84,10 +84,11 @@
       </view>
 
       <!-- 操作按钮组 -->
-      <view class="action-btn-group" wx:if="{{item.showConfirmBtn || item.showCancelBtn || item.showPayBtn || item.showRefundBtn || item.showRefundAgreeBtn || item.showRefundRejectBtn || item.showDepositBtn}}">
+      <view class="action-btn-group" wx:if="{{item.showShipBtn || item.showConfirmBtn || item.showCancelBtn || item.showPayBtn || item.showRefundBtn || item.showRefundAgreeBtn || item.showRefundRejectBtn || item.showDepositBtn}}">
         <view class="action-btn action-btn-secondary" wx:if="{{item.showCancelBtn}}" catchtap="onCancelOrder" data-id="{{item.id}}" data-type="{{item.type}}">取消订单</view>
         <view class="action-btn action-btn-primary" wx:if="{{item.showPayBtn}}" catchtap="onPayOrder" data-id="{{item.id}}" data-type="{{item.type}}">去支付</view>
         <view class="action-btn action-btn-primary" wx:if="{{item.showDepositBtn}}" catchtap="onPayDeposit" data-id="{{item.id}}" data-type="{{item.type}}">缴押金</view>
+        <view class="action-btn action-btn-primary {{shippingOrderId ? 'btn-disabled' : ''}}" wx:if="{{item.showShipBtn}}" catchtap="onShipOrder" data-id="{{item.id}}" data-type="{{item.type}}">{{shippingOrderId == item.id ? '处理中...' : '确认发货/交付'}}</view>
         <view class="action-btn action-btn-secondary" wx:if="{{item.showRefundBtn}}" catchtap="onApplyRefund" data-id="{{item.id}}" data-type="{{item.type}}">申请退款</view>
         <view class="action-btn action-btn-primary" wx:if="{{item.showRefundAgreeBtn}}" catchtap="onRefundAgree" data-id="{{item.id}}" data-type="{{item.type}}">同意退款</view>
         <view class="action-btn action-btn-danger" wx:if="{{item.showRefundRejectBtn}}" catchtap="onRefundReject" data-id="{{item.id}}" data-type="{{item.type}}">拒绝退款</view>
