@@ -46,6 +46,8 @@
       class="order-card"
       wx:for="{{filteredOrders}}"
       wx:key="id"
+      data-id="{{item.id}}"
+      data-type="{{item.type}}"
       data-targetid="{{item.targetId}}"
       data-targettype="{{item.targetType}}"
       bindtap="onOrderTap"

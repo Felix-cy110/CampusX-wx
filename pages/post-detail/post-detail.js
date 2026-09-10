@@ -182,6 +182,7 @@ Page({
         isOwn: String(vo.userId) === String(userInfo.uid),
         isFollowed: followedByMe,
         school: '',
+        status: vo.status,
         sourceType: vo.sourceType || '',
         sourceId: vo.sourceId || '',
         publisherCampusId: vo.publisherCampusId || '',
@@ -214,7 +215,7 @@ Page({
       })
       return
     }
-    safeNavigate({ url: '/pages/market-detail/market-detail?id=' + sourceId })
+    safeNavigate({ url: '/pages/market-detail/market-detail?id=' + encodeURIComponent(sourceId) })
   },
 
   /* 跑腿关联帖：跳转跑腿详情下单 */
@@ -551,6 +552,12 @@ Page({
   },
 
   onShow() {
+    // 下单会关闭商品关联帖；返回时更新入口文案，商品是否可买由详情接口判断。
+    if (this._hasShown && this.data.post.sourceType === 'IDLE_PRODUCT') {
+      this.loadPostDetail(this.data.postId)
+    }
+    this._hasShown = true
+
     // 检查是否从编辑页返回
     const editedPostStr = wx.getStorageSync('editedPostData')
     if (editedPostStr) {

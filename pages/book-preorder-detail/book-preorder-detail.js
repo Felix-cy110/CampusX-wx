@@ -70,11 +70,16 @@ Page({
     depositPrice: '0.00',
     statusBarHeight: 0,
     navBarHeight: 0,
+    loading: false,
+    loadError: '',
+    orderLoading: false,
+    orderError: '',
+    orderView: false,
     submitting: false,
     paying: false
   },
 
-  onLoad(options) {
+  onLoad(options = {}) {
     const systemInfo = wx.getSystemInfoSync()
     const menuButton = wx.getMenuButtonBoundingClientRect()
     this.setData({
@@ -82,37 +87,88 @@ Page({
       navBarHeight: (menuButton.top - systemInfo.statusBarHeight) * 2 + menuButton.height
     })
 
-    const id = parseInt(options.id)
-    this._loadPresale(id)
-    this._loadMyOrder(id)
+    if (options.myOrders === '1') {
+      wx.redirectTo({ url: '/pages/book-preorder/book-preorder?tab=orders' })
+      return
+    }
+    const id = String(options.id || '')
+    const orderId = options.orderId == null ? '' : String(options.orderId)
+    if (!/^[1-9]\d*$/.test(id) || (options.orderId != null && !/^[1-9]\d*$/.test(orderId))) {
+      this.setData({ loadError: '预购链接无效，请返回列表重新进入' })
+      return
+    }
+    this._presaleId = id
+    this._orderId = orderId
+    this.setData({ orderView: !!orderId })
+    return this.retryLoad()
+  },
+
+  retryLoad() {
+    if (!this._presaleId || this.data.loading || this.data.orderLoading) return
+    return Promise.all([
+      this._loadPresale(this._presaleId),
+      this._loadMyOrder(this._presaleId)
+    ])
+  },
+
+  retryOrder() {
+    if (!this._presaleId || this.data.orderLoading) return
+    return this._loadMyOrder(this._presaleId)
   },
 
   _loadPresale(id) {
+    this.setData({ loading: true, loadError: '', presale: null })
     return request({ url: `/api/v1/presale/${id}` })
       .then(data => {
+        if (!data || String(data.id) !== String(id) || data.price == null || !Number.isFinite(Number(data.price))) {
+          throw new Error('预购商品信息不完整，请重试')
+        }
         const presale = formatPresale(data)
-        this.setData({ presale })
+        this.setData({ presale, loading: false })
         this._updatePrice(this.data.quantity, presale.price)
       })
       .catch(err => {
         console.error('获取预购详情失败', err)
-        wx.showToast({ title: err.message || '获取详情失败', icon: 'none' })
+        this.setData({ loading: false, presale: null, loadError: (err && err.message) || '获取预购详情失败，请重试' })
       })
   },
 
-  _loadMyOrder(id) {
-    return request({ url: '/api/v1/presale/orders/my' })
-      .then(res => {
-        const list = (res && res.list) || []
-        const rawOrder = list.find(o => {
-          const status = Number(o.status)
-          return Number(o.presaleId) === id && status !== 3 && status !== 4
+  async _loadMyOrder(id) {
+    this.setData({ orderLoading: true, orderError: '' })
+    try {
+      let cursor
+      const cursors = new Set()
+      do {
+        const res = await request({
+          url: '/api/v1/presale/orders/my',
+          data: { pageSize: 100, ...(cursor != null ? { cursor } : {}) }
         })
-        this.setData({ myOrder: rawOrder ? formatOrder(rawOrder) : null })
-      })
-      .catch(err => {
-        console.error('获取我的预购订单失败', err)
-      })
+        if (!res || !Array.isArray(res.list)) throw new Error('预购订单信息不完整，请重试')
+        const list = res.list
+        const rawOrder = list.find(o => {
+          if (!o || String(o.presaleId) !== String(id)) return false
+          if (this._orderId) return String(o.id) === this._orderId
+          const status = Number(o.status)
+          return status !== 3 && status !== 4
+        })
+        if (rawOrder) {
+          this.setData({ myOrder: formatOrder(rawOrder) })
+          return
+        }
+        cursor = res.nextCursor
+        if (cursor != null) {
+          if (cursors.has(String(cursor))) throw new Error('预购订单加载异常，请重试')
+          cursors.add(String(cursor))
+        }
+      } while (cursor != null)
+      if (this._orderId) throw new Error('预购订单不存在或无法查看')
+      this.setData({ myOrder: null })
+    } catch (err) {
+      console.error('获取我的预购订单失败', err)
+      this.setData({ orderError: (err && err.message) || '获取预购订单失败，请重试' })
+    } finally {
+      this.setData({ orderLoading: false })
+    }
   },
 
   _updatePrice(qty, unitPrice) {
@@ -134,7 +190,7 @@ Page({
   },
 
   onSubmitOrder() {
-    if (this.data.submitting) return
+    if (this.data.submitting || this.data.loading || this.data.loadError || this.data.orderLoading || this.data.orderError || this.data.orderView || this.data.myOrder) return
     const { presale, quantity } = this.data
     if (!presale) return
     this.setData({ submitting: true })
@@ -158,7 +214,7 @@ Page({
 
   async runPresalePayment(kind) {
     const { myOrder, presale, paying } = this.data
-    if (!myOrder || !presale || paying) return
+    if (!myOrder || !presale || paying || this.data.loading || this.data.orderLoading || this.data.orderError) return
     const isDeposit = kind === 'deposit'
     this.setData({ paying: true })
 
@@ -212,7 +268,7 @@ Page({
 
   onCancelOrder() {
     const { myOrder } = this.data
-    if (!myOrder) return
+    if (!myOrder || this.data.loading || this.data.orderLoading || this.data.orderError) return
     wx.showModal({
       title: '确认取消',
       content: '取消后定金不予退还，确认取消吗？',
@@ -225,7 +281,8 @@ Page({
           .then(() => {
             this.setData({ myOrder: null, quantity: 1 })
             this._loadPresale(myOrder.presaleId)
-            wx.showToast({ title: '已取消，可重新预购', icon: 'none' })
+            this._loadMyOrder(myOrder.presaleId)
+            wx.showToast({ title: '已取消', icon: 'none' })
           })
           .catch(err => {
             console.error('取消预购订单失败', err)

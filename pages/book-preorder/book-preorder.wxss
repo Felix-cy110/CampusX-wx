@@ -75,6 +75,14 @@
   color: var(--color-text-secondary);
 }
 
+.list-error {
+  flex-direction: column;
+  align-items: center;
+  gap: 24rpx;
+  padding: 48rpx;
+  text-align: center;
+}
+
 .item {
   display: flex;
   align-items: center;

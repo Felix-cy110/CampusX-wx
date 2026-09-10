@@ -20,6 +20,9 @@ Page({
     item: {},
     comments: [],
     itemId: '',
+    orderId: '',
+    productType: 'book',
+    loadError: '',
     isLiked: false,
     isFavorited: false,
     isFollowed: false,
@@ -42,16 +45,11 @@ Page({
     const capsuleGap = systemInfo.windowWidth - menuButton.left + 8
     this.setData({ statusBarHeight, navBarHeight, capsuleGap })
 
-    const id = options.id
-    if (!id) {
-      wx.showToast({ title: '参数错误', icon: 'none' })
-      return
-    }
-
-    // 判断商品类型：优先尝试二手书详情 API
-    const type = options.type || 'book'
-    this.setData({ itemId: id })
-    this.loadProductDetail(id, type)
+    const id = options.id || ''
+    const type = options.type === 'rental' ? 'rental' : options.type === 'item' ? 'item' : 'book'
+    const orderId = options.orderId ? String(options.orderId) : ''
+    this.setData({ itemId: id, productType: type, orderId })
+    return this.loadProductDetail(id, type)
   },
 
   onShow() {
@@ -64,91 +62,62 @@ Page({
     const item = this.data.item || {}
     const shareConfig = {
       title: buildShareTitle(item.title),
-      path: '/pages/market-detail/market-detail?id=' + encodeURIComponent(this.data.itemId)
+      path: '/pages/market-detail/market-detail?id=' + encodeURIComponent(this.data.itemId) +
+        '&type=' + this.data.productType
     }
     if (item.images && item.images[0]) shareConfig.imageUrl = item.images[0]
     return shareConfig
   },
 
   /** 加载商品详情 */
-  loadProductDetail(id, type) {
-    this.setData({ loading: true })
+  async loadProductDetail(id, type) {
+    if (!id) {
+      this.setData({ item: {}, loading: false, loadError: '参数错误' })
+      return
+    }
+    let productType = type === 'rental' ? 'rental' : type === 'item' ? 'item' : 'book'
+    this.setData({ item: {}, loading: true, loadError: '', productType })
 
-    if (type === 'item') {
-      // 闲置物品 → 走 item 详情 API
-      this.loadItemDetail(id)
-    } else {
-      // 默认按二手书处理
-      this.loadBookDetail(id)
+    try {
+      let item
+      try {
+        item = await this.fetchProductDetail(id, productType)
+      } catch (err) {
+        // 旧帖子及分享链接可能不带类型；仅在明确类型不匹配时换接口。
+        const mismatchMessage = productType === 'book' ? '该商品不是二手书' : '该商品不是闲置物品'
+        if (productType === 'rental' || !err || Number(err.code) !== 422 || err.message !== mismatchMessage) throw err
+        productType = productType === 'book' ? 'item' : 'book'
+        this.setData({ productType })
+        item = await this.fetchProductDetail(id, productType)
+      }
+      this.setData({ item, loading: false, productType })
+      this.checkFavoriteStatus(id)
+      this.checkFollowStatus(item.user && item.user.uid)
+    } catch (err) {
+      console.warn('商品详情加载失败:', id, err)
+      this.setData({
+        item: {},
+        loading: false,
+        loadError: (err && err.message) || '加载失败，请重试'
+      })
     }
   },
 
-  /** 加载二手书详情 */
-  loadBookDetail(id) {
-    request({
-      url: '/api/v1/idle/product/book/' + id,
-      method: 'GET'
-    }).then(vo => {
-      const item = this.mapBookDetail(vo)
-      this.setData({ item, loading: false })
-      this.checkFavoriteStatus(id)
-      this.checkFollowStatus(item.user && item.user.uid)
-    }).catch(err => {
-      console.warn('二手书详情加载失败，尝试作为闲置物品加载:', err)
-      this.loadItemDetail(id)
+  async fetchProductDetail(id, type) {
+    const basePath = type === 'rental' ? '/api/v1/rental/product/' : '/api/v1/idle/product/' + type + '/'
+    const vo = await request({
+      url: basePath + encodeURIComponent(id),
+      method: 'GET',
+      data: this.data.orderId ? { orderId: this.data.orderId } : undefined
     })
+    if (!vo || !vo.productId) throw new Error('商品信息加载失败，请重试')
+    if (type === 'rental') return this.mapRentalDetail(vo)
+    return type === 'book' ? this.mapBookDetail(vo) : this.mapItemDetail(vo)
   },
 
-  /** 加载闲置物品详情 */
-  loadItemDetail(id) {
-    request({
-      url: '/api/v1/idle/product/item/' + id,
-      method: 'GET'
-    }).then(vo => {
-      const item = this.mapItemDetail(vo)
-      this.setData({ item, loading: false })
-      this.checkFavoriteStatus(id)
-      this.checkFollowStatus(item.user && item.user.uid)
-    }).catch(() => {
-      // item API 也失败，降级到列表查找
-      this.fallbackLoadItem(id)
-    })
-  },
-
-  /** 降级加载：通过列表接口查找商品（同时查书籍和物品列表） */
-  fallbackLoadItem(id) {
-    // 同时查询书籍列表和物品列表
-    Promise.all([
-      request({
-        url: '/api/v1/idle/product/book',
-        method: 'GET',
-        data: { pageNum: 1, pageSize: 50 }
-      }).catch(() => ({ list: [] })),
-      request({
-        url: '/api/v1/idle/product/item',
-        method: 'GET',
-        data: { pageNum: 1, pageSize: 50 }
-      }).catch(() => ({ list: [] }))
-    ]).then(([bookData, itemData]) => {
-      const bookList = (bookData && bookData.list) || []
-      const itemList = (itemData && itemData.list) || []
-      const allList = [...bookList, ...itemList]
-      const vo = allList.find(v => String(v.productId) === String(id))
-      if (vo) {
-        // 根据是否有 author 字段判断是书籍还是物品
-        const item = vo.author !== undefined
-          ? this.mapBookDetail(vo)
-          : this.mapItemDetail(vo)
-        this.setData({ item, loading: false })
-        this.checkFollowStatus(item.user && item.user.uid)
-      } else {
-        wx.showToast({ title: '商品不存在', icon: 'none' })
-        this.setData({ loading: false })
-      }
-    }).catch(() => {
-      wx.showToast({ title: '加载失败', icon: 'none' })
-      this.setData({ loading: false })
-    })
+  retryLoad() {
+    if (this.data.loading) return
+    return this.loadProductDetail(this.data.itemId, this.data.productType)
   },
 
   /** 检查收藏状态 */
@@ -156,7 +125,7 @@ Page({
     request({
       url: '/api/v1/favorite/list',
       method: 'GET',
-      data: { targetType: 2, pageNum: 1, pageSize: 100 }
+      data: { targetType: this.data.productType === 'rental' ? 1 : 2, pageNum: 1, pageSize: 100 }
     }).then(data => {
       const list = data.list || []
       const faved = list.some(f => String(f.targetId || f.itemId) === String(id))
@@ -248,6 +217,23 @@ Page({
     }
   },
 
+  /** 租赁详情复用商品展示，租金、押金和交接方式按租赁接口映射。 */
+  mapRentalDetail(vo) {
+    const dateLabel = value => Array.isArray(value)
+      ? value.slice(0, 3).map((part, index) => index ? String(part).padStart(2, '0') : String(part)).join('-')
+      : String(value || '').slice(0, 10)
+    return {
+      ...this.mapItemDetail(vo),
+      condition: '',
+      price: vo.rentPrice != null ? Number(vo.rentPrice) : 0,
+      deposit: vo.deposit != null ? Number(vo.deposit) : 0,
+      rentUnitLabel: vo.rentUnit === 'piece' ? '次' : '天',
+      availableStart: dateLabel(vo.availableStart),
+      availableEnd: dateLabel(vo.availableEnd),
+      deliveryType: vo.deliveryType === 2 ? '送达' : '自取'
+    }
+  },
+
   /** 时间格式化 */
   formatTime(dateValue) {
     if (!dateValue) return ''
@@ -290,7 +276,7 @@ Page({
     request({
       url: '/api/v1/favorite/toggle',
       method: 'POST',
-      data: { targetId: Number(id), targetType: 2 }
+      data: { targetId: Number(id), targetType: this.data.productType === 'rental' ? 1 : 2 }
     }).then(() => {
       wx.showToast({ title: isFav ? '已收藏' : '已取消收藏', icon: 'none' })
     }).catch(err => {
@@ -314,7 +300,7 @@ Page({
   /** 创建订单 */
   createOrder() {
     const item = this.data.item
-    if (!item.id || this.data.purchasePending) return
+    if (this.data.orderId || this.data.productType === 'rental' || !item.id || this.data.purchasePending) return
 
     wx.showModal({
       title: '确认下单',
@@ -329,7 +315,7 @@ Page({
 
   /** 创建业务订单后立即拉起微信支付，并以服务端查单结果为准。 */
   async purchaseItem(item) {
-    if (this.data.purchasePending) return
+    if (this.data.orderId || this.data.productType === 'rental' || this.data.purchasePending) return
     this.setData({ purchasePending: true })
 
     try {
@@ -377,14 +363,16 @@ Page({
 
   /** 关闭交易 */
   closeDeal() {
+    if (this.data.orderId) return
     wx.showModal({
       title: '下架商品',
       content: '确定要下架这个商品吗？',
       success: (res) => {
         if (res.confirm) {
           const id = this.data.itemId
+          const module = this.data.productType === 'rental' ? 'rental' : 'idle'
           request({
-            url: `/api/v1/idle/product/${id}/off-shelf`,
+            url: `/api/v1/${module}/product/${id}/off-shelf`,
             method: 'PUT'
           }).then(() => {
             this.setData({ isOwnerClosing: true })
@@ -428,8 +416,9 @@ Page({
   },
 
   doReport() {
+    const targetType = this.data.productType === 'rental' ? 'RENTAL_PRODUCT' : 'IDLE_PRODUCT'
     wx.navigateTo({
-      url: '/pages/complaint/complaint?targetType=IDLE_PRODUCT&targetId=' + this.data.itemId
+      url: '/pages/complaint/complaint?targetType=' + targetType + '&targetId=' + this.data.itemId
     })
   },
 

@@ -212,20 +212,19 @@ Page({
   },
 
   onTapPost(e) {
-    const id = e.currentTarget.dataset.id
-    if (!id) return
-    // 将当前帖子状态（含乐观更新的点赞）传递给详情页
-    const post = this.data.filteredPosts.find(item => String(item.id) === String(id))
-    if (post) {
+    const { id, type, index } = e.currentTarget.dataset
+    // 各模块使用独立的自增 ID，不能只按 ID 在混合搜索结果中查找。
+    const post = this.data.filteredPosts[index]
+    if (!post || !id || String(post.id) !== String(id) || post.type !== type) return
+    const encodedId = encodeURIComponent(post.id)
+    if (post.type === 'rental') {
+      safeNavigate({ url: '/pages/market-detail/market-detail?id=' + encodedId + '&type=rental' })
+    } else if (post.type === 'idle') {
+      safeNavigate({ url: '/pages/market-detail/market-detail?id=' + encodedId + '&type=' + post.productType })
+    } else {
+      // 将当前帖子状态（含乐观更新的点赞）传递给详情页。
       wx.setStorageSync('selectedPostDetail', post)
-      // 根据类型跳转不同详情页
-      let url = ''
-      if (post.type === 'rental' || post.type === 'idle') {
-        url = `/pages/market-detail/market-detail?id=${post.id}`
-      } else {
-        url = `/pages/post-detail/post-detail?id=${post.id}`
-      }
-      safeNavigate({ url })
+      safeNavigate({ url: '/pages/post-detail/post-detail?id=' + encodedId })
     }
   },
 
@@ -235,7 +234,7 @@ Page({
     const dataList = this.data.filteredPosts
     if (!dataList || index === undefined || index >= dataList.length) return
     const item = dataList[index]
-    if (String(item.id) !== String(id)) return
+    if (item.type !== 'post' || String(item.id) !== String(id)) return
 
     const isLiked = item.liked
     const oldLikes = Number(item.stats.likes) || 0
@@ -245,7 +244,7 @@ Page({
     if (!operation) return
 
     const applyState = (liked, likes) => {
-      const latestIndex = this.data.filteredPosts.findIndex(post => String(post.id) === String(id))
+      const latestIndex = this.data.filteredPosts.findIndex(post => post.type === 'post' && String(post.id) === String(id))
       if (latestIndex < 0) return
       this.setData({
         ['filteredPosts[' + latestIndex + '].liked']: liked,
@@ -276,7 +275,7 @@ Page({
       wx.removeStorageSync('postLikeUpdate')
       const list = this.data.filteredPosts
       if (list) {
-        const idx = list.findIndex(item => String(item.id) === String(update.id))
+        const idx = list.findIndex(item => item.type === 'post' && String(item.id) === String(update.id))
         if (idx >= 0) {
           this.setData({
             ['filteredPosts[' + idx + '].liked']: update.liked,
@@ -359,7 +358,8 @@ function normalizeIdle(product) {
     time: formatRelativeTime(product.createdAt),
     status: product.status === 1 ? '可联系' : '已下架',
     price: product.price || 0,
-    type: 'idle'
+    type: 'idle',
+    productType: Number(product.subType) === 2 ? 'item' : 'book'
   }
 }
 

@@ -30,6 +30,18 @@
   height: 0;
 }
 
+.detail-state {
+  padding: 120rpx 48rpx;
+  text-align: center;
+  color: var(--color-text-secondary);
+  font-size: var(--font-base);
+}
+
+.state-retry {
+  margin: 24rpx auto 0;
+  max-width: 320rpx;
+}
+
 .book-card, .info-card {
   background-color: var(--color-bg-white);
   margin: 16rpx 24rpx 0;

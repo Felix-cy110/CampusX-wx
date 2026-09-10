@@ -11,12 +11,27 @@
   <view class="tab-bar">
     <view class="tab-item {{activeTab === 'ongoing' ? 'active' : ''}}" bindtap="switchTab" data-tab="ongoing"><text>进行中</text></view>
     <view class="tab-item {{activeTab === 'ended' ? 'active' : ''}}" bindtap="switchTab" data-tab="ended"><text>已结束</text></view>
+    <view class="tab-item {{activeTab === 'orders' ? 'active' : ''}}" bindtap="switchTab" data-tab="orders"><text>我的订单</text></view>
   </view>
 
-  <scroll-view class="list" scroll-y enhanced show-scrollbar="{{false}}">
-    <view wx:if="{{filteredList.length === 0}}" class="empty">
-      <text class="empty-text">暂无预购活动</text>
+  <scroll-view class="list" scroll-y enhanced show-scrollbar="{{false}}" bindscrolltolower="loadMore">
+    <view wx:if="{{!loading && !loadError && filteredList.length === 0}}" class="empty">
+      <text class="empty-text">{{activeTab === 'orders' ? '暂无预购订单' : '暂无预购活动'}}</text>
     </view>
+    <block wx:if="{{activeTab === 'orders'}}">
+      <view class="item" wx:for="{{filteredList}}" wx:key="id" bindtap="onTapItem" data-id="{{item.presaleId}}" data-order-id="{{item.id}}">
+        <view class="item-left">
+          <view class="item-title-row">
+            <text class="item-title">图书预购订单</text>
+            <view class="status-tag tag-gray"><text>{{item.statusLabel}}</text></view>
+          </view>
+          <text class="item-sub text-secondary">订单号：{{item.orderNo}}</text>
+          <text class="price-value">¥{{item.totalAmount}}</text>
+          <text class="item-meta text-secondary">{{item.quantity}} 本 · 点击查看商品与订单</text>
+        </view>
+      </view>
+    </block>
+    <block wx:else>
     <view class="item" wx:for="{{filteredList}}" wx:key="id" bindtap="onTapItem" data-id="{{item.id}}">
       <view class="item-left">
         <view class="item-title-row">
@@ -32,6 +47,12 @@
       </view>
       <image wx:if="{{item.coverImage}}" class="item-cover" src="{{item.coverImage}}" mode="aspectFill"></image>
       <view wx:else class="item-cover-placeholder"></view>
+    </view>
+    </block>
+    <view wx:if="{{loading}}" class="empty"><text class="empty-text">正在加载...</text></view>
+    <view wx:if="{{loadError}}" class="empty list-error">
+      <text class="empty-text">{{loadError}}</text>
+      <view class="btn btn-outline btn-small" bindtap="retryLoad">重新加载</view>
     </view>
     <view class="list-bottom"></view>
   </scroll-view>

@@ -58,6 +58,12 @@
   background: var(--color-bg-white);
 }
 
+.load-error {
+  flex: 1;
+  padding: 60rpx 40rpx;
+  text-align: center;
+}
+
 /* ===== 帖子头部 ===== */
 .user-info-row {
   display: flex;

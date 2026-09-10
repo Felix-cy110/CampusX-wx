@@ -6,7 +6,15 @@
     <view class="nav-placeholder"></view>
   </view>
 
-  <scroll-view class="content" scroll-y enhanced show-scrollbar="{{false}}">
+  <view wx:if="{{loading}}" class="detail-state">
+    <text>正在加载预购详情...</text>
+  </view>
+  <view wx:elif="{{loadError}}" class="detail-state">
+    <text>{{loadError}}</text>
+    <view class="btn-action btn-primary-outline state-retry" bindtap="retryLoad">重新加载</view>
+    <view class="btn-action state-retry" bindtap="navigateBack">返回列表</view>
+  </view>
+  <scroll-view wx:elif="{{presale}}" class="content" scroll-y enhanced show-scrollbar="{{false}}">
     <!-- 书籍信息 -->
     <view class="book-card">
       <image wx:if="{{presale.coverImage}}" class="book-cover" src="{{presale.coverImage}}" mode="aspectFill"></image>
@@ -53,8 +61,13 @@
       <text class="desc-text">预购采用两阶段付款：下单时支付定金（总价40%），活动结束后支付尾款（总价60%）。取消订单时定金不退；若活动方取消，退还全款。</text>
     </view>
 
+    <view class="info-card" wx:if="{{orderLoading}}">正在加载我的订单...</view>
+    <view class="info-card" wx:elif="{{orderError}}">
+      <text class="desc-text">{{orderError}}</text>
+      <view class="btn-action btn-primary-outline state-retry" bindtap="retryOrder">重新加载订单</view>
+    </view>
     <!-- 我的订单 -->
-    <view class="info-card" wx:if="{{myOrder}}">
+    <view class="info-card" wx:elif="{{myOrder}}">
       <text class="section-title">我的订单</text>
       <view class="order-no-row">
         <text class="info-label">订单号</text>
@@ -88,7 +101,7 @@
   </scroll-view>
 
   <!-- 底部下单栏（无订单且活动进行中） -->
-  <view wx:if="{{!myOrder && presale.status === 1}}" class="bottom-bar">
+  <view wx:if="{{!loading && !loadError && !orderLoading && !orderError && !orderView && !myOrder && presale.status === 1}}" class="bottom-bar">
     <view class="quantity-row">
       <text class="quantity-label">数量</text>
       <view class="quantity-ctrl">

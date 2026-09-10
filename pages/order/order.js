@@ -290,8 +290,21 @@ Page({
   },
 
   onOrderTap(e) {
-    const { targetid, targettype } = e.currentTarget.dataset
+    const { id, type, targetid, targettype } = e.currentTarget.dataset
     if (!targetid || !targettype) return
+
+    if (type === 'secondhand' || type === 'rental') {
+      if (!id) {
+        wx.showToast({ title: '订单信息不可用', icon: 'none' })
+        return
+      }
+      safeNavigate({
+        url: '/pages/market-detail/market-detail?id=' + encodeURIComponent(targetid) +
+          (type === 'rental' ? '&type=rental' : '') +
+          '&orderId=' + encodeURIComponent(id)
+      })
+      return
+    }
 
     const urlMap = {
       market: `/pages/market-detail/market-detail?id=${targetid}`,

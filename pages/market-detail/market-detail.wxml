@@ -7,12 +7,12 @@
         <image class="nav-back-icon" src="/images/SVG/返回.svg" mode="aspectFit"></image>
       </view>
       <text class="detail-title">商品详情</text>
-      <view class="nav-more" style="margin-right: {{capsuleGap}}px;" bindtap="showMoreOptions">
+      <view class="nav-more" wx:if="{{!loading && !loadError && item.id}}" style="margin-right: {{capsuleGap}}px;" bindtap="showMoreOptions">
         <text class="nav-more-icon">⋮</text>
       </view>
     </view>
   </view>
-  <scroll-view class="content" scroll-y wx:if="{{!loading}}">
+  <scroll-view class="content" scroll-y wx:if="{{!loading && !loadError && item.id}}">
     <!-- 用户信息行：头像 + 用户名 + 时间 + 关注按钮 -->
     <view class="user-info-row">
       <view class="user-info-left" bindtap="goToUserProfile" data-uid="{{item.user.uid}}" data-name="{{item.user.name}}" data-avatar="{{item.user.avatar}}">
@@ -44,7 +44,7 @@
     </view>
 
     <!-- 商品信息 -->
-    <view class="info-row">
+    <view class="info-row" wx:if="{{item.condition}}">
       <text class="info-label">新旧程度：</text>
       <text class="info-value">{{item.condition}}</text>
     </view>
@@ -73,8 +73,16 @@
 
     <!-- 价格信息 -->
     <view class="info-row">
-      <text class="info-label">价格：</text>
-      <text class="info-value price-value">¥{{item.price}}</text>
+      <text class="info-label">{{productType === 'rental' ? '租金：' : '价格：'}}</text>
+      <text class="info-value price-value">¥{{item.price}}{{productType === 'rental' ? '/' + item.rentUnitLabel : ''}}</text>
+    </view>
+    <view class="info-row" wx:if="{{productType === 'rental'}}">
+      <text class="info-label">押金：</text>
+      <text class="info-value">¥{{item.deposit}}</text>
+    </view>
+    <view class="info-row" wx:if="{{productType === 'rental' && (item.availableStart || item.availableEnd)}}">
+      <text class="info-label">可租日期：</text>
+      <text class="info-value">{{item.availableStart || '不限'}} 至 {{item.availableEnd || '不限'}}</text>
     </view>
 
   </scroll-view>
@@ -84,8 +92,14 @@
     <text>加载中...</text>
   </view>
 
+  <view class="empty-state load-error" wx:if="{{!loading && loadError}}">
+    <text>{{loadError}}</text>
+    <button class="btn btn-primary mt-20" wx:if="{{itemId}}" bindtap="retryLoad">重新加载</button>
+    <button class="btn btn-outline mt-20" bindtap="goBack">返回</button>
+  </view>
+
   <!-- 底部操作栏 -->
-  <view class="bottom-bar">
+  <view class="bottom-bar" wx:if="{{!loading && !loadError && item.id}}">
     <view class="bottom-action favorite-action" bindtap="toggleFavorite">
       <text class="bottom-action-icon">{{isFavorited ? '⭐' : '☆'}}</text>
       <text class="bottom-action-count" style="color: {{isFavorited ? 'var(--color-star)' : 'var(--color-text-secondary)'}};">{{isFavorited ? '已收藏' : '收藏'}}</text>
@@ -100,19 +114,22 @@
       <view class="bottom-btn btn-contact" bindtap="contactSeller">
         <text>联系卖家</text>
       </view>
-      <view class="bottom-btn btn-buy {{purchasePending ? 'disabled' : ''}}" bindtap="createOrder">
+      <view class="bottom-btn btn-buy {{purchasePending ? 'disabled' : ''}}" wx:if="{{!orderId && productType !== 'rental'}}" bindtap="createOrder">
         <text>{{purchasePending ? '支付中...' : '立即购买'}}</text>
       </view>
     </block>
-    <block wx:if="{{item.isOwn && !isOwnerClosing}}">
+    <block wx:if="{{!orderId && item.isOwn && !isOwnerClosing}}">
       <view class="bottom-btn btn-off-shelf" bindtap="closeDeal">
         <text>下架商品</text>
       </view>
     </block>
-    <block wx:if="{{item.isOwn && isOwnerClosing}}">
+    <block wx:if="{{!orderId && item.isOwn && isOwnerClosing}}">
       <view class="bottom-btn btn-off-shelf disabled">
         <text>已下架</text>
       </view>
     </block>
+    <view class="bottom-btn btn-buy" wx:if="{{orderId}}" bindtap="goBack">
+      <text>返回订单</text>
+    </view>
   </view>
 </view>

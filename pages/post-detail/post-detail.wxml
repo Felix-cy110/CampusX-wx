@@ -77,7 +77,7 @@
 
     <!-- 二手商品关联帖：购买入口 -->
     <view class="buy-entry" wx:if="{{post.sourceType === 'IDLE_PRODUCT'}}" bindtap="goBuy">
-      <text>去购买</text>
+      <text>{{post.status === 2 ? '查看商品' : '去购买'}}</text>
     </view>
 
     <!-- 跑腿关联帖：去抢单入口 -->

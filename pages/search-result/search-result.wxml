@@ -68,7 +68,9 @@
         wx:for="{{filteredPosts}}"
         wx:key="index"
         bindtap="onTapPost"
-        data-post="{{item}}"
+        data-id="{{item.id}}"
+        data-type="{{item.type}}"
+        data-index="{{index}}"
       >
         <view class="post-header">
           <image class="avatar-search-post" src="{{item.user.avatar}}" mode="aspectFill"></image>
