@@ -78,7 +78,7 @@
         <view class="price-wrap">
           <text class="price-label">{{item.priceLabel}}</text>
           <text class="price-symbol">¥</text>
-          <text class="price-value">{{item.price.toFixed(2)}}</text>
+          <text class="price-value">{{item.priceText}}</text>
         </view>
         <view class="status-tag" style="background-color: {{item.statusBg}};">
           <text class="status-text">{{item.status}}</text>
