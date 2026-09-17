@@ -91,6 +91,11 @@ Page({
         orders = await this.fetchProxyOrders(currentSide)
       }
 
+      // WXML 不支持直接调用 Number 方法，先格式化金额再绑定到模板。
+      orders = orders.map(order => ({
+        ...order,
+        priceText: order.price.toFixed(2)
+      }))
       this.setData({ orders, filteredOrders: orders, loading: false })
     } catch (err) {
       console.error('加载订单失败:', err)
