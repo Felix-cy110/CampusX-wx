@@ -7,6 +7,7 @@ let pageDefinition
 let pendingRequests = []
 let modals = []
 let toasts = []
+let loadingVisible = false
 
 global.Page = function (definition) { pageDefinition = definition }
 global.wx = {
@@ -17,8 +18,8 @@ global.wx = {
   request(options) { pendingRequests.push(options) },
   showModal(options) { modals.push(options) },
   showToast(options) { toasts.push(options) },
-  showLoading() {},
-  hideLoading() {}
+  showLoading() { loadingVisible = true },
+  hideLoading() { loadingVisible = false }
 }
 
 require('../pages/order/order')
@@ -27,6 +28,7 @@ test.beforeEach(function () {
   pendingRequests = []
   modals = []
   toasts = []
+  loadingVisible = false
 })
 
 function map(status, side) {
@@ -67,6 +69,73 @@ async function flush() {
   await new Promise(resolve => setImmediate(resolve))
 }
 
+for (const scenario of [
+  { name: '同意后立即退款成功', handler: 'onRefundAgree', status: 4, reason: '卖方同意退款', label: '已取消' },
+  { name: '同意后退款在途', handler: 'onRefundAgree', status: 5, reason: '卖方同意退款', label: '退款处理中' },
+  { name: '拒绝后等待管理员', handler: 'onRefundReject', status: 5, reason: '卖方拒绝退款：无', label: '待管理员处理' }
+]) {
+  test(`Mock完整退款流程：买家申请→卖家${scenario.name}→双方重新进入`, async function () {
+    // Mock wx.request 边界，执行真实 Page 方法和请求封装，不访问线上资金接口。
+    let savedOrder = { id: 1, productId: 2, actualPaid: 10, status: 2, statusDesc: '待收货' }
+    const buyer = createPage(2, 'buy')
+    buyer.onApplyRefund(shipEvent())
+    const application = modals[0].success({ confirm: true })
+    assert.equal(pendingRequests[0].method, 'POST')
+    assert.match(pendingRequests[0].url, /\/idle\/order\/1\/refund-apply$/)
+    savedOrder = { ...savedOrder, status: 5, statusDesc: '退款申请中', cancelReason: '买家申请退款' }
+    succeed(0, null)
+    await application
+    succeed(1, { list: [savedOrder] })
+    await flush()
+    assert.equal(buyer.data.filteredOrders[0].showRefundBtn, false)
+
+    const seller = createPage(5, 'sell')
+    const initialLoad = seller.loadOrders()
+    succeed(2, { list: [savedOrder] })
+    await initialLoad
+    assert.equal(seller.data.filteredOrders[0].showRefundAgreeBtn, true)
+    assert.equal(seller.data.filteredOrders[0].showRefundRejectBtn, true)
+    const decision = seller[scenario.handler](shipEvent())
+    modals[1].success({ confirm: true })
+    await flush()
+    assert.equal(loadingVisible, true)
+    assert.equal(pendingRequests[3].method, 'PUT')
+    assert.match(pendingRequests[3].url, scenario.handler === 'onRefundAgree' ? /\/refund-agree$/ : /\/refund-reject$/)
+    for (let click = 0; click < 5; click++) {
+      await seller.onRefundAgree(shipEvent())
+      await seller.onRefundReject(shipEvent())
+    }
+    assert.equal(pendingRequests.length, 4)
+    assert.equal(modals.length, 2)
+
+    savedOrder = { ...savedOrder, status: scenario.status, cancelReason: scenario.reason,
+      statusDesc: scenario.status === 4 ? '已取消' : '退款申请中' }
+    succeed(3, null)
+    await flush()
+    assert.equal(loadingVisible, false)
+    succeed(4, { list: [savedOrder] })
+    await decision
+    assert.equal(seller.data.filteredOrders[0].status, scenario.label)
+    assert.equal(seller.data.refundOrderId, '')
+
+    for (const side of ['buy', 'sell']) {
+      const reopened = createPage(5, side)
+      reopened.onShow()
+      succeed(pendingRequests.length - 1, { list: [savedOrder] })
+      await flush()
+      const order = reopened.data.filteredOrders[0]
+      assert.equal(order.status, scenario.label)
+      assert.equal(order.showRefundBtn, false)
+      assert.equal(order.showRefundAgreeBtn, false)
+      assert.equal(order.showRefundRejectBtn, false)
+      await reopened.onRefundAgree(shipEvent())
+      await reopened.onRefundReject(shipEvent())
+    }
+    assert.equal(pendingRequests.length, 7)
+    assert.equal(modals.length, 2)
+  })
+}
+
 test('二手待付款订单展示去支付和取消操作', function () {
   const order = map(0, 'buy')
   assert.equal(order.showPayBtn, true)
@@ -87,6 +156,110 @@ test('二手退款申请只允许卖家处理', function () {
   assert.equal(sellerOrder.showRefundAgreeBtn, true)
   assert.equal(sellerOrder.showRefundRejectBtn, true)
   assert.equal(buyerOrder.showRefundAgreeBtn, false)
+})
+
+for (const [handler, endpoint, reason, status] of [
+  ['onRefundAgree', 'refund-agree', '卖方同意退款', '退款处理中'],
+  ['onRefundReject', 'refund-reject', '卖方拒绝退款：无', '待管理员处理']
+]) {
+  test(`${handler}提交期间互斥，成功后及重新进入均不再显示处理按钮`, async function () {
+    const page = createPage(5)
+    const action = page[handler](shipEvent())
+    await page.onRefundAgree(shipEvent())
+    await page.onRefundReject(shipEvent())
+    assert.equal(modals.length, 1)
+    modals[0].success({ confirm: true })
+    await flush()
+    assert.equal(pendingRequests[0].url, `https://xixutech.cn/api/v1/idle/order/1/${endpoint}`)
+    assert.equal(pendingRequests[0].method, 'PUT')
+    await page.onRefundAgree(shipEvent())
+    await page.onRefundReject(shipEvent())
+    assert.equal(pendingRequests.length, 1)
+    assert.equal(toasts.length, 0)
+    succeed(0, null)
+    await flush()
+    assert.equal(page.data.filteredOrders[0].showRefundAgreeBtn, false)
+    assert.equal(page.data.filteredOrders[0].status, status)
+    assert.equal(page.data.refundOrderId, '1')
+    const savedOrder = { id: 1, status: 5, statusDesc: '退款申请中', cancelReason: reason }
+    succeed(1, { list: [savedOrder] })
+    await action
+    assert.equal(page.data.refundOrderId, '')
+    await page.onRefundAgree(shipEvent())
+    await page.onRefundReject(shipEvent())
+    assert.equal(modals.length, 1)
+
+    const reopened = createPage(5)
+    const reload = reopened.loadOrders()
+    succeed(2, { list: [savedOrder] })
+    await reload
+    assert.equal(reopened.data.filteredOrders[0].status, status)
+    assert.equal(reopened.data.filteredOrders[0].showRefundAgreeBtn, false)
+    assert.equal(reopened.data.filteredOrders[0].showRefundRejectBtn, false)
+  })
+
+  test(`${handler}失败明确提示且允许重试`, async function () {
+    const page = createPage(5)
+    const action = page[handler](shipEvent())
+    modals[0].success({ confirm: true })
+    await flush()
+    pendingRequests[0].success({ data: { code: 500, message: '退款服务暂不可用' } })
+    await action
+    assert.deepEqual(toasts, [{ title: '退款服务暂不可用', icon: 'none' }])
+    assert.equal(page.data.refundOrderId, '')
+    assert.equal(page.data.filteredOrders[0].showRefundAgreeBtn, true)
+    const retry = page[handler](shipEvent())
+    modals[1].success({ confirm: false })
+    await retry
+    assert.equal(pendingRequests.length, 1)
+    assert.equal(page.data.refundOrderId, '')
+  })
+}
+
+test('退款完成后不展示处理入口，买卖双方均能看到退款处理中或待管理员处理', function () {
+  for (const side of ['buy', 'sell']) {
+    for (const reason of ['卖方同意退款', '管理员同意退款', '卖方拒绝退款：无']) {
+      const order = pageDefinition.mapIdleOrder({ id: 1, status: 5, cancelReason: reason }, side)
+      assert.equal(order.showRefundAgreeBtn, false)
+      assert.equal(order.showRefundRejectBtn, false)
+      assert.ok(order.remark)
+    }
+    assert.equal(map(4, side).showRefundAgreeBtn, false)
+    assert.equal(map(4, side).showRefundRejectBtn, false)
+  }
+})
+
+test('退款操作后的新列表不会被较早返回的旧列表覆盖', async function () {
+  const page = createPage(5)
+  const oldLoad = page.loadOrders()
+  const action = page.onRefundReject(shipEvent())
+  modals[0].success({ confirm: true })
+  await flush()
+  succeed(1, null)
+  await flush()
+  succeed(2, { list: [{ id: 1, status: 5, cancelReason: '卖方拒绝退款：无' }] })
+  await action
+  succeed(0, { list: [{ id: 1, status: 5, cancelReason: '买家申请退款' }] })
+  await oldLoad
+  assert.equal(page.data.filteredOrders[0].status, '待管理员处理')
+  assert.equal(page.data.filteredOrders[0].showRefundAgreeBtn, false)
+})
+
+test('退款弹窗打开失败或网络超时均释放锁并显示失败提示', async function () {
+  const page = createPage(5)
+  const first = page.onRefundAgree(shipEvent())
+  modals[0].fail({ errMsg: 'showModal:fail' })
+  await first
+  assert.equal(page.data.refundOrderId, '')
+  assert.equal(toasts[0].icon, 'none')
+  const second = page.onRefundReject(shipEvent())
+  modals[1].success({ confirm: true })
+  await flush()
+  pendingRequests[0].fail({ errMsg: 'request:fail timeout' })
+  await second
+  assert.equal(page.data.refundOrderId, '')
+  assert.match(toasts[1].title, /超时/)
+  assert.equal(page.data.filteredOrders[0].showRefundRejectBtn, true)
 })
 
 test('确认发货入口仅展示给待发货订单的卖家', function () {

@@ -295,6 +295,11 @@
   opacity: 0.85;
 }
 
+.action-btn-disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
 /* 确认收货按钮（保留兼容） */
 .confirm-btn-wrap {
   margin-top: 16rpx;

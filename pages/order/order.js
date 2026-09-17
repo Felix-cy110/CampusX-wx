@@ -24,7 +24,8 @@ Page({
     filteredOrders: [],
     loading: false,
     payingOrderKey: '',
-    shippingOrderId: ''
+    shippingOrderId: '',
+    refundOrderId: ''
   },
 
   onLoad(options) {
@@ -65,6 +66,7 @@ Page({
 
   /* 从后端加载订单 */
   async loadOrders() {
+    const loadId = this._ordersLoadId = (this._ordersLoadId || 0) + 1
     const { currentTab, currentSide } = this.data
     this.setData({ loading: true })
 
@@ -91,6 +93,7 @@ Page({
         orders = await this.fetchProxyOrders(currentSide)
       }
 
+      if (loadId !== this._ordersLoadId) return
       // WXML 不支持直接调用 Number 方法，先格式化金额再绑定到模板。
       orders = orders.map(order => ({
         ...order,
@@ -99,6 +102,7 @@ Page({
       this.setData({ orders, filteredOrders: orders, loading: false })
     } catch (err) {
       console.error('加载订单失败:', err)
+      if (loadId !== this._ordersLoadId) return
       this.setData({ loading: false })
     }
   },
@@ -148,7 +152,16 @@ Page({
 
   /* 映射二手订单为统一格式 */
   mapIdleOrder(vo, side) {
-    const statusDesc = vo.statusDesc || ''
+    // 后端状态 5 同时包含待卖家处理、退款在途和待管理员处理。
+    // 使用已落库的处理原因，确保重新进入页面也能还原处理结果。
+    const reason = vo.cancelReason || ''
+    const refundRejected = vo.status === 5 && reason.indexOf('卖方拒绝退款：') === 0
+    const refundProcessing = vo.status === 5 && (
+      reason === '卖方同意退款' || reason === '管理员同意退款' ||
+      reason === '买方取消订单' || reason === '卖方超过48小时未确认发货，系统自动取消'
+    )
+    const canHandleRefund = vo.status === 5 && !refundRejected && !refundProcessing && side === 'sell'
+    const statusDesc = refundRejected ? '待管理员处理' : refundProcessing ? '退款处理中' : (vo.statusDesc || '')
     let remark = ''
     if (vo.status === 1) {
       const deadline = vo.sellerConfirmExpireTime
@@ -161,6 +174,11 @@ Page({
       remark = side === 'buy'
         ? '卖家已确认发货，请在实际收到商品后确认收货。'
         : '已确认发货，等待买家确认收货。'
+    }
+    if (refundRejected) {
+      remark = '卖家已拒绝退款，等待管理员介入处理。'
+    } else if (refundProcessing) {
+      remark = '退款已提交，正在等待退款结果，请勿重复操作。'
     }
     const statusBgMap = {
       '待付款': '#FF4D4F',
@@ -193,8 +211,8 @@ Page({
       showCancelBtn: vo.status === 0,
       showPayBtn: vo.status === 0 && side === 'buy',
       showRefundBtn: vo.status === 2 && side === 'buy',
-      showRefundAgreeBtn: vo.status === 5 && side === 'sell',
-      showRefundRejectBtn: vo.status === 5 && side === 'sell',
+      showRefundAgreeBtn: canHandleRefund,
+      showRefundRejectBtn: canHandleRefund,
       targetId: vo.productId,
       targetType: 'market'
     }
@@ -543,51 +561,62 @@ Page({
 
   /* 同意退款 */
   onRefundAgree(e) {
-    const { id, type } = e.currentTarget.dataset
-    wx.showModal({
-      title: '同意退款',
-      content: '确定要同意买家的退款申请吗？',
-      confirmText: '确定',
-      cancelText: '再想想',
-      success: async (res) => {
-        if (res.confirm) {
-          try {
-            if (type === 'secondhand') {
-              await request({ url: `/api/v1/idle/order/${id}/refund-agree`, method: 'PUT' })
-            }
-            wx.showToast({ title: '已同意退款', icon: 'success' })
-            this.loadOrders()
-          } catch (err) {
-            console.error('同意退款失败:', err)
-            wx.showToast({ title: (err && err.message) || '操作失败', icon: 'none' })
-          }
-        }
-      }
-    })
+    return this.handleRefundDecision(e, true)
   },
 
   /* 拒绝退款 */
   onRefundReject(e) {
+    return this.handleRefundDecision(e, false)
+  },
+
+  async handleRefundDecision(e, agree) {
+    if (this.data.refundOrderId) return
     const { id, type } = e.currentTarget.dataset
-    wx.showModal({
-      title: '拒绝退款',
-      content: '确定要拒绝买家的退款申请吗？拒绝后将由管理员介入处理',
-      confirmText: '确定拒绝',
-      cancelText: '再想想',
-      success: async (res) => {
-        if (res.confirm) {
-          try {
-            if (type === 'secondhand') {
-              await request({ url: `/api/v1/idle/order/${id}/refund-reject`, method: 'PUT' })
-            }
-            wx.showToast({ title: '已拒绝退款', icon: 'success' })
-            this.loadOrders()
-          } catch (err) {
-            console.error('拒绝退款失败:', err)
-            wx.showToast({ title: (err && err.message) || '操作失败', icon: 'none' })
-          }
-        }
+    const order = this.data.filteredOrders.find(item =>
+      item.type === type && String(item.id) === String(id) &&
+      (agree ? item.showRefundAgreeBtn : item.showRefundRejectBtn)
+    )
+    if (type !== 'secondhand' || !order) return
+
+    this.setData({ refundOrderId: String(id) })
+    try {
+      const result = await new Promise((resolve, reject) => wx.showModal({
+        title: agree ? '同意退款' : '拒绝退款',
+        content: agree ? '确定要同意买家的退款申请吗？' : '确定要拒绝买家的退款申请吗？拒绝后将由管理员介入处理',
+        confirmText: agree ? '确定' : '确定拒绝',
+        cancelText: '再想想',
+        success: resolve,
+        fail: reject
+      }))
+      if (!result.confirm) return
+
+      wx.showLoading({ title: '提交处理中...', mask: true })
+      try {
+        await request({
+          url: `/api/v1/idle/order/${id}/refund-${agree ? 'agree' : 'reject'}`,
+          method: 'PUT'
+        })
+      } finally {
+        wx.hideLoading()
       }
-    })
+      // 只有服务端确认成功才移除操作入口，同时使此前的列表请求失效。
+      this._ordersLoadId = (this._ordersLoadId || 0) + 1
+      const updateOrder = item => item.type === type && String(item.id) === String(id)
+        ? { ...item, showRefundAgreeBtn: false, showRefundRejectBtn: false,
+          status: agree ? '退款处理中' : '待管理员处理',
+          remark: agree ? '退款已提交，正在等待退款结果，请勿重复操作。' : '卖家已拒绝退款，等待管理员介入处理。' }
+        : item
+      this.setData({
+        orders: this.data.orders.map(updateOrder),
+        filteredOrders: this.data.filteredOrders.map(updateOrder)
+      })
+      wx.showToast({ title: agree ? '已同意退款' : '已拒绝，待管理员处理', icon: 'none' })
+      await this.loadOrders()
+    } catch (err) {
+      console.error('处理退款失败:', err)
+      wx.showToast({ title: (err && err.message) || '处理失败，请重试', icon: 'none' })
+    } finally {
+      this.setData({ refundOrderId: '' })
+    }
   }
 })
