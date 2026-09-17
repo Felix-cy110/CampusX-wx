@@ -158,6 +158,32 @@ test('二手退款申请只允许卖家处理', function () {
   assert.equal(buyerOrder.showRefundAgreeBtn, false)
 })
 
+test('Mock买家退款到账后重新进入：以真实退款结果覆盖旧申请状态', async function () {
+  const page = createPage(5, 'buy')
+  const initial = page.loadOrders()
+  succeed(0, { list: [{ id: 1, status: 5, statusDesc: '退款申请中', refundStatus: 'P' }] })
+  await initial
+  assert.equal(page.data.filteredOrders[0].status, '退款处理中')
+  page.onShow()
+  succeed(1, { list: [{ id: 1, status: 4, statusDesc: '已退款', refundStatus: 'S', cancelReason: '卖方同意退款' }] })
+  await flush()
+  assert.equal(page.data.filteredOrders[0].status, '已退款')
+  assert.match(page.data.filteredOrders[0].remark, /原路退回/)
+  assert.equal(page.data.filteredOrders[0].showRefundBtn, false)
+  for (const side of ['buy', 'sell']) {
+    const order = pageDefinition.mapIdleOrder({ id: 1, status: 5, statusDesc: '退款申请中', refundStatus: 'S' }, side)
+    assert.equal(order.status, '已退款')
+    assert.equal(order.showRefundAgreeBtn, false)
+    assert.equal(order.showRefundRejectBtn, false)
+  }
+})
+
+test('退款失败不会被旧的同意退款原因误判为到账或仍在处理中', function () {
+  const order = pageDefinition.mapIdleOrder({ status: 5, refundStatus: 'F', cancelReason: '卖方同意退款' }, 'buy')
+  assert.equal(order.status, '退款失败')
+  assert.match(order.remark, /联系平台/)
+})
+
 for (const [handler, endpoint, reason, status] of [
   ['onRefundAgree', 'refund-agree', '卖方同意退款', '退款处理中'],
   ['onRefundReject', 'refund-reject', '卖方拒绝退款：无', '待管理员处理']

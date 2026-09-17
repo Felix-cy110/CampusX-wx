@@ -152,16 +152,18 @@ Page({
 
   /* 映射二手订单为统一格式 */
   mapIdleOrder(vo, side) {
-    // 后端状态 5 同时包含待卖家处理、退款在途和待管理员处理。
-    // 使用已落库的处理原因，确保重新进入页面也能还原处理结果。
+    // 优先使用退款单真实结果；兼容旧接口未返回 refundStatus 时的处理原因。
+    // 订单状态 5 同时包含待卖家处理、退款在途和待管理员处理。
     const reason = vo.cancelReason || ''
-    const refundRejected = vo.status === 5 && reason.indexOf('卖方拒绝退款：') === 0
-    const refundProcessing = vo.status === 5 && (
+    const refunded = vo.refundStatus === 'S'
+    const refundFailed = vo.refundStatus === 'F'
+    const refundRejected = vo.status === 5 && !vo.refundStatus && reason.indexOf('卖方拒绝退款：') === 0
+    const refundProcessing = vo.refundStatus === 'P' || (vo.status === 5 && !vo.refundStatus && (
       reason === '卖方同意退款' || reason === '管理员同意退款' ||
       reason === '买方取消订单' || reason === '卖方超过48小时未确认发货，系统自动取消'
-    )
-    const canHandleRefund = vo.status === 5 && !refundRejected && !refundProcessing && side === 'sell'
-    const statusDesc = refundRejected ? '待管理员处理' : refundProcessing ? '退款处理中' : (vo.statusDesc || '')
+    ))
+    const canHandleRefund = vo.status === 5 && !refunded && !refundFailed && !refundRejected && !refundProcessing && side === 'sell'
+    const statusDesc = refunded ? '已退款' : refundFailed ? '退款失败' : refundRejected ? '待管理员处理' : refundProcessing ? '退款处理中' : (vo.statusDesc || '')
     let remark = ''
     if (vo.status === 1) {
       const deadline = vo.sellerConfirmExpireTime
@@ -175,7 +177,11 @@ Page({
         ? '卖家已确认发货，请在实际收到商品后确认收货。'
         : '已确认发货，等待买家确认收货。'
     }
-    if (refundRejected) {
+    if (refunded) {
+      remark = '退款已成功，款项已原路退回。'
+    } else if (refundFailed) {
+      remark = '退款未成功，请联系平台处理。'
+    } else if (refundRejected) {
       remark = '卖家已拒绝退款，等待管理员介入处理。'
     } else if (refundProcessing) {
       remark = '退款已提交，正在等待退款结果，请勿重复操作。'
@@ -186,6 +192,7 @@ Page({
       '待收货': '#255AC5',
       '已完成': '#14B554',
       '已取消': '#999999',
+      '已退款': '#14B554',
       '退款申请中': '#FF4D4F'
     }
     return {
