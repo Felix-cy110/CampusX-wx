@@ -105,15 +105,18 @@ Page({
 })
 
 function mapSystemMessage(item) {
+  const refundApplied = item.eventType === 'IDLE_REFUND_APPLIED'
   const buyer = item.buyerNickname || '有同学'
   const product = item.productTitle || '闲置商品'
   const amount = Number(item.amount || 0).toFixed(2)
   return {
     id: item.cursorId || item.orderId,
     orderId: item.orderId,
-    title: '商品已付款',
-    brief: `${buyer} 已购买「${product}」`,
-    msg: `${buyer} 已支付 ¥${amount} 购买「${product}」。请前往“我卖出的”查看订单并尽快完成交付。\n订单号：${item.orderNo || ''}`,
+    title: refundApplied ? '买家申请退款' : '商品已付款',
+    brief: refundApplied ? `${buyer} 申请退款，请及时处理` : `${buyer} 已购买「${product}」`,
+    msg: refundApplied
+      ? `${buyer} 已为「${product}」申请退款，订单实付 ¥${amount}。请前往“我卖出的”查看申请并及时处理。\n订单号：${item.orderNo || ''}`
+      : `${buyer} 已支付 ¥${amount} 购买「${product}」。请前往“我卖出的”查看订单并尽快完成交付。\n订单号：${item.orderNo || ''}`,
     time: formatRelativeTime(item.createdAt),
     createdAt: item.createdAt,
     unread: true
