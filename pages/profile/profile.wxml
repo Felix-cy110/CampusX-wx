@@ -202,7 +202,7 @@
           </button>
           <view class="post-option-btn btn-red" wx:if="{{selectedPostBackendType !== 'idle' || selectedPostBackendStatus === 1}}" bindtap="onDeletePost">
             <image class="option-icon" src="/images/SVG/删除.svg" mode="aspectFit"></image>
-            <text class="option-text">{{selectedPostBackendType === 'idle' ? '下架商品' : '删除帖子'}}</text>
+            <text class="option-text">{{selectedPostBackendType === 'idle' ? '下架商品' : (selectedPostBackendType === 'proxy_demand' || selectedPostBackendType === 'proxy_supply' ? '删除跑腿' : '删除帖子')}}</text>
           </view>
         </view>
       </scroll-view>
