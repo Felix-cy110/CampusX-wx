@@ -322,6 +322,13 @@
 }
 
 /* 空状态 */
+.load-error {
+  margin: 24rpx 30rpx;
+  text-align: center;
+  font-size: var(--font-sm);
+  color: var(--color-primary);
+}
+
 .empty-state {
   display: flex;
   align-items: center;
