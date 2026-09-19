@@ -1,7 +1,7 @@
 const app = getApp()
 const { safeNavigate } = require('../../utils/safeNavigate')
 const { request, toFullUrl } = require('../../utils/request')
-const { requireAuth } = require('../../utils/auth')
+const { confirmAndApplyProxyOrder } = require('../../utils/proxyOrder')
 
 function formatDateTime(value) {
   if (!value) return ''
@@ -171,64 +171,21 @@ Page({
   },
 
   /* 下单（申请接单） */
-  applyOrder() {
+  async applyOrder() {
     if (this.data.detailType === 'supply') {
       this.contactUser()
       return
     }
-    if (!this.requireLogin()) return
     if (this.data.applying) return
 
     const { demand } = this.data
     if (!demand || !demand.id) return
 
-    // 不能接自己的单
-    const currentUid = (app.globalData.userInfo || {}).uid
-    if (demand.user.uid && String(demand.user.uid) === String(currentUid)) {
-      wx.showToast({ title: '不能接自己发布的跑腿', icon: 'none' })
-      return
-    }
-
-    wx.showModal({
-      title: '确认接单',
-      content: `确定要接下「${demand.title || ''}」这个跑腿任务吗？代课费 ￥${demand.reward || 0}`,
-      success: (res) => {
-        if (res.confirm) {
-          this.doApply()
-        }
-      }
-    })
-  },
-
-  async doApply() {
     this.setData({ applying: true })
-    wx.showLoading({ title: '下单中...', mask: true })
-
     try {
-      await request({
-        url: '/api/v1/proxy-class-order/apply',
-        method: 'POST',
-        data: { demandId: this.data.demand.id }
-      })
-
-      wx.hideLoading()
-      wx.showToast({ title: '下单成功', icon: 'success' })
-
-      // 延迟跳转到订单页面
-      setTimeout(() => {
-        wx.switchTab({ url: '/pages/profile/profile' })
-      }, 1500)
-    } catch (err) {
-      wx.hideLoading()
-      console.error('下单失败:', err)
-      const msg = (err && err.message) || '下单失败，请重试'
-      wx.showToast({ title: msg, icon: 'none', duration: 2000 })
+      await confirmAndApplyProxyOrder(demand)
     } finally {
       this.setData({ applying: false })
     }
-  },
-
-  requireLogin() {
-    return requireAuth()
   }
 })

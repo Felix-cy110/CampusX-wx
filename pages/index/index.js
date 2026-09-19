@@ -4,6 +4,7 @@ const { safeNavigate, safeSwitch } = require('../../utils/safeNavigate')
 const { request, toFullUrl } = require('../../utils/request')
 const { requestPostLikeChange, reconcileLikeCount } = require('../../utils/like')
 const { canAccessCampusFeatures, requireAuth } = require('../../utils/auth')
+const { confirmAndApplyProxyOrder } = require('../../utils/proxyOrder')
 const { getActivities } = require('../../utils/api/lottery')
 const { getUnreadCounts, getUnreadTotal, refreshUnreadCounts, subscribeUnreadCounts } = require('../../utils/unread')
 
@@ -82,6 +83,7 @@ Page({
     errandPage: 1,
     errandHasMore: true,
     errandLoading: false,
+    errandApplyingId: '',
     errandSubTab: 'demand',
     supplyList: [],
     supplyPage: 1,
@@ -775,12 +777,17 @@ Page({
   },
 
   /* 抢单 */
-  grabErrand(e) {
-    if (!this.requireLogin()) return
+  async grabErrand(e) {
+    if (this.data.errandApplyingId) return
     const id = e.currentTarget.dataset.id
-    const item = this.data.errandList.find(i => i.id === id)
-    if (item) {
-      wx.showToast({ title: '抢单成功', icon: 'success' })
+    const item = this.data.errandList.find(i => String(i.id) === String(id))
+    if (!item) return
+
+    this.setData({ errandApplyingId: String(item.id) })
+    try {
+      await confirmAndApplyProxyOrder(item)
+    } finally {
+      this.setData({ errandApplyingId: '' })
     }
   },
 
