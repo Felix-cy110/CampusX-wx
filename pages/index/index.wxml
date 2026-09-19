@@ -432,8 +432,8 @@
                           <view class="errand-btn errand-btn-left" catchtap="contactErrandUser" data-user-id="{{item.user.uid || ''}}" data-name="{{item.user.name}}" data-avatar="{{item.user.avatar}}">
                             <text>联系</text>
                           </view>
-                          <view class="errand-btn errand-btn-right" catchtap="grabErrand" data-id="{{item.id}}">
-                            <text>抢单</text>
+                          <view class="errand-btn errand-btn-right {{errandApplyingId ? 'errand-btn-disabled' : ''}}" catchtap="grabErrand" data-id="{{item.id}}">
+                            <text>{{errandApplyingId == item.id ? '接单中' : '抢单'}}</text>
                           </view>
                         </view>
                       </view>
