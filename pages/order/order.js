@@ -23,7 +23,9 @@ Page({
     orders: [],
     filteredOrders: [],
     loading: false,
+    loadError: '',
     payingOrderKey: '',
+    matchingOrderId: '',
     shippingOrderId: '',
     refundOrderId: ''
   },
@@ -68,17 +70,29 @@ Page({
   async loadOrders() {
     const loadId = this._ordersLoadId = (this._ordersLoadId || 0) + 1
     const { currentTab, currentSide } = this.data
-    this.setData({ loading: true })
+    this.setData({ loading: true, loadError: '' })
+
+    let proxyLoadFailed = false
+    const loadProxyOrders = async () => {
+      try {
+        return await this.fetchProxyOrders(currentSide)
+      } catch (err) {
+        console.error('加载跑腿订单失败:', err)
+        proxyLoadFailed = true
+        // 网络失败不代表空列表；仅保留当前角色已有的跑腿订单。
+        return this.data.orders.filter(item => item.type === 'errand' && item.side === currentSide)
+      }
+    }
 
     try {
       let orders = []
 
       if (currentTab === 'all') {
-        // 全部：并行请求三个 API（各 fetch 方法内部已处理异常，始终返回数组）
+        // 全部：独立处理各模块请求结果，跑腿刷新失败时保留已有订单。
         const results = await Promise.all([
           this.fetchIdleOrders(currentSide),
           this.fetchRentalOrders(currentSide),
-          this.fetchProxyOrders(currentSide)
+          loadProxyOrders()
         ])
         results.forEach(arr => {
           if (arr && arr.length) {
@@ -90,7 +104,7 @@ Page({
       } else if (currentTab === 'rental') {
         orders = await this.fetchRentalOrders(currentSide)
       } else if (currentTab === 'errand') {
-        orders = await this.fetchProxyOrders(currentSide)
+        orders = await loadProxyOrders()
       }
 
       if (loadId !== this._ordersLoadId) return
@@ -99,7 +113,8 @@ Page({
         ...order,
         priceText: order.price.toFixed(2)
       }))
-      this.setData({ orders, filteredOrders: orders, loading: false })
+      this.setData({ orders, filteredOrders: orders, loading: false,
+        loadError: proxyLoadFailed ? '跑腿订单刷新失败，点击重试' : '' })
     } catch (err) {
       console.error('加载订单失败:', err)
       if (loadId !== this._ordersLoadId) return
@@ -135,19 +150,14 @@ Page({
 
   /* 获取跑腿（代课）订单 */
   async fetchProxyOrders(side) {
-    try {
-      const role = side === 'buy' ? 1 : 2
-      const result = await request({
-        url: '/api/v1/proxy-class-order/my-list',
-        method: 'GET',
-        data: { role, pageNum: 1, pageSize: 50 }
-      })
-      const list = (result && result.list) || []
-      return list.map(vo => this.mapProxyOrder(vo, side))
-    } catch (err) {
-      console.error('加载跑腿订单失败:', err)
-      return []
-    }
+    const role = side === 'buy' ? 1 : 2
+    const result = await request({
+      url: '/api/v1/proxy-class-order/my-list',
+      method: 'GET',
+      data: { role, pageNum: 1, pageSize: 50 }
+    })
+    const list = (result && result.list) || []
+    return list.map(vo => this.mapProxyOrder(vo, side))
   },
 
   /* 映射二手订单为统一格式 */
@@ -274,6 +284,8 @@ Page({
 
   /* 映射跑腿（代课）订单为统一格式 */
   mapProxyOrder(vo, side) {
+    // 与后端 ProxyClassOrderStatusEnum 一致：-1 待匹配，0 待付款，1 待押金，
+    // 2 进行中，3 待确认完成，4 已完成，5 已取消，6 申诉中。
     const statusDesc = vo.statusDesc || ''
     const statusBgMap = {
       '待需求方确认': '#FF4D4F',
@@ -289,6 +301,11 @@ Page({
     if (vo.classTime) {
       remark = '上课时间：' + (vo.classTime || '')
     }
+    const classTime = Array.isArray(vo.classTime)
+      ? new Date(vo.classTime[0], vo.classTime[1] - 1, vo.classTime[2],
+        vo.classTime[3] || 0, vo.classTime[4] || 0, vo.classTime[5] || 0)
+      : new Date(String(vo.classTime || '').replace(' ', 'T'))
+    const beforeStart = !vo.classTime || classTime.getTime() > Date.now()
     return {
       id: vo.orderId,
       orderNo: vo.orderNo,
@@ -307,15 +324,67 @@ Page({
       status: statusDesc,
       statusBg: statusBgMap[statusDesc] || '#999999',
       remark: remark,
-      showConfirmBtn: vo.status === 5 && side === 'buy',
-      showCancelBtn: vo.status === 1 && side === 'buy',
-      showPayBtn: vo.status === 2 && side === 'buy',
-      showDepositBtn: vo.status === 3 && side === 'sell',
+      showMatchBtn: vo.status === -1 && side === 'buy',
+      showConfirmBtn: (vo.status === 2 && side === 'sell') || (vo.status === 3 && side === 'buy'),
+      showCancelBtn: [0, 1, 2, 3].includes(vo.status) && side === 'buy' && beforeStart,
+      showPayBtn: vo.status === 0 && side === 'buy',
+      showDepositBtn: vo.status === 1 && side === 'sell',
       showRefundBtn: false,
       showRefundAgreeBtn: false,
       showRefundRejectBtn: false,
       targetId: vo.demandId,
-      targetType: 'errand'
+      targetType: 'errand',
+      _raw: vo
+    }
+  },
+
+  /* 发布者确认接单申请，确认后进入待付款 */
+  async onConfirmMatch(e) {
+    if (this.data.matchingOrderId) return
+    const { id, type } = e.currentTarget.dataset
+    const order = this.data.filteredOrders.find(item =>
+      item.type === 'errand' && String(item.id) === String(id) && item.showMatchBtn
+    )
+    if (type !== 'errand' || !order) return
+
+    this.setData({ matchingOrderId: String(order.id) })
+    try {
+      const result = await new Promise((resolve, reject) => wx.showModal({
+        title: '确认接单人',
+        content: `确定由「${order.user.name || '该用户'}」接下「${order.content || '这个跑腿任务'}」吗？确认后请在30分钟内付款。`,
+        confirmText: '确认',
+        cancelText: '再想想',
+        success: resolve,
+        fail: () => reject(new Error('无法打开确认弹窗，请重试'))
+      }))
+      if (!result.confirm) return
+
+      wx.showLoading({ title: '确认中...', mask: true })
+      try {
+        await request({
+          url: '/api/v1/proxy-class-order/confirm-match',
+          method: 'POST',
+          data: { orderId: order.id }
+        })
+      } finally {
+        wx.hideLoading()
+      }
+      // 服务端确认成功后移除申请入口，避免较早的列表响应重新展示旧按钮。
+      this._ordersLoadId = (this._ordersLoadId || 0) + 1
+      const updateOrder = item => item.type === 'errand' && String(item.id) === String(order.id)
+        ? { ...item, ...this.mapProxyOrder({ ...item._raw, status: 0, statusDesc: '待买方付款' }, item.side) }
+        : item
+      this.setData({
+        orders: this.data.orders.map(updateOrder),
+        filteredOrders: this.data.filteredOrders.map(updateOrder)
+      })
+      wx.showToast({ title: '已确认，请继续付款', icon: 'none' })
+      await this.loadOrders()
+    } catch (err) {
+      console.error('确认接单申请失败:', err)
+      wx.showToast({ title: (err && err.message) || '确认失败，请重试', icon: 'none' })
+    } finally {
+      this.setData({ matchingOrderId: '' })
     }
   },
 
