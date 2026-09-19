@@ -731,19 +731,16 @@ Page({
       }
       deletePromise = request({ url: '/api/v1/idle/product/' + backendId + '/off-shelf', method: 'PUT' })
     } else if (backendType === 'proxy_demand') {
-      deletePromise = request({ url: '/api/v1/proxy-class-demand/close', method: 'POST', data: { id: backendId } })
+      deletePromise = request({ url: '/api/v1/proxy-class-demand/' + backendId, method: 'DELETE' })
     } else if (backendType === 'proxy_supply') {
-      deletePromise = request({ url: '/api/v1/proxy-class-supply/close', method: 'POST', data: { id: backendId } })
+      deletePromise = request({ url: '/api/v1/proxy-class-supply/' + backendId, method: 'DELETE' })
     } else {
-      // 未知类型（如收藏），仅从列表移除
-      const list = this.data.filteredContentList.filter(i => String(i.id) !== String(cardId))
-      this.setData({ filteredContentList: list })
-      wx.showToast({ title: '已删除', icon: 'success' })
+      wx.showToast({ title: '该内容暂不支持删除', icon: 'none' })
       return
     }
 
     wx.showLoading({ title: backendType === 'idle' ? '下架中...' : '删除中...' })
-    deletePromise.then(() => {
+    return deletePromise.then(() => {
       wx.hideLoading()
       const list = this.data.filteredContentList.filter(i => String(i.id) !== String(cardId))
       this.setData({ filteredContentList: list })
