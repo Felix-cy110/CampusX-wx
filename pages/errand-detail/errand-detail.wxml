@@ -6,9 +6,9 @@
       <view class="nav-back" bindtap="goBack">
         <image class="nav-back-icon" src="/images/SVG/返回.svg" mode="aspectFit"></image>
       </view>
-      <text class="nav-title">跑腿详情</text>
+      <text class="nav-title">{{orderId ? '跑腿订单详情' : '跑腿详情'}}</text>
       <view class="nav-share">
-        <button class="share-nav-button" size="mini" open-type="share">
+        <button wx:if="{{!orderId}}" class="share-nav-button" size="mini" open-type="share">
           <image class="share-nav-icon" src="/images/SVG/转发.svg" mode="aspectFit"></image>
         </button>
       </view>
@@ -18,8 +18,14 @@
   <scroll-view class="content" style="padding-top: {{statusBarHeight + navBarHeight}}px;" scroll-y enhanced show-scrollbar="{{false}}" wx:if="{{!loading && demand}}">
     <!-- 发布者信息 + 课程信息 + 提示 -->
     <view class="info-card">
+      <view class="info-block" wx:if="{{order}}">
+        <text class="order-status">{{order.statusDesc}}</text>
+        <view class="order-meta"><text>订单号：{{order.orderNo}}</text></view>
+        <view class="order-meta"><text>创建时间：{{order.createdAt}}</text></view>
+      </view>
       <!-- 发布者信息 -->
       <view class="info-block">
+        <view class="contact-role" wx:if="{{order}}"><text>{{order.contactRole}}</text></view>
         <view class="user-row" bindtap="goToUserProfile">
           <image class="user-avatar" src="{{demand.user.avatar}}" mode="aspectFill"></image>
           <view class="user-info">
@@ -60,14 +66,19 @@
     <text>加载中...</text>
   </view>
   <view class="empty-container" wx:if="{{!loading && !demand}}">
-    <text>数据不存在</text>
+    <text>{{loadError || '数据不存在'}}</text>
+    <button wx:if="{{loadError}}" class="retry-btn" bindtap="retryLoad">重新加载</button>
   </view>
 
   <!-- 底部下单按钮 -->
-  <view class="bottom-bar" wx:if="{{!loading && demand}}">
+  <view class="bottom-bar" wx:if="{{!loading && demand && !orderId}}">
     <view class="bottom-btn {{applying ? 'disabled' : ''}}" bindtap="applyOrder">
       <text>{{demand.type === 'supply' ? '联系TA' : (applying ? '下单中...' : '下单')}}</text>
     </view>
+  </view>
+
+  <view class="bottom-bar" wx:if="{{!loading && order}}">
+    <view class="bottom-btn" bindtap="viewOrders"><text>返回订单列表</text></view>
   </view>
 
   <view class="safe-bottom-spacer"></view>

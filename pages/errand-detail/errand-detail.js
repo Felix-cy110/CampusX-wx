@@ -30,8 +30,12 @@ Page({
     capsuleGap: 0,
 
     demand: null,
+    detailId: '',
     detailType: 'demand',
+    orderId: '',
+    order: null,
     loading: true,
+    loadError: '',
     applying: false,
 
     // 用户信息
@@ -47,14 +51,23 @@ Page({
     const capsuleGap = systemInfo.windowWidth - menuButton.left + 8
 
     const id = options.id || ''
+    const orderId = String(options.orderId || '')
     const detailType = options.type === 'supply' ? 'supply' : 'demand'
     this.setData({
       statusBarHeight,
       navBarHeight,
       capsuleGap,
+      detailId: String(id),
       detailType,
+      orderId,
       isLoggedIn: app.globalData.isLoggedIn
     })
+
+    // 订单详情由后端校验交易双方权限，不受公开需求状态或首页缓存影响。
+    if (orderId) {
+      wx.hideShareMenu()
+      return this.loadOrderById(orderId)
+    }
 
     // 从存储中读取跑腿数据
     const demand = wx.getStorageSync('currentErrand')
@@ -65,7 +78,7 @@ Page({
     } else {
       if (demand) wx.removeStorageSync('currentErrand')
       if (id) {
-        this.loadDemandById(id, detailType)
+        return this.loadDemandById(id, detailType)
       } else {
         this.setData({ loading: false })
         wx.showToast({ title: '数据不存在', icon: 'none' })
@@ -90,7 +103,8 @@ Page({
 
   loadDemandById(id, detailType) {
     const isSupply = detailType === 'supply'
-    request({
+    this.setData({ loading: true, loadError: '' })
+    return request({
       url: isSupply
         ? '/api/v1/proxy-class-supply/' + id
         : '/api/v1/proxy-class-demand/' + id,
@@ -100,9 +114,68 @@ Page({
       this.setData({ demand, loading: false })
     }).catch(err => {
       console.error('加载跑腿详情失败:', err)
-      this.setData({ demand: null, loading: false })
-      wx.showToast({ title: (err && err.message) || '数据加载失败，请返回重试', icon: 'none' })
+      const loadError = (err && err.message) || '数据加载失败，请重试'
+      this.setData({ demand: null, loading: false, loadError })
+      wx.showToast({ title: loadError, icon: 'none' })
     })
+  },
+
+  loadOrderById(orderId) {
+    this.setData({ loading: true, loadError: '', demand: null, order: null })
+    return request({
+      url: '/api/v1/proxy-class-order/detail',
+      method: 'GET',
+      data: { orderId }
+    }).then(vo => {
+      const currentUid = (app.globalData.userInfo || {}).uid
+      const isBuyer = String(currentUid) === String(vo.buyerId)
+      const location = [vo.locationCampus, vo.locationBuilding, vo.locationRoom].filter(Boolean).join(' ')
+      const demand = {
+        id: vo.demandId,
+        type: 'errand',
+        title: vo.courseName || '',
+        content: [location, formatDateTime(vo.classTime)].filter(Boolean).join('\n'),
+        reward: vo.fee != null ? Number(vo.fee) : 0,
+        time: formatDateTime(vo.createdAt),
+        user: {
+          uid: String((isBuyer ? vo.sellerId : vo.buyerId) || ''),
+          name: (isBuyer ? vo.sellerNickname : vo.buyerNickname) || '',
+          avatar: toFullUrl(isBuyer ? vo.sellerAvatarUrl : vo.buyerAvatarUrl) || '/images/avatars/default.png'
+        }
+      }
+      this.setData({
+        demand,
+        detailType: 'demand',
+        order: {
+          orderNo: vo.orderNo,
+          statusDesc: vo.statusDesc || '未知状态',
+          createdAt: formatDateTime(vo.createdAt),
+          side: isBuyer ? 'buy' : 'sell',
+          contactRole: isBuyer ? '接单人' : '发布者'
+        },
+        loading: false
+      })
+    }).catch(err => {
+      console.error('加载跑腿订单详情失败:', err)
+      const loadError = (err && err.message) || '订单加载失败，请重试'
+      this.setData({ demand: null, order: null, loading: false, loadError })
+      wx.showToast({ title: loadError, icon: 'none' })
+    })
+  },
+
+  retryLoad() {
+    if (this.data.loading) return
+    if (this.data.orderId) return this.loadOrderById(this.data.orderId)
+    if (this.data.detailId) return this.loadDemandById(this.data.detailId, this.data.detailType)
+  },
+
+  viewOrders() {
+    const pages = getCurrentPages()
+    if (pages.length > 1 && pages[pages.length - 2].route === 'pages/order/order') {
+      wx.navigateBack()
+      return
+    }
+    safeNavigate({ url: '/pages/order/order?tab=errand&side=' + ((this.data.order || {}).side || 'buy') })
   },
 
   mapDemandDetail(vo) {
@@ -172,6 +245,7 @@ Page({
 
   /* 下单（申请接单） */
   async applyOrder() {
+    if (this.data.orderId) return
     if (this.data.detailType === 'supply') {
       this.contactUser()
       return
