@@ -216,6 +216,7 @@
 .empty-container {
   flex: 1;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   padding-top: calc(var(--navBarHeight, 44px) + var(--statusBarHeight, 20px));
@@ -261,4 +262,27 @@
 
 .safe-bottom-spacer {
   height: calc(120rpx + env(safe-area-inset-bottom));
+}
+
+.order-status {
+  font-size: var(--font-xl, 36rpx);
+  font-weight: 600;
+  color: var(--color-primary, #255AC5);
+}
+
+.order-meta,
+.contact-role {
+  margin-top: 16rpx;
+  font-size: var(--font-sm, 26rpx);
+  color: var(--color-text-secondary, #666666);
+  word-break: break-all;
+}
+
+.contact-role {
+  margin: 0 0 20rpx;
+}
+
+.retry-btn {
+  margin-top: 24rpx;
+  color: var(--color-primary, #255AC5);
 }

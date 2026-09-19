@@ -315,12 +315,20 @@ Page({
       showRefundAgreeBtn: false,
       showRefundRejectBtn: false,
       targetId: vo.demandId,
-      targetType: 'post'
+      targetType: 'errand'
     }
   },
 
   onOrderTap(e) {
     const { id, type, targetid, targettype } = e.currentTarget.dataset
+    if (type === 'errand') {
+      if (!id) {
+        wx.showToast({ title: '订单信息不可用', icon: 'none' })
+        return
+      }
+      safeNavigate({ url: '/pages/errand-detail/errand-detail?orderId=' + encodeURIComponent(id) })
+      return
+    }
     if (!targetid || !targettype) return
 
     if (type === 'secondhand' || type === 'rental') {

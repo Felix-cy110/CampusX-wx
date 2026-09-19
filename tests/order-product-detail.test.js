@@ -178,13 +178,13 @@ test('二手订单缺少订单 ID 时不会降级为普通购买入口', () => {
   assert.equal(pendingRequests.length, 0)
 })
 
-test('租赁订单保留租赁类型及订单号，代课订单不附商品订单参数', () => {
+test('租赁订单保留租赁类型及订单号，跑腿订单进入自身订单详情', () => {
   const page = createPage(orderDefinition)
   page.onOrderTap(orderTapEvent(page.mapRentalOrder({ id: 71, productId: 812 }, 'buy')))
   page.onOrderTap(orderTapEvent(page.mapProxyOrder({ orderId: 72, demandId: 913 }, 'buy')))
   assert.deepEqual(navigations.map(options => options.url), [
     '/pages/market-detail/market-detail?id=812&type=rental&orderId=71',
-    '/pages/post-detail/post-detail?id=913'
+    '/pages/errand-detail/errand-detail?orderId=72'
   ])
 })
 
