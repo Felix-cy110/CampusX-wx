@@ -2,14 +2,16 @@
   <!-- 自定义导航栏 -->
   <view class="fixed-header">
     <view class="status-bar-placeholder" style="height: {{statusBarHeight}}px;"></view>
-    <view class="nav-bar" style="height: {{navBarHeight}}px;">
+    <view class="nav-bar" style="height: {{navBarHeight}}px; padding-right: {{capsuleGap}}px;">
       <view class="nav-back" bindtap="goBack">
         <image class="nav-back-icon" src="/images/SVG/返回.svg" mode="aspectFit"></image>
       </view>
       <text class="nav-title">跑腿详情</text>
-      <button class="nav-placeholder share-nav-button" style="margin-right: {{capsuleGap}}px;" open-type="share">
-        <image class="share-nav-icon" src="/images/SVG/转发.svg" mode="aspectFit"></image>
-      </button>
+      <view class="nav-share">
+        <button class="share-nav-button" size="mini" open-type="share">
+          <image class="share-nav-icon" src="/images/SVG/转发.svg" mode="aspectFit"></image>
+        </button>
+      </view>
     </view>
   </view>
 
