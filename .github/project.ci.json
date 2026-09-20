@@ -1,0 +1,20 @@
+{
+  "description": "CampusX CI 上传配置，AppID 由仓库变量注入",
+  "projectname": "CampusX",
+  "compileType": "miniprogram",
+  "libVersion": "3.15.2",
+  "setting": {
+    "urlCheck": true,
+    "es6": true,
+    "postcss": true,
+    "minified": true,
+    "minifyWXSS": true,
+    "minifyWXML": true,
+    "enhance": true,
+    "uploadWithSourceMap": true
+  },
+  "packOptions": {
+    "ignore": [],
+    "include": []
+  }
+}

@@ -1,0 +1,51 @@
+name: 小程序 CI/CD
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      upload:
+        description: 测试通过后上传微信开发版本（仅默认分支）
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: wechat-${{ github.event_name == 'workflow_dispatch' && 'release' || github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: 检查上传分支
+        if: github.event_name == 'workflow_dispatch' && inputs.upload
+        env:
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: test "$GITHUB_REF" = "refs/heads/$DEFAULT_BRANCH"
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          package-manager-cache: false
+      - name: 检查 JavaScript 语法
+        run: git ls-files -z '*.js' '*.cjs' | xargs -0 -r -n 1 node --check
+      - name: 运行现有单元测试
+        run: node --test tests/*.test.js
+      - name: 安装微信上传工具
+        if: github.event_name == 'workflow_dispatch' && inputs.upload
+        run: npm install --prefix "$RUNNER_TEMP/wechat-ci" --no-audit --no-fund miniprogram-ci@2.1.31
+      - name: 上传开发版本
+        if: github.event_name == 'workflow_dispatch' && inputs.upload
+        env:
+          WECHAT_APP_ID: ${{ vars.WECHAT_APP_ID }}
+          WECHAT_PRIVATE_KEY: ${{ secrets.WECHAT_PRIVATE_KEY }}
+          NODE_PATH: ${{ runner.temp }}/wechat-ci/node_modules
+        run: node .github/scripts/upload-wechat.cjs
