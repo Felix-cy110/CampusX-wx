@@ -14,7 +14,7 @@ App({
         this.globalData.userInfo = userInfo
         this.globalData.isJoinedSchool = !!(userInfo.campusId || userInfo.school)
       }
-      this.validateStoredSession(token)
+      this.sessionReady = this.validateStoredSession(token)
     } else if (userInfo) {
       // 清理旧版本可能遗留的孤立用户缓存
       wx.removeStorageSync('userInfo')
@@ -28,7 +28,7 @@ App({
 
   validateStoredSession(tokenSnapshot) {
     const { request, toFullUrl } = require('./utils/request')
-    request({ url: '/api/v1/user/me', method: 'GET' }).then(vo => {
+    return request({ url: '/api/v1/user/me', method: 'GET' }).then(vo => {
       // 校验期间若用户已退出或重新登录，不用旧请求覆盖新会话
       if (wx.getStorageSync('token') !== tokenSnapshot) return
       const cached = wx.getStorageSync('userInfo') || {}

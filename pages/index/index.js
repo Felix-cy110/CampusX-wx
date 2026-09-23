@@ -1,4 +1,3 @@
-  const mock = require('../../utils/mock.js')
 const app = getApp()
 const { safeNavigate, safeSwitch } = require('../../utils/safeNavigate')
 const { request, toFullUrl } = require('../../utils/request')
@@ -171,6 +170,7 @@ Page({
   },
 
   onLoad() {
+    this._unloaded = false
     this._unsubscribeUnreadCounts = subscribeUnreadCounts(counts => {
       this.updateInboxUnreadIndicator(counts)
     })
@@ -209,7 +209,6 @@ Page({
       isLoggedIn: app.globalData.isLoggedIn,
       isJoinedSchool: app.globalData.isJoinedSchool,
       userInfo: userInfo,
-      schoolInfo: Object.assign({}, mock.schools[6], { icon: '/images/avatars/default.png' }),
       feedList: replaceUserInfo([]),
       marketList: [],
       errandList: [],
@@ -228,9 +227,52 @@ Page({
       bookServerPage: 1,
       bookServerHasMore: true
     })
+    this.syncUserSchool()
     this.loadFeed()
     this.loadActivityBanner()
     if (canAccessCampusFeatures()) this.loadCampusData()
+
+    // 启动校验可能晚于首页渲染完成，复用该请求同步最新学校。
+    if (app.sessionReady) {
+      app.sessionReady.then(() => {
+        if (!this._unloaded && this.syncUserSchool()) this.reloadSchoolData()
+      })
+    }
+  },
+
+  /** 默认展示用户所属学校；主动跨校浏览期间保留所选学校。 */
+  syncUserSchool() {
+    const isLoggedIn = !!app.globalData.isLoggedIn
+    const isJoinedSchool = canAccessCampusFeatures()
+    const userInfo = isLoggedIn ? (app.globalData.userInfo || {}) : {}
+    const previousUser = this.data.userInfo || {}
+    const userChanged = String(previousUser.uid || '') !== String(userInfo.uid || '')
+    const campusChanged = String(previousUser.campusId || '') !== String(userInfo.campusId || '')
+    const joinedChanged = this.data.isJoinedSchool !== isJoinedSchool
+    const resetBrowse = userChanged || campusChanged || !isLoggedIn
+    const browsingCampusId = resetBrowse ? '' : this.data.browsingCampusId
+    const updates = { userInfo, isLoggedIn, isJoinedSchool, browsingCampusId }
+
+    if (resetBrowse) this._selectingBrowseSchool = false
+    if (!browsingCampusId) {
+      updates.schoolInfo = {
+        id: userInfo.campusId || '',
+        name: isLoggedIn
+          ? (userInfo.school || (userInfo.campusId ? '学校信息加载中' : '未加入学校'))
+          : '未登录',
+        icon: '/images/avatars/default.png'
+      }
+    }
+    this.setData(updates)
+    return userChanged || campusChanged || joinedChanged
+  },
+
+  /** 学校切换后统一刷新列表，使导航栏与查询范围同步。 */
+  reloadSchoolData() {
+    this.loadFeed()
+    this.loadCampusData()
+    this.loadTeacherRatings()
+    this.loadSupplies(1)
   },
 
   /** 仅在用户已完成校园资料后加载按学校隔离的数据。 */
@@ -399,59 +441,42 @@ Page({
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
       this.getTabBar().setData({ selected: 0 })
     }
-    const previouslyJoined = this.data.isJoinedSchool
-    const isJoinedSchool = canAccessCampusFeatures()
-    this.setData({
-      isLoggedIn: app.globalData.isLoggedIn,
-      isJoinedSchool
-    })
+    let schoolChanged = this.syncUserSchool()
     this.updateInboxUnreadIndicator(getUnreadCounts())
-    if (isJoinedSchool) {
+    if (this.data.isJoinedSchool) {
       // 与 TabBar 共享单飞请求；页面重新可见时确保红点使用服务端最新未读状态。
       refreshUnreadCounts().catch(() => {})
     }
 
-    // 完善资料后 switchTab 回到已存在的首页实例，onLoad 不会重跑，需在这里补加载校园数据。
-    if (!previouslyJoined && isJoinedSchool) this.loadCampusData()
-
-    /* 检查是否从选校页面返回了新学校 */
-    const selectedSchool = wx.getStorageSync('selectedSchool')
-    if (selectedSchool) {
-      // 兼容 JSON 字符串（{"id":2,"name":"上海大学"}）和纯名字字符串（老数据）
-      let schoolName = ''
-      let schoolId = ''
-      if (typeof selectedSchool === 'object') {
-        schoolName = selectedSchool.name || ''
-        schoolId = selectedSchool.id || ''
-      } else {
-        try {
-          const parsed = JSON.parse(selectedSchool)
-          schoolName = (parsed && parsed.name) || ''
-          schoolId = (parsed && parsed.id) || ''
-        } catch (e) {
-          schoolName = selectedSchool
+    // 只接收本次从首页主动选校的结果，忽略注册、编辑资料或旧版本留下的缓存。
+    if (this._selectingBrowseSchool) {
+      this._selectingBrowseSchool = false
+      const selectedSchool = wx.getStorageSync('selectedSchool')
+      wx.removeStorageSync('selectedSchool')
+      try {
+        const school = typeof selectedSchool === 'string' ? JSON.parse(selectedSchool || 'null') : selectedSchool
+        if (school && school.id && school.name) {
+          const ownCampusId = (app.globalData.userInfo || {}).campusId
+          const browsingCampusId = String(school.id) === String(ownCampusId) ? '' : school.id
+          schoolChanged = schoolChanged || String(browsingCampusId) !== String(this.data.browsingCampusId)
+          this.setData({
+            schoolInfo: { id: school.id, name: school.name, icon: '/images/avatars/default.png' },
+            browsingCampusId
+          })
+          this.syncUserSchool()
         }
-      }
-      if (schoolName && schoolName !== this.data.schoolInfo.name) {
-        // 优先在 mock.schools 按 name 匹配补齐展示字段；匹配不到（后端新建学校）直接用解析出的 id/name
-        const school = mock.schools.find(s => s.name === schoolName)
-        const schoolInfo = school
-          ? Object.assign({}, school, { icon: '/images/avatars/default.png' })
-          : { id: schoolId, name: schoolName, icon: '/images/avatars/default.png' }
-        this.setData({ schoolInfo, browsingCampusId: schoolId })
-        this.loadFeed()
-        // 切换学校后完整重载其余按学校隔离的数据
-        this.loadCampusData()
-        this.loadTeacherRatings()
-        this.loadSupplies(1)
+      } catch (err) {
+        console.warn('解析浏览学校失败:', err)
       }
     }
+    if (schoolChanged) this.reloadSchoolData()
 
     // 同步详情页的点赞/取消赞操作到列表
     this._syncPostLikeUpdate()
   },
 
   onUnload() {
+    this._unloaded = true
     if (this._unsubscribeUnreadCounts) {
       this._unsubscribeUnreadCounts()
       this._unsubscribeUnreadCounts = null
@@ -673,7 +698,13 @@ Page({
 
   /* 切换学校 */
   switchSchool() {
-    safeNavigate({ url: '/pages/select-school/select-school' })
+    wx.removeStorageSync('selectedSchool')
+    this._selectingBrowseSchool = true
+    const navigated = safeNavigate({
+      url: '/pages/select-school/select-school',
+      fail: () => { this._selectingBrowseSchool = false }
+    })
+    if (!navigated) this._selectingBrowseSchool = false
   },
 
   /* 跳转搜索 */
