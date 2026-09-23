@@ -228,9 +228,8 @@ Page({
       bookServerHasMore: true
     })
     this.syncUserSchool()
-    this.loadFeed()
+    this.reloadSchoolData(true)
     this.loadActivityBanner()
-    if (canAccessCampusFeatures()) this.loadCampusData()
 
     // 启动校验可能晚于首页渲染完成，复用该请求同步最新学校。
     if (app.sessionReady) {
@@ -267,12 +266,31 @@ Page({
     return userChanged || campusChanged || joinedChanged
   },
 
-  /** 学校切换后统一刷新列表，使导航栏与查询范围同步。 */
-  reloadSchoolData() {
-    this.loadFeed()
+  /** 相同范围、相同发布版本的生命周期刷新共享请求，避免推荐内容被重复取走。 */
+  reloadSchoolData(initialLoad = false) {
+    const userInfo = app.globalData.userInfo || {}
+    const key = JSON.stringify([
+      wx.getStorageSync('token'), userInfo.uid, userInfo.campusId,
+      this.data.isJoinedSchool, this.data.browsingCampusId, this.data.activePostCategory,
+      app.globalData.homeContentRefreshVersion || 0
+    ])
+    if (this._schoolDataRefresh && this._schoolDataRefresh.key === key &&
+        this._schoolDataRefresh.requestId === this._feedRequestId) {
+      return this._schoolDataRefresh.promise
+    }
+
+    const refresh = { key }
+    this._schoolDataRefresh = refresh
+    refresh.promise = this.loadFeed().finally(() => {
+      if (this._schoolDataRefresh === refresh) this._schoolDataRefresh = null
+    })
+    refresh.requestId = this._feedRequestId
     this.loadCampusData()
-    this.loadTeacherRatings()
-    this.loadSupplies(1)
+    if (!initialLoad) {
+      this.loadTeacherRatings()
+      this.loadSupplies(1)
+    }
+    return refresh.promise
   },
 
   /** 仅在用户已完成校园资料后加载按学校隔离的数据。 */
@@ -342,6 +360,8 @@ Page({
     // 首次加载/下拉刷新允许覆盖仍在途的翻页请求，旧响应通过 requestId 丢弃。
     const requestId = (this._feedRequestId || 0) + 1
     this._feedRequestId = requestId
+    const refreshVersion = app.globalData.homeContentRefreshVersion || 0
+    const tokenSnapshot = wx.getStorageSync('token')
     this.setData({ feedLoading: true })
 
     const browsingCampusId = this.data.browsingCampusId
@@ -355,7 +375,7 @@ Page({
       ? { url: '/api/post/list', method: 'GET', data: requestData }
       : { url: '/api/post/feed', method: 'GET', data: requestData }
     return request(reqOptions).then(data => {
-      if (requestId !== this._feedRequestId) return false
+      if (this._unloaded || requestId !== this._feedRequestId) return false
       try {
         console.log('feed API 返回:', JSON.stringify(data))
         if (!data || !Array.isArray(data.list)) {
@@ -398,6 +418,11 @@ Page({
           feedLoading: false
         })
         wx.removeStorageSync('lastFeedRenderError')
+        // 只有最新发布版本的首屏成功渲染后才确认通知；翻页或迟到响应不能清除它。
+        if (!isLoadMore && refreshVersion === (app.globalData.homeContentRefreshVersion || 0) &&
+            tokenSnapshot === wx.getStorageSync('token')) {
+          app.globalData.homeContentNeedsRefresh = false
+        }
         return true
       } catch (err) {
         const message = getErrorMessage(err)
@@ -408,7 +433,7 @@ Page({
         return false
       }
     }, err => {
-      if (requestId !== this._feedRequestId) return false
+      if (this._unloaded || requestId !== this._feedRequestId) return false
       console.error('帖子接口请求失败:', err)
       this.setData({ feedLoading: false })
       wx.showToast({ title: '帖子网络请求失败，请下拉刷新', icon: 'none', duration: 2000 })
@@ -470,7 +495,6 @@ Page({
       }
     }
     if (schoolChanged || app.globalData.homeContentNeedsRefresh) {
-      app.globalData.homeContentNeedsRefresh = false
       this.reloadSchoolData()
     }
 

@@ -11,6 +11,8 @@ let pages
 let publishedPage
 let failFeed
 let failPublish
+let deferFeed
+let pendingFeeds
 
 global.getApp = () => app
 global.getCurrentPages = () => [{ route: 'pages/index/index' }]
@@ -37,6 +39,10 @@ global.wx = {
     requests.push(options)
     let data = {}
     if (/\/post\/(feed|list)$/.test(options.url)) {
+      if (deferFeed) {
+        pendingFeeds.push(options)
+        return
+      }
       if (failFeed) return options.fail({ errMsg: 'request:fail timeout' })
       data = { list: posts.filter(post => !options.data.targetCampusId ||
         String(post.targetCampusId) === String(options.data.targetCampusId)), nextCursor: null }
@@ -86,6 +92,15 @@ function createPublisher() {
 async function flush() { await new Promise(resolve => setImmediate(resolve)) }
 function feedRequests() { return requests.filter(req => /\/post\/(feed|list)$/.test(req.url)) }
 
+function notifyPublished() {
+  const page = createPage(publishedDefinition)
+  page.onLoad({ from: 'post' })
+}
+
+function completeFeed(index, list) {
+  pendingFeeds[index].success({ data: { code: 200, data: { list, nextCursor: null } } })
+}
+
 test.beforeEach(() => {
   storage = new Map([['token', 'test-token']])
   posts = []
@@ -95,6 +110,8 @@ test.beforeEach(() => {
   publishedPage = null
   failFeed = false
   failPublish = false
+  deferFeed = false
+  pendingFeeds = []
   app.globalData = { isLoggedIn: true, isJoinedSchool: true,
     userInfo: { uid: '18', campusId: '320', school: '南京中医药大学' } }
   resetUnreadState()
@@ -175,4 +192,125 @@ test('发布失败不会进入成功页或通知首页重新加载', async () =>
   assert.equal(publishedPage, null)
   assert.equal(posts.length, 0)
   assert.equal(feedRequests().length, 1)
+})
+
+test('发布后首次创建首页及请求期间再次显示只发送一次推荐，成功前保留通知', async () => {
+  notifyPublished()
+  deferFeed = true
+  const home = createHome()
+  home.onShow()
+  assert.equal(feedRequests().length, 1)
+  assert.equal(app.globalData.homeContentNeedsRefresh, true)
+  completeFeed(0, [{ id: '501', userId: '18', title: '我的新帖' }])
+  await flush()
+  assert.deepEqual(home.data.feedList.map(post => post.id), ['501'])
+  assert.equal(app.globalData.homeContentNeedsRefresh, false)
+  home.onShow()
+  assert.equal(feedRequests().length, 1)
+})
+
+test('发布后自动刷新失败会保留通知，恢复网络再次进入首页后重试', async () => {
+  const home = createHome()
+  await flush()
+  posts.push({ id: '501', userId: '18', title: '我的新帖' })
+  notifyPublished()
+  failFeed = true
+  home.onShow()
+  await flush()
+  assert.equal(app.globalData.homeContentNeedsRefresh, true)
+  assert.deepEqual(home.data.feedList, [])
+  failFeed = false
+  home.onShow()
+  await flush()
+  assert.equal(feedRequests().length, 3)
+  assert.deepEqual(home.data.feedList.map(post => post.id), ['501'])
+  assert.equal(app.globalData.homeContentNeedsRefresh, false)
+})
+
+test('自动刷新失败后手动刷新成功也能确认通知，返回首页不再重复请求', async () => {
+  const home = createHome()
+  await flush()
+  notifyPublished()
+  failFeed = true
+  home.onShow()
+  await flush()
+  assert.equal(app.globalData.homeContentNeedsRefresh, true)
+  failFeed = false
+  posts.push({ id: '501', userId: '18' })
+  await home.refreshFeed()
+  assert.equal(app.globalData.homeContentNeedsRefresh, false)
+  home.onShow()
+  assert.equal(feedRequests().length, 3)
+  assert.deepEqual(home.data.feedList.map(post => post.id), ['501'])
+})
+
+test('旧刷新完成不能确认请求发出之后的新发布通知', async () => {
+  const home = createHome()
+  await flush()
+  notifyPublished()
+  deferFeed = true
+  home.onShow()
+  notifyPublished()
+  completeFeed(0, [{ id: '501', userId: '18' }])
+  await flush()
+  assert.equal(app.globalData.homeContentNeedsRefresh, true)
+  home.onShow()
+  assert.equal(pendingFeeds.length, 2)
+  completeFeed(1, [{ id: '502', userId: '18' }, { id: '501', userId: '18' }])
+  await flush()
+  assert.equal(app.globalData.homeContentNeedsRefresh, false)
+  assert.deepEqual(home.data.feedList.map(post => post.id), ['502', '501'])
+})
+
+test('切换学校不会复用旧学校的刷新请求，旧响应不能确认新请求的通知', async () => {
+  notifyPublished()
+  deferFeed = true
+  const home = createHome()
+  home.switchSchool()
+  storage.set('selectedSchool', JSON.stringify({ id: '900', name: '南京大学' }))
+  home.onShow()
+  assert.equal(pendingFeeds.length, 2)
+  assert.equal(pendingFeeds[1].data.targetCampusId, '900')
+  completeFeed(0, [{ id: '501', userId: '18' }])
+  await flush()
+  assert.equal(app.globalData.homeContentNeedsRefresh, true)
+  completeFeed(1, [{ id: '601', userId: '19', schoolName: '南京大学' }])
+  await flush()
+  assert.equal(home.data.schoolInfo.name, '南京大学')
+  assert.deepEqual(home.data.feedList.map(post => post.id), ['601'])
+  assert.equal(app.globalData.homeContentNeedsRefresh, false)
+})
+
+test('请求过程中再次发布，返回首页会请求新版本且忽略旧响应', async () => {
+  notifyPublished()
+  deferFeed = true
+  const home = createHome()
+  notifyPublished()
+  home.onShow()
+  assert.equal(pendingFeeds.length, 2)
+  completeFeed(0, [{ id: '501', userId: '18' }])
+  await flush()
+  assert.equal(app.globalData.homeContentNeedsRefresh, true)
+  completeFeed(1, [{ id: '502', userId: '18' }, { id: '501', userId: '18' }])
+  await flush()
+  assert.equal(app.globalData.homeContentNeedsRefresh, false)
+  assert.deepEqual(home.data.feedList.map(post => post.id), ['502', '501'])
+})
+
+test('手动刷新覆盖自动请求后失败，返回首页不会复用已经失效的自动请求', async () => {
+  notifyPublished()
+  deferFeed = true
+  const home = createHome()
+  const manualRefresh = home.refreshFeed()
+  pendingFeeds[1].fail({ errMsg: 'request:fail timeout' })
+  await manualRefresh
+  home.onShow()
+  assert.equal(pendingFeeds.length, 3)
+  completeFeed(0, [{ id: 'old', userId: '18' }])
+  await flush()
+  assert.equal(app.globalData.homeContentNeedsRefresh, true)
+  completeFeed(2, [{ id: '501', userId: '18' }])
+  await flush()
+  assert.equal(app.globalData.homeContentNeedsRefresh, false)
+  assert.deepEqual(home.data.feedList.map(post => post.id), ['501'])
 })

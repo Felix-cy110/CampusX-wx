@@ -2,7 +2,9 @@ Page({
   onLoad(options) {
     // 帖子、闲置和跑腿发布后都会进入此页，返回缓存中的首页时需重新取列表。
     if (['post', 'errand', 'supply'].includes(options.from)) {
-      getApp().globalData.homeContentNeedsRefresh = true
+      const globalData = getApp().globalData
+      globalData.homeContentRefreshVersion = (globalData.homeContentRefreshVersion || 0) + 1
+      globalData.homeContentNeedsRefresh = true
     }
     const systemInfo = wx.getSystemInfoSync()
     const menuButton = wx.getMenuButtonBoundingClientRect()
