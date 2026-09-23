@@ -80,6 +80,9 @@ App({
       stats: { following: 0, followers: 0, likes: 0 }
     },
 
+    // 发布完成后通知已存在的首页刷新内容，返回首页时消费。
+    homeContentNeedsRefresh: false,
+
     // 跨校发帖额度
     crossSchoolQuota: 5,
 

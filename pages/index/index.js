@@ -469,7 +469,10 @@ Page({
         console.warn('解析浏览学校失败:', err)
       }
     }
-    if (schoolChanged) this.reloadSchoolData()
+    if (schoolChanged || app.globalData.homeContentNeedsRefresh) {
+      app.globalData.homeContentNeedsRefresh = false
+      this.reloadSchoolData()
+    }
 
     // 同步详情页的点赞/取消赞操作到列表
     this._syncPostLikeUpdate()
@@ -838,9 +841,10 @@ Page({
 
   refreshFeed() {
     this.setData({ feedRefreshing: true })
-    this.loadFeed().finally(() => {
+    return this.loadFeed().then(success => {
+      if (success) wx.showToast({ title: '刷新成功', icon: 'none' })
+    }).finally(() => {
       this.setData({ feedRefreshing: false })
-      wx.showToast({ title: '刷新成功', icon: 'none' })
     })
   },
 
