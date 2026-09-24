@@ -80,6 +80,10 @@ App({
       stats: { following: 0, followers: 0, likes: 0 }
     },
 
+    // 发布完成后通知首页刷新内容，最新版本的列表刷新成功后确认。
+    homeContentNeedsRefresh: false,
+    homeContentRefreshVersion: 0,
+
     // 跨校发帖额度
     crossSchoolQuota: 5,
 

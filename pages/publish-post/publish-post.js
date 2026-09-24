@@ -93,19 +93,18 @@ Page({
   },
 
   onShow() {
-    // 从 select-school 页面返回时，读取选中的学校
-    const schoolStr = wx.getStorageSync('selectedSchool')
-    if (schoolStr) {
+    // 仅接受从本页主动选校的结果，避免其他页面或旧版本的缓存改变发帖归属。
+    if (this._selectingTargetSchool) {
+      this._selectingTargetSchool = false
+      const selectedSchool = wx.getStorageSync('selectedSchool')
+      wx.removeStorageSync('selectedSchool')
       try {
-        const school = JSON.parse(schoolStr)
-        this.setData({
-          targetSchool: school.name || '',
-          targetCampusId: school.id || null
-        })
-        // 清除 storage 防止下次打开页面时显示旧数据
-        wx.removeStorageSync('selectedSchool')
+        const school = typeof selectedSchool === 'string' ? JSON.parse(selectedSchool || 'null') : selectedSchool
+        if (school && school.id && school.name) {
+          this.setData({ targetSchool: school.name, targetCampusId: school.id })
+        }
       } catch (e) {
-        // ignore parse error
+        // 无效结果不改变原目标学校。
       }
     }
     // 每次返回页面时重新判断是否跨校，并加载额度
@@ -244,7 +243,13 @@ Page({
   },
 
   selectTargetSchool() {
-    safeNavigate({ url: '/pages/select-school/select-school' })
+    wx.removeStorageSync('selectedSchool')
+    this._selectingTargetSchool = true
+    const navigated = safeNavigate({
+      url: '/pages/select-school/select-school',
+      fail: () => { this._selectingTargetSchool = false }
+    })
+    if (!navigated) this._selectingTargetSchool = false
   },
 
   // ===== 二手挂单 handlers =====
