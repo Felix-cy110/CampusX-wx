@@ -101,6 +101,51 @@ function completeFeed(index, list) {
   pendingFeeds[index].success({ data: { code: 200, data: { list, nextCursor: null } } })
 }
 
+test('首页忽略的旧选校缓存也不能把新发布的帖子发到别校', async t => {
+  t.mock.timers.enable({ apis: ['setTimeout'] })
+  storage.set('selectedSchool', JSON.stringify({ id: '900', name: '南京大学' }))
+  const home = createHome()
+  const publisher = createPublisher()
+  publisher.onLoad({ mode: 'feed' })
+  publisher.onShow()
+  assert.equal(home.data.schoolInfo.name, '南京中医药大学')
+  assert.equal(publisher.data.targetCampusId, '320')
+  assert.equal(publisher.data.targetSchool, '南京中医药大学')
+  assert.equal(publisher.data.isCrossSchool, false)
+  await publisher.publishPost()
+  const publishRequest = requests.find(req => req.url.endsWith('/post/publish/local'))
+  assert.equal(publishRequest.data.targetCampusId, '320')
+})
+
+test('发布页主动选择其他学校后接受结果且只消费一次', () => {
+  const publisher = createPublisher()
+  publisher.onLoad({ mode: 'feed' })
+  storage.set('selectedSchool', JSON.stringify({ id: '700', name: '旧学校' }))
+  publisher.selectTargetSchool()
+  assert.equal(storage.has('selectedSchool'), false)
+  storage.set('selectedSchool', JSON.stringify({ id: '900', name: '南京大学' }))
+  publisher.onShow()
+  assert.equal(publisher.data.targetCampusId, '900')
+  assert.equal(publisher.data.isCrossSchool, true)
+  assert.equal(storage.has('selectedSchool'), false)
+  storage.set('selectedSchool', JSON.stringify({ id: '700', name: '无关页面的学校' }))
+  publisher.onShow()
+  assert.equal(publisher.data.targetCampusId, '900')
+})
+
+for (const selected of ['', '{broken', JSON.stringify({ name: '无效学校' })]) {
+  test(`发布页取消选校或收到无效选校结果时保留原目标：${selected}`, () => {
+    const publisher = createPublisher()
+    publisher.onLoad({ mode: 'feed' })
+    publisher.selectTargetSchool()
+    storage.set('selectedSchool', selected)
+    publisher.onShow()
+    assert.equal(publisher.data.targetCampusId, '320')
+    assert.equal(publisher.data.isCrossSchool, false)
+    assert.equal(storage.has('selectedSchool'), false)
+  })
+}
+
 test.beforeEach(() => {
   storage = new Map([['token', 'test-token']])
   posts = []
