@@ -326,6 +326,132 @@ test('切换学校不会复用旧学校的刷新请求，旧响应不能确认�
   assert.equal(app.globalData.homeContentNeedsRefresh, false)
 })
 
+test('切换学校立即清空旧帖子和分页，加载失败也不把本校帖子显示在外校标题下', async () => {
+  posts.push({ id: '501', targetCampusId: '320', schoolName: '南京中医药大学' })
+  const home = createHome()
+  await flush()
+  home.setData({ feedCursor: 'old-cursor', feedHasMore: true })
+  deferFeed = true
+  const oldPage = home.loadMoreFeed()
+  home.switchSchool()
+  storage.set('selectedSchool', JSON.stringify({ id: '900', name: '南京大学' }))
+  home.onShow()
+  assert.equal(home.data.schoolInfo.name, '南京大学')
+  assert.deepEqual(home.data.feedList, [])
+  assert.deepEqual(home.data.currentList, [])
+  assert.equal(home.data.feedCursor, null)
+  assert.equal(home.data.feedLoading, true)
+  assert.equal(pendingFeeds[1].data.targetCampusId, '900')
+  completeFeed(0, [{ id: '502', targetCampusId: '320' }])
+  await oldPage
+  assert.deepEqual(home.data.feedList, [])
+  pendingFeeds[1].fail({ errMsg: 'request:fail timeout' })
+  await flush()
+  assert.equal(home.data.feedLoadFailed, true)
+  assert.deepEqual(home.data.feedList, [])
+
+  const retry = home.refreshFeed()
+  completeFeed(2, [{ id: '601', targetCampusId: '900', schoolName: '南京大学' }])
+  await retry
+  assert.equal(home.data.schoolInfo.name, home.data.feedList[0].school)
+  assert.equal(home.data.feedLoadFailed, false)
+})
+
+test('本校推荐分页保留顺序，仅在第一条外校帖子前提示一次，刷新后重置', async () => {
+  deferFeed = true
+  const home = createHome()
+  pendingFeeds[0].success({ data: { code: 200, data: {
+    list: [{ id: '501', targetCampusId: '320', schoolName: '南京中医药大学' }],
+    nextCursor: 'next-page'
+  } } })
+  await flush()
+  assert.equal(home.data.crossSchoolStartIndex, -1)
+  const more = home.loadMoreFeed()
+  assert.equal(pendingFeeds[1].data.cursor, 'next-page')
+  assert.ok(pendingFeeds[1].url.endsWith('/post/feed'))
+  completeFeed(1, [
+    { id: '601', targetCampusId: '900', schoolName: '南京大学' },
+    { id: '602', targetCampusId: '901', schoolName: '江苏大学' }
+  ])
+  await more
+  assert.deepEqual(home.data.feedList.map(post => post.id), ['501', '601', '602'])
+  assert.equal(home.data.crossSchoolStartIndex, 1)
+  assert.equal(home.data.schoolInfo.name, '南京中医药大学')
+  assert.equal(home.data.browsingCampusId, '')
+  assert.equal(home.data.feedHasMore, false)
+  const refresh = home.refreshFeed()
+  completeFeed(2, [{ id: '503', targetCampusId: '320' }])
+  await refresh
+  assert.equal(home.data.crossSchoolStartIndex, -1)
+})
+
+test('本校没有帖子时在第一条外校帖子前提示，手动选校则不显示本校刷完提示', async () => {
+  posts.push({ id: '601', targetCampusId: '900', schoolName: '南京大学' })
+  const home = createHome()
+  await flush()
+  assert.equal(home.data.crossSchoolStartIndex, 0)
+  home.switchSchool()
+  storage.set('selectedSchool', JSON.stringify({ id: '900', name: '南京大学' }))
+  home.onShow()
+  await flush()
+  assert.equal(home.data.crossSchoolStartIndex, -1)
+  assert.equal(home.data.schoolInfo.name, home.data.feedList[0].school)
+})
+
+test('游客首页重复显示不会清空帖子或使正在加载的请求失效', async () => {
+  storage.delete('token')
+  app.globalData = { isLoggedIn: false, isJoinedSchool: false, userInfo: {} }
+  deferFeed = true
+  const home = createHome()
+  home.onShow()
+  assert.equal(pendingFeeds.length, 1)
+  completeFeed(0, [{ id: '601', targetCampusId: '900', schoolName: '南京大学' }])
+  await flush()
+  home.onShow()
+  assert.deepEqual(home.data.feedList.map(post => post.id), ['601'])
+  assert.equal(home.data.crossSchoolStartIndex, -1)
+  assert.equal(home.data.schoolInfo.name, '未登录')
+})
+
+test('快速切到外校再切回本校，外校的迟到成功或失败都不能改写本校列表', async () => {
+  posts.push({ id: '501', targetCampusId: '320', schoolName: '南京中医药大学' })
+  const home = createHome()
+  await flush()
+  deferFeed = true
+  home.switchSchool()
+  storage.set('selectedSchool', JSON.stringify({ id: '900', name: '南京大学' }))
+  home.onShow()
+  home.switchSchool()
+  storage.set('selectedSchool', JSON.stringify({ id: '320', name: '南京中医药大学' }))
+  home.onShow()
+  assert.equal(home.data.schoolInfo.name, '南京中医药大学')
+  assert.deepEqual(home.data.feedList, [])
+  assert.equal(home.data.feedCursor, null)
+  assert.ok(pendingFeeds[1].url.endsWith('/post/feed'))
+  completeFeed(1, [{ id: '502', targetCampusId: '320', schoolName: '南京中医药大学' }])
+  await flush()
+  completeFeed(0, [{ id: '601', targetCampusId: '900', schoolName: '南京大学' }])
+  await flush()
+  assert.deepEqual(home.data.feedList.map(post => post.id), ['502'])
+  assert.equal(home.data.schoolInfo.name, home.data.feedList[0].school)
+
+  home.switchSchool()
+  storage.set('selectedSchool', JSON.stringify({ id: '901', name: '江苏大学' }))
+  home.onShow()
+  home.switchSchool()
+  storage.set('selectedSchool', JSON.stringify({ id: '320', name: '南京中医药大学' }))
+  home.onShow()
+  completeFeed(3, [{ id: '503', targetCampusId: '320', schoolName: '南京中医药大学' }])
+  await flush()
+  pendingFeeds[2].fail({ errMsg: 'request:fail timeout' })
+  await flush()
+  assert.deepEqual(home.data.feedList.map(post => post.id), ['503'])
+  assert.equal(home.data.schoolInfo.name, home.data.feedList[0].school)
+  assert.equal(home.data.feedLoadFailed, false)
+  assert.equal(home.data.crossSchoolStartIndex, -1)
+  assert.equal(toasts.length, 0)
+})
+
 test('请求过程中再次发布，返回首页会请求新版本且忽略旧响应', async () => {
   notifyPublished()
   deferFeed = true

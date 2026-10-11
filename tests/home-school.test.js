@@ -106,9 +106,25 @@ test('用户资料晚于首页返回时，自动刷新学校，且只请求一�
   app.onLaunch()
   const page = createHome()
   assert.equal(page.data.schoolInfo.name, '学校信息加载中')
+  assert.equal(lastFeedRequest(), undefined)
+  assert.equal(page.data.feedLoading, true)
   await completeSession()
   assert.equal(page.data.schoolInfo.name, '南京中医药大学')
   assert.equal(requests.filter(req => req.url.endsWith('/user/me')).length, 1)
+  assert.equal(requests.filter(req => req.url.endsWith('/post/feed')).length, 1)
+})
+
+test('本地缓存学校过时时，等待账号资料同步后才加载推荐，避免旧校名配新校帖子', async () => {
+  storage.set('userInfo', { ...ownSchool, campusId: '900', school: '旧学校' })
+  app.onLaunch()
+  const page = createHome()
+  page.onShow()
+  assert.equal(lastFeedRequest(), undefined)
+  await completeSession()
+  assert.equal(page.data.schoolInfo.name, ownSchool.school)
+  assert.equal(page.data.schoolInfo.id, ownSchool.campusId)
+  assert.ok(lastFeedRequest().url.endsWith('/post/feed'))
+  assert.equal(requests.filter(req => req.url.endsWith('/post/feed')).length, 1)
 })
 
 test('主动切换使用真实学校ID，返回首页保留浏览学校，切回本校恢复推荐流', () => {
@@ -161,6 +177,19 @@ test('用户更换账号或所属学校后返回首页，重置浏览范围并�
   assert.equal(page.data.schoolInfo.name, '江苏大学')
   assert.equal(page.data.browsingCampusId, '')
   assert.ok(lastFeedRequest().url.endsWith('/post/feed'))
+})
+
+test('账号资料原对象被更新学校时，也能识别范围变化并清空旧帖子', async () => {
+  const page = createHome()
+  await new Promise(resolve => setImmediate(resolve))
+  page.setData({ feedList: [{ id: 'old' }], feedCursor: 'old-cursor' })
+  app.globalData.userInfo.campusId = '400'
+  app.globalData.userInfo.school = '江苏大学'
+  page.onShow()
+  assert.equal(page.data.schoolInfo.name, '江苏大学')
+  assert.deepEqual(page.data.feedList, [])
+  assert.equal(page.data.feedCursor, null)
+  assert.equal(requests.filter(req => req.url.endsWith('/post/feed')).length, 2)
 })
 
 test('游客登录完善资料后回到已有首页，立即显示所属学校', () => {
