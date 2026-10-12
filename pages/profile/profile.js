@@ -703,9 +703,12 @@ Page({
     }
 
     const isIdle = item._backendType === 'idle'
+    const isDemand = item._backendType === 'proxy_demand'
     wx.showModal({
       title: isIdle ? '确认下架' : '确认删除',
-      content: isIdle ? '下架后其他同学将无法看到该商品，是否确认下架？' : '删除后无法恢复，是否确认删除？',
+      content: isIdle ? '下架后其他同学将无法看到该商品，是否确认下架？'
+        : (isDemand ? '删除后无法恢复，尚未确认的接单申请也会取消；已确认的订单需先处理。是否确认删除？'
+          : '删除后无法恢复，是否确认删除？'),
       confirmColor: '#FF7878',
       success(res) {
         if (res.confirm) {

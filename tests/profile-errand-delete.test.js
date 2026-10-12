@@ -40,6 +40,10 @@ for (const kind of ['demand', 'supply']) {
     page.showPostOptions({ currentTarget: { dataset: { id: item.id } } })
     page.onDeletePost()
     assert.equal(requests.length, 0)
+    if (kind === 'demand') {
+      assert.match(modal.content, /尚未确认的接单申请也会取消/)
+      assert.match(modal.content, /已确认的订单需先处理/)
+    }
     modal.success({ confirm: true })
 
     assert.equal(requests.length, 1)
