@@ -63,6 +63,9 @@ Page({
     feedCursor: null,
     feedHasMore: true,
     feedLoading: false,
+    feedLoadFailed: false,
+    schoolLoadFailed: false,
+    crossSchoolStartIndex: -1,
 
     /* 帖子分类筛选（AI 分类，id 对应后端 category 表；null=推荐流） */
     postCategories: [
@@ -230,28 +233,27 @@ Page({
     this.syncUserSchool()
     this.reloadSchoolData(true)
     this.loadActivityBanner()
-
-    // 启动校验可能晚于首页渲染完成，复用该请求同步最新学校。
-    if (app.sessionReady) {
-      app.sessionReady.then(() => {
-        if (!this._unloaded && this.syncUserSchool()) this.reloadSchoolData()
-      })
-    }
   },
 
   /** 默认展示用户所属学校；主动跨校浏览期间保留所选学校。 */
   syncUserSchool() {
+    const token = wx.getStorageSync('token')
+    const tokenChanged = this._schoolToken !== token
+    this._schoolToken = token
     const isLoggedIn = !!app.globalData.isLoggedIn
     const isJoinedSchool = canAccessCampusFeatures()
-    const userInfo = isLoggedIn ? (app.globalData.userInfo || {}) : {}
+    const userInfo = isLoggedIn ? { ...(app.globalData.userInfo || {}) } : {}
     const previousUser = this.data.userInfo || {}
     const userChanged = String(previousUser.uid || '') !== String(userInfo.uid || '')
     const campusChanged = String(previousUser.campusId || '') !== String(userInfo.campusId || '')
+    const loginChanged = this.data.isLoggedIn !== isLoggedIn
     const joinedChanged = this.data.isJoinedSchool !== isJoinedSchool
-    const resetBrowse = userChanged || campusChanged || !isLoggedIn
+    const resetBrowse = tokenChanged || userChanged || campusChanged || loginChanged ||
+      (!isLoggedIn && !!this.data.browsingCampusId)
     const browsingCampusId = resetBrowse ? '' : this.data.browsingCampusId
     const updates = { userInfo, isLoggedIn, isJoinedSchool, browsingCampusId }
 
+    if (resetBrowse || joinedChanged) this.resetSchoolFeed()
     if (resetBrowse) this._selectingBrowseSchool = false
     if (!browsingCampusId) {
       updates.schoolInfo = {
@@ -263,11 +265,67 @@ Page({
       }
     }
     this.setData(updates)
-    return userChanged || campusChanged || joinedChanged
+    return resetBrowse || joinedChanged
+  },
+
+  /** 学校/账号范围变化时，旧列表和旧游标不能继续显示或翻页。 */
+  resetSchoolFeed() {
+    this._feedRequestId = (this._feedRequestId || 0) + 1
+    this._schoolDataRefresh = null
+    this.setData({
+      feedList: [],
+      currentList: [],
+      feedCursor: null,
+      feedHasMore: true,
+      feedLoading: false,
+      feedLoadFailed: false,
+      schoolLoadFailed: false,
+      crossSchoolStartIndex: -1
+    })
+  },
+
+  /** 学校确认失败时阻止加载；用户下拉后先重试资料，同一校验共享后续刷新。 */
+  waitForSchoolSession(initialLoad = false, retry = false) {
+    const token = wx.getStorageSync('token')
+    let validation = app.sessionValidation
+    // 新登录的会话已由登录流程提供资料，旧 Token 的启动校验不能阻塞它。
+    if (!token || !validation || validation.token !== token || validation.status === 'ready') return null
+    if (this._schoolSessionPending && this._schoolSessionPending.validation === validation) {
+      this.setData({ feedLoading: true, feedLoadFailed: false, schoolLoadFailed: false })
+      return this._schoolSessionPending.promise
+    }
+    if (validation.status === 'failed') {
+      if (!retry) {
+        this.resetSchoolFeed()
+        this.setData({ feedLoadFailed: true, schoolLoadFailed: true })
+        return Promise.resolve(false)
+      }
+      app.validateStoredSession(token)
+      validation = app.sessionValidation
+    }
+
+    this.resetSchoolFeed()
+    this.setData({ feedLoading: true })
+    const pending = { validation }
+    this._schoolSessionPending = pending
+    pending.promise = validation.promise.then(success => {
+      if (this._schoolSessionPending !== pending) return false
+      this._schoolSessionPending = null
+      if (this._unloaded || wx.getStorageSync('token') !== token || app.sessionValidation !== validation) return false
+      if (!success) {
+        this.setData({ feedLoading: false, feedLoadFailed: true, schoolLoadFailed: true })
+        return false
+      }
+      this.syncUserSchool()
+      return this.reloadSchoolData(initialLoad)
+    })
+    return pending.promise
   },
 
   /** 相同范围、相同发布版本的生命周期刷新共享请求，避免推荐内容被重复取走。 */
   reloadSchoolData(initialLoad = false) {
+    const sessionPending = this.waitForSchoolSession(initialLoad)
+    if (sessionPending) return sessionPending
     const userInfo = app.globalData.userInfo || {}
     const key = JSON.stringify([
       wx.getStorageSync('token'), userInfo.uid, userInfo.campusId,
@@ -352,6 +410,8 @@ Page({
   },
 
   loadFeed(cursor = null) {
+    const sessionPending = this.waitForSchoolSession()
+    if (sessionPending) return sessionPending
     const isLoadMore = cursor !== null && cursor !== undefined
     if (isLoadMore && (this.data.feedLoading || !this.data.feedHasMore)) {
       return Promise.resolve(false)
@@ -362,7 +422,7 @@ Page({
     this._feedRequestId = requestId
     const refreshVersion = app.globalData.homeContentRefreshVersion || 0
     const tokenSnapshot = wx.getStorageSync('token')
-    this.setData({ feedLoading: true })
+    this.setData({ feedLoading: true, feedLoadFailed: false, schoolLoadFailed: false })
 
     const browsingCampusId = this.data.browsingCampusId
     const requestData = browsingCampusId
@@ -403,6 +463,7 @@ Page({
             liked: vo.liked === true,
             time: timeStr,
             school: vo.schoolName || '',
+            campusId: vo.targetCampusId || '',
             sourceType: vo.sourceType || '',
             sourceId: vo.sourceId || ''
           }
@@ -410,9 +471,14 @@ Page({
         const feedList = isLoadMore ? this.data.feedList.concat(list) : list
         const nextCursor = data.nextCursor === undefined ? null : data.nextCursor
         const feedHasMore = nextCursor !== null && data.hasMore !== false
+        const ownCampusId = this.data.userInfo.campusId
+        const crossSchoolStartIndex = !browsingCampusId && !this.data.activePostCategory && ownCampusId
+          ? feedList.findIndex(post => post.campusId && String(post.campusId) !== String(ownCampusId))
+          : -1
         this.setData({
           feedList,
           currentList: feedList,
+          crossSchoolStartIndex,
           feedCursor: nextCursor,
           feedHasMore,
           feedLoading: false
@@ -427,7 +493,7 @@ Page({
       } catch (err) {
         const message = getErrorMessage(err)
         console.error('处理帖子数据失败:', err)
-        this.setData({ feedLoading: false })
+        this.setData({ feedLoading: false, feedLoadFailed: true })
         wx.setStorageSync('lastFeedRenderError', message)
         wx.showToast({ title: '帖子数据处理失败：' + message, icon: 'none', duration: 3500 })
         return false
@@ -435,7 +501,7 @@ Page({
     }, err => {
       if (this._unloaded || requestId !== this._feedRequestId) return false
       console.error('帖子接口请求失败:', err)
-      this.setData({ feedLoading: false })
+      this.setData({ feedLoading: false, feedLoadFailed: true })
       wx.showToast({ title: '帖子网络请求失败，请下拉刷新', icon: 'none', duration: 2000 })
       return false
     })
@@ -452,13 +518,8 @@ Page({
     const raw = e.currentTarget.dataset.id
     const id = raw === '' || raw === null || raw === undefined ? null : Number(raw)
     if (id === this.data.activePostCategory) return
-    this.setData({
-      activePostCategory: id,
-      feedList: [],
-      currentList: [],
-      feedCursor: null,
-      feedHasMore: true
-    })
+    this.resetSchoolFeed()
+    this.setData({ activePostCategory: id })
     this.loadFeed()
   },
 
@@ -483,7 +544,9 @@ Page({
         if (school && school.id && school.name) {
           const ownCampusId = (app.globalData.userInfo || {}).campusId
           const browsingCampusId = String(school.id) === String(ownCampusId) ? '' : school.id
-          schoolChanged = schoolChanged || String(browsingCampusId) !== String(this.data.browsingCampusId)
+          const browsingChanged = String(browsingCampusId) !== String(this.data.browsingCampusId)
+          if (browsingChanged) this.resetSchoolFeed()
+          schoolChanged = schoolChanged || browsingChanged
           this.setData({
             schoolInfo: { id: school.id, name: school.name, icon: '/images/avatars/default.png' },
             browsingCampusId
@@ -494,7 +557,10 @@ Page({
         console.warn('解析浏览学校失败:', err)
       }
     }
-    if (schoolChanged || app.globalData.homeContentNeedsRefresh) {
+    const validation = app.sessionValidation
+    const schoolSessionPending = validation && validation.token === wx.getStorageSync('token') &&
+      validation.status !== 'ready'
+    if (schoolChanged || schoolSessionPending || this.data.schoolLoadFailed || app.globalData.homeContentNeedsRefresh) {
       this.reloadSchoolData()
     }
 
@@ -865,10 +931,12 @@ Page({
 
   refreshFeed() {
     this.setData({ feedRefreshing: true })
-    return this.loadFeed().then(success => {
+    const refresh = this.waitForSchoolSession(false, true) || this.loadFeed()
+    return refresh.then(success => {
+      if (this._unloaded) return
       if (success) wx.showToast({ title: '刷新成功', icon: 'none' })
     }).finally(() => {
-      this.setData({ feedRefreshing: false })
+      if (!this._unloaded) this.setData({ feedRefreshing: false })
     })
   },
 

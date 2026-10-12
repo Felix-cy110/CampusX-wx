@@ -27,10 +27,16 @@ App({
   },
 
   validateStoredSession(tokenSnapshot) {
+    const current = this.sessionValidation
+    if (current && current.token === tokenSnapshot && current.status === 'pending') {
+      return current.promise
+    }
+    const validation = { token: tokenSnapshot, status: 'pending' }
+    this.sessionValidation = validation
     const { request, toFullUrl } = require('./utils/request')
-    return request({ url: '/api/v1/user/me', method: 'GET' }).then(vo => {
+    validation.promise = request({ url: '/api/v1/user/me', method: 'GET' }).then(vo => {
       // 校验期间若用户已退出或重新登录，不用旧请求覆盖新会话
-      if (wx.getStorageSync('token') !== tokenSnapshot) return
+      if (wx.getStorageSync('token') !== tokenSnapshot || this.sessionValidation !== validation) return false
       const cached = wx.getStorageSync('userInfo') || {}
       const userInfo = Object.assign({}, cached, {
         uid: String(vo.userId),
@@ -49,10 +55,16 @@ App({
       this.globalData.isJoinedSchool = !!vo.campusId
       this.globalData.userInfo = userInfo
       wx.setStorageSync('userInfo', userInfo)
+      validation.status = 'ready'
+      return true
     }).catch(err => {
-      // 认证类错误由 request 统一清理并跳转；网络错误保留本地会话，待下次请求重试
+      // 保留缓存供页面展示，但失败不代表学校已确认；首页下拉刷新会重新校验。
+      validation.status = 'failed'
       console.warn('启动会话校验失败:', err)
+      return false
     })
+    this.sessionReady = validation.promise
+    return validation.promise
   },
 
   globalData: {

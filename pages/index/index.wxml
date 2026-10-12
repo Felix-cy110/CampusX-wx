@@ -95,7 +95,11 @@
                 </scroll-view>
               <scroll-view class="panel-scroll post-feed-scroll" scroll-y enhanced show-scrollbar="{{false}}" enable-back-to-top refresher-enabled refresher-triggered="{{feedRefreshing}}" bindrefresherrefresh="refreshFeed" bindscrolltolower="loadMoreFeed" lower-threshold="200" bindscroll="onPanelScroll">
                 <view class="content-list">
-                  <view class="feed-card" wx:for="{{feedList}}" wx:key="id" bindtap="goToPostDetail" data-id="{{item.id}}">
+                  <block wx:for="{{feedList}}" wx:key="id">
+                  <view class="feed-school-divider" wx:if="{{index === crossSchoolStartIndex}}">
+                    <text>本校帖子已看完，看看其他学校</text>
+                  </view>
+                  <view class="feed-card" bindtap="goToPostDetail" data-id="{{item.id}}">
                     <view class="feed-card-header">
                       <image class="feed-card-avatar" src="{{item.user.avatar}}" mode="aspectFill" catchtap="goToUserProfile" data-uid="{{item.user.uid}}" data-name="{{item.user.name}}" data-avatar="{{item.user.avatar}}"></image>
                       <text class="feed-card-username">{{item.user.name}}</text>
@@ -128,8 +132,9 @@
                       </view>
                     </view>
                   </view>
+                  </block>
                   <view class="empty-state" wx:if="{{feedList.length === 0}}">
-                    <text>暂无内容</text>
+                    <text>{{feedLoading ? '正在加载...' : (schoolLoadFailed ? '学校信息加载失败，请下拉重试' : (feedLoadFailed ? '加载失败，请下拉重试' : '暂无内容'))}}</text>
                   </view>
                   <view class="load-more-tip" wx:if="{{feedHasMore && feedList.length > 0}}">
                     <text>{{feedLoading ? '正在加载...' : '上拉加载更多'}}</text>

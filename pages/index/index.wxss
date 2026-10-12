@@ -559,6 +559,13 @@
 }
 
 /* ========== 帖子卡片 ========== */
+.feed-school-divider {
+  padding: 24rpx 0;
+  text-align: center;
+  color: var(--color-text-secondary);
+  font-size: var(--font-sm);
+}
+
 .feed-card {
   background-color: var(--color-bg-white);
   padding: 28rpx 30rpx;
