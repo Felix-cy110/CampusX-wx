@@ -64,6 +64,7 @@ Page({
     feedHasMore: true,
     feedLoading: false,
     feedLoadFailed: false,
+    schoolLoadFailed: false,
     crossSchoolStartIndex: -1,
 
     /* 帖子分类筛选（AI 分类，id 对应后端 category 表；null=推荐流） */
@@ -230,22 +231,15 @@ Page({
       bookServerHasMore: true
     })
     this.syncUserSchool()
-    // 先确认账号的最新学校，再加载帖子，避免旧缓存学校与服务端推荐范围不一致。
-    if (app.sessionReady) {
-      this.setData({ feedLoading: true })
-      this._schoolSessionPending = app.sessionReady.then(() => {
-        this._schoolSessionPending = null
-        if (this._unloaded) return false
-        this.syncUserSchool()
-        return this.reloadSchoolData(true)
-      })
-    }
     this.reloadSchoolData(true)
     this.loadActivityBanner()
   },
 
   /** 默认展示用户所属学校；主动跨校浏览期间保留所选学校。 */
   syncUserSchool() {
+    const token = wx.getStorageSync('token')
+    const tokenChanged = this._schoolToken !== token
+    this._schoolToken = token
     const isLoggedIn = !!app.globalData.isLoggedIn
     const isJoinedSchool = canAccessCampusFeatures()
     const userInfo = isLoggedIn ? { ...(app.globalData.userInfo || {}) } : {}
@@ -254,7 +248,7 @@ Page({
     const campusChanged = String(previousUser.campusId || '') !== String(userInfo.campusId || '')
     const loginChanged = this.data.isLoggedIn !== isLoggedIn
     const joinedChanged = this.data.isJoinedSchool !== isJoinedSchool
-    const resetBrowse = userChanged || campusChanged || loginChanged ||
+    const resetBrowse = tokenChanged || userChanged || campusChanged || loginChanged ||
       (!isLoggedIn && !!this.data.browsingCampusId)
     const browsingCampusId = resetBrowse ? '' : this.data.browsingCampusId
     const updates = { userInfo, isLoggedIn, isJoinedSchool, browsingCampusId }
@@ -285,13 +279,53 @@ Page({
       feedHasMore: true,
       feedLoading: false,
       feedLoadFailed: false,
+      schoolLoadFailed: false,
       crossSchoolStartIndex: -1
     })
   },
 
+  /** 学校确认失败时阻止加载；用户下拉后先重试资料，同一校验共享后续刷新。 */
+  waitForSchoolSession(initialLoad = false, retry = false) {
+    const token = wx.getStorageSync('token')
+    let validation = app.sessionValidation
+    // 新登录的会话已由登录流程提供资料，旧 Token 的启动校验不能阻塞它。
+    if (!token || !validation || validation.token !== token || validation.status === 'ready') return null
+    if (this._schoolSessionPending && this._schoolSessionPending.validation === validation) {
+      this.setData({ feedLoading: true, feedLoadFailed: false, schoolLoadFailed: false })
+      return this._schoolSessionPending.promise
+    }
+    if (validation.status === 'failed') {
+      if (!retry) {
+        this.resetSchoolFeed()
+        this.setData({ feedLoadFailed: true, schoolLoadFailed: true })
+        return Promise.resolve(false)
+      }
+      app.validateStoredSession(token)
+      validation = app.sessionValidation
+    }
+
+    this.resetSchoolFeed()
+    this.setData({ feedLoading: true })
+    const pending = { validation }
+    this._schoolSessionPending = pending
+    pending.promise = validation.promise.then(success => {
+      if (this._schoolSessionPending !== pending) return false
+      this._schoolSessionPending = null
+      if (this._unloaded || wx.getStorageSync('token') !== token || app.sessionValidation !== validation) return false
+      if (!success) {
+        this.setData({ feedLoading: false, feedLoadFailed: true, schoolLoadFailed: true })
+        return false
+      }
+      this.syncUserSchool()
+      return this.reloadSchoolData(initialLoad)
+    })
+    return pending.promise
+  },
+
   /** 相同范围、相同发布版本的生命周期刷新共享请求，避免推荐内容被重复取走。 */
   reloadSchoolData(initialLoad = false) {
-    if (this._schoolSessionPending) return this._schoolSessionPending
+    const sessionPending = this.waitForSchoolSession(initialLoad)
+    if (sessionPending) return sessionPending
     const userInfo = app.globalData.userInfo || {}
     const key = JSON.stringify([
       wx.getStorageSync('token'), userInfo.uid, userInfo.campusId,
@@ -376,7 +410,8 @@ Page({
   },
 
   loadFeed(cursor = null) {
-    if (this._schoolSessionPending) return this._schoolSessionPending
+    const sessionPending = this.waitForSchoolSession()
+    if (sessionPending) return sessionPending
     const isLoadMore = cursor !== null && cursor !== undefined
     if (isLoadMore && (this.data.feedLoading || !this.data.feedHasMore)) {
       return Promise.resolve(false)
@@ -387,7 +422,7 @@ Page({
     this._feedRequestId = requestId
     const refreshVersion = app.globalData.homeContentRefreshVersion || 0
     const tokenSnapshot = wx.getStorageSync('token')
-    this.setData({ feedLoading: true, feedLoadFailed: false })
+    this.setData({ feedLoading: true, feedLoadFailed: false, schoolLoadFailed: false })
 
     const browsingCampusId = this.data.browsingCampusId
     const requestData = browsingCampusId
@@ -522,7 +557,10 @@ Page({
         console.warn('解析浏览学校失败:', err)
       }
     }
-    if (schoolChanged || app.globalData.homeContentNeedsRefresh) {
+    const validation = app.sessionValidation
+    const schoolSessionPending = validation && validation.token === wx.getStorageSync('token') &&
+      validation.status !== 'ready'
+    if (schoolChanged || schoolSessionPending || this.data.schoolLoadFailed || app.globalData.homeContentNeedsRefresh) {
       this.reloadSchoolData()
     }
 
@@ -893,10 +931,12 @@ Page({
 
   refreshFeed() {
     this.setData({ feedRefreshing: true })
-    return this.loadFeed().then(success => {
+    const refresh = this.waitForSchoolSession(false, true) || this.loadFeed()
+    return refresh.then(success => {
+      if (this._unloaded) return
       if (success) wx.showToast({ title: '刷新成功', icon: 'none' })
     }).finally(() => {
-      this.setData({ feedRefreshing: false })
+      if (!this._unloaded) this.setData({ feedRefreshing: false })
     })
   },
 

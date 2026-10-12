@@ -134,7 +134,7 @@
                   </view>
                   </block>
                   <view class="empty-state" wx:if="{{feedList.length === 0}}">
-                    <text>{{feedLoading ? '正在加载...' : (feedLoadFailed ? '加载失败，请下拉重试' : '暂无内容')}}</text>
+                    <text>{{feedLoading ? '正在加载...' : (schoolLoadFailed ? '学校信息加载失败，请下拉重试' : (feedLoadFailed ? '加载失败，请下拉重试' : '暂无内容'))}}</text>
                   </view>
                   <view class="load-more-tip" wx:if="{{feedHasMore && feedList.length > 0}}">
                     <text>{{feedLoading ? '正在加载...' : '上拉加载更多'}}</text>
