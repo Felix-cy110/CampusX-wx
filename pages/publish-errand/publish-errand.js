@@ -33,7 +33,7 @@ Page({
     // 教室号
     locationRoom: '',
 
-    // 代课费
+    // 服务费
     fee: '',
 
     // 备注要求
@@ -129,7 +129,7 @@ Page({
       return
     }
     if (!fee || parseFloat(fee) <= 0) {
-      wx.showToast({ title: '请输入有效代课费', icon: 'none' })
+      wx.showToast({ title: '请输入有效服务费', icon: 'none' })
       return
     }
 

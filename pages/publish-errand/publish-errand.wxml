@@ -46,12 +46,12 @@
         <input class="location-input" placeholder="* 教室号" placeholder-class="input-placeholder" value="{{locationRoom}}" bindinput="onLocationRoomInput" />
       </view>
 
-      <!-- 代课费 -->
+      <!-- 服务费 -->
       <view class="input-wrap">
         <input
           class="form-input"
           type="digit"
-          placeholder="* 代课费（元）"
+          placeholder="* 服务费（元）"
           placeholder-class="input-placeholder"
           value="{{fee}}"
           bindinput="onFeeInput"
@@ -83,7 +83,7 @@
 
     <!-- 切换发布供给 -->
     <view class="switch-supply" bindtap="goPublishSupply">
-      <text>我要发布代课供给（我可以代课）</text>
+      <text>我要发布代课供给</text>
     </view>
 
     <!-- 提交按钮 -->
