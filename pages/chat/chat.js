@@ -1,6 +1,7 @@
 var requestModule = require('../../utils/request')
 var request = requestModule.request
 var getBaseUrl = requestModule.getBaseUrl
+var toFullUrl = requestModule.toFullUrl
 var handleAuthFailure = require('../../utils/auth').handleAuthFailure
 var unreadModule = require('../../utils/unread')
 var markChatConversationRead = unreadModule.markChatConversationRead
@@ -616,12 +617,20 @@ function mapMessage(vo, myUid) {
     }
   }
 
+  var content = vo.content || ''
+  if (vo.msgType === 2) {
+    // 上传和历史消息保存相对路径，展示与预览统一使用完整服务器地址。
+    content = toFullUrl(content)
+  } else if (vo.msgType === 3) {
+    content = '消息已撤回'
+  }
+
   return {
     _id: vo.id,
     id: vo.id,
     from: isMe ? 'me' : 'other',
     type: vo.msgType === 2 ? 'image' : (vo.msgType === 3 ? 'system' : 'text'),
-    content: vo.msgType === 3 ? '消息已撤回' : (vo.content || ''),
+    content: content,
     senderId: String(vo.senderId),
     senderNickname: vo.senderNickname || '',
     time: formatChatTime(vo.createdAt),
