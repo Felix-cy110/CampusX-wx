@@ -6,6 +6,9 @@ let pageDefinition
 let historyRequests
 let sockets
 let pages
+let imageChoices
+let imageUploads
+let imagePreviews
 const app = { globalData: {} }
 
 global.getApp = () => app
@@ -33,6 +36,11 @@ global.wx = {
     sockets.push(socket)
     return socket
   },
+  chooseImage(options) { imageChoices.push(options) },
+  uploadFile(options) { imageUploads.push(options) },
+  previewImage(options) { imagePreviews.push(options) },
+  showLoading() {},
+  hideLoading() {},
   showToast() {}
 }
 
@@ -87,6 +95,9 @@ test.beforeEach(t => {
   historyRequests = []
   sockets = []
   pages = []
+  imageChoices = []
+  imageUploads = []
+  imagePreviews = []
   app.globalData = { userInfo: { uid: '10', avatar: '/images/my-avatar.png' } }
   resetFollowState()
   resetUnreadState()
@@ -294,3 +305,104 @@ test('文本、图片、帖子分享与撤回消息按历史顺序展示', async
   assert.deepEqual(page.data.messages.map(msg => msg.type), ['text', 'image', 'link', 'system'])
   assert.equal(contents(page).at(-1), '消息已撤回')
 })
+
+const imagePath = '/images/2026/10/chat-image.png'
+const imageUrl = 'https://xixutech.cn' + imagePath
+const imageSources = [
+  { name: '相册', method: 'chooseImage', sourceType: 'album' },
+  { name: '拍照', method: 'takePhoto', sourceType: 'camera' }
+]
+
+for (const source of imageSources) {
+  for (const responseType of ['object', 'string']) {
+    test(source.name + '发图：' + responseType + '上传响应可发送、回显和预览', async () => {
+      const { page, socket } = enter()
+      await respond([])
+      page.setData({ showPanel: true })
+      page[source.method]()
+      assert.deepEqual(imageChoices[0].sourceType, [source.sourceType])
+      imageChoices[0].success({ tempFilePaths: ['/tmp/chosen-image.png'] })
+      assert.equal(page.data.showPanel, false)
+
+      const upload = imageUploads[0]
+      assert.equal(upload.url, 'https://xixutech.cn/api/v1/upload/image')
+      assert.equal(upload.filePath, '/tmp/chosen-image.png')
+      assert.equal(upload.name, 'file')
+      assert.equal(upload.header.Authorization, 'Bearer mock-token')
+      upload.success({
+        data: JSON.stringify({ code: 200, data: responseType === 'object' ? { url: imagePath } : imagePath })
+      })
+
+      const frame = socket.frames.at(-1)
+      assert.equal(frame.command, 'SEND')
+      assert.equal(frame.headers.destination, '/app/chat/20/send')
+      // 传输和存储仍使用稳定相对路径，展示时再补全域名。
+      assert.deepEqual(JSON.parse(frame.body), {
+        receiverId: 20, orderId: null, orderType: null, msgType: 2, content: imagePath
+      })
+      socket.receive(message(2, imagePath, { msgType: 2 }))
+      const displayed = page.data.messages[0]
+      assert.equal(displayed.from, 'me')
+      assert.equal(displayed.type, 'image')
+      assert.equal(displayed.content, imageUrl)
+      page.previewImage({ currentTarget: { dataset: { src: displayed.content } } })
+      assert.deepEqual(imagePreviews[0], { urls: [imageUrl], current: imageUrl })
+    })
+  }
+}
+
+test('实时收图：相对路径和旧本机地址可展示，完整链接与其他消息保持正确', async () => {
+  const { page, socket } = enter()
+  await respond([])
+  const signedUrl = 'https://cdn.example.test/chat.png?sign=abc&expires=123'
+  const cases = [
+    { content: imagePath, expected: imageUrl },
+    { content: 'http://localhost:5659' + imagePath, expected: imageUrl },
+    { content: 'http://127.0.0.1:5659' + imagePath, expected: imageUrl },
+    { content: signedUrl, expected: signedUrl },
+    { content: '', expected: '' },
+    { content: null, expected: '' }
+  ]
+  cases.forEach((item, index) => {
+    socket.receive(message(index + 1, item.content, { msgType: 2, senderId: 20, receiverId: 10 }))
+    const displayed = page.data.messages.at(-1)
+    assert.equal(displayed.from, 'other')
+    assert.equal(displayed.type, 'image')
+    assert.equal(displayed.content, item.expected)
+    if (item.expected) {
+      page.previewImage({ currentTarget: { dataset: { src: displayed.content } } })
+      assert.deepEqual(imagePreviews.at(-1), { urls: [item.expected], current: item.expected })
+    }
+  })
+  socket.receive(message(7, imagePath))
+  socket.receive(message(8, '撤回内容', { msgType: 3 }))
+  assert.equal(page.data.messages[6].type, 'text')
+  assert.equal(page.data.messages[6].content, imagePath)
+  assert.equal(page.data.messages[7].content, '消息已撤回')
+})
+
+for (const entry of entries) {
+  test(entry.name + '：历史图片分页、退出重进后仍可展示和预览', async () => {
+    const signedUrl = 'https://cdn.example.test/older.png?sign=abc&expires=123'
+    const records = [
+      message(1, imagePath, { msgType: 2 }),
+      message(2, 'http://localhost:5659' + imagePath, { msgType: 2 }),
+      message(3, signedUrl, { msgType: 2 }),
+      message(4, imagePath)
+    ]
+    const { page } = enter(entry.options)
+    assert.equal(new URL(historyRequests[0].url).pathname, entry.path)
+    await respond(records.slice(2).reverse(), true)
+    page.onScrollToUpper()
+    await respond(records.slice(0, 2).reverse())
+    assert.deepEqual(ids(page), [1, 2, 3, 4])
+    assert.deepEqual(contents(page), [imageUrl, imageUrl, signedUrl, imagePath])
+    page.previewImage({ currentTarget: { dataset: { src: page.data.messages[0].content } } })
+    assert.deepEqual(imagePreviews[0], { urls: [imageUrl], current: imageUrl })
+    page.onUnload()
+
+    const reopened = enter(entry.options)
+    await respond(records.slice().reverse())
+    assert.deepEqual(contents(reopened.page), contents(page))
+  })
+}
