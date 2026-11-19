@@ -7,6 +7,9 @@ const { confirmAndApplyProxyOrder } = require('../../utils/proxyOrder')
 const { getActivities } = require('../../utils/api/lottery')
 const { getUnreadCounts, getUnreadTotal, refreshUnreadCounts, subscribeUnreadCounts } = require('../../utils/unread')
 
+const HOME_SHARE_TITLE = 'X校圈｜发现校园生活'
+const HOME_SHARE_IMAGE = '/images/share-home.png'
+
 function pad2(value) {
   const text = String(value == null ? 0 : value)
   return text.length < 2 ? '0' + text : text
@@ -523,7 +526,28 @@ Page({
     this.loadFeed()
   },
 
+  // 分享首页入口，使用固定品牌图，避免默认截图带出用户头像、昵称或校园内容。
+  onShareAppMessage() {
+    return {
+      title: HOME_SHARE_TITLE,
+      path: '/pages/index/index',
+      imageUrl: HOME_SHARE_IMAGE
+    }
+  },
+
+  onShareTimeline() {
+    return {
+      title: HOME_SHARE_TITLE,
+      query: '',
+      imageUrl: HOME_SHARE_IMAGE
+    }
+  },
+
   onShow() {
+    // 返回首页时重新开放菜单，避免其他页面隐藏分享后影响首页。
+    if (typeof wx.showShareMenu === 'function') {
+      wx.showShareMenu({ menus: ['shareAppMessage', 'shareTimeline'] })
+    }
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
       this.getTabBar().setData({ selected: 0 })
     }
